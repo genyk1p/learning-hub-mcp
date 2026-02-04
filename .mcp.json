@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "learning-hub": {
-      "type": "stdio",
-      "command": "/home/geny/.cache/pypoetry/virtualenvs/learning-hub-mcp-Q3W67QO2-py3.12/bin/python",
-      "args": ["-m", "learning_hub.server"]
-    }
-  }
-}
