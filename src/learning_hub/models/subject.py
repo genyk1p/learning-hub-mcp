@@ -1,0 +1,59 @@
+"""Subject model - school subjects catalog."""
+
+from typing import TYPE_CHECKING
+from sqlalchemy import String, Boolean, Integer, CheckConstraint, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from learning_hub.models.base import Base, TimestampMixin
+from learning_hub.models.enums import SchoolType
+
+if TYPE_CHECKING:
+    from learning_hub.models.subject_topic import SubjectTopic
+    from learning_hub.models.grade import Grade
+    from learning_hub.models.homework import Homework
+
+
+class Subject(Base, TimestampMixin):
+    """
+    School subject catalog.
+
+    Each subject belongs to a specific school (UA or CZ).
+    History in CZ school and History in UA school are different subjects.
+    """
+
+    __tablename__ = "subjects"
+
+    # Primary key
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # School this subject belongs to
+    school: Mapped[SchoolType] = mapped_column(nullable=False)
+
+    # Subject name in school's language
+    # CZ: "Matematika", "Dějepis", "Zeměpis"
+    # UA: "Математика", "Історія", "Географія"
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    # Russian name for display (optional)
+    name_ru: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    # Grade level (class): 1-20, optional (e.g., "History 7th grade")
+    grade_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Whether this subject is active (can deactivate old subjects)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Relationships
+    topics: Mapped[list["SubjectTopic"]] = relationship("SubjectTopic", back_populates="subject")
+    grades: Mapped[list["Grade"]] = relationship("Grade", back_populates="subject")
+    homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="subject")
+
+    # Constraints
+    __table_args__ = (
+        UniqueConstraint("school", "name", "grade_level", name="uq_subject_school_name_grade"),
+        CheckConstraint("grade_level IS NULL OR (grade_level >= 1 AND grade_level <= 20)", name="check_grade_level_range"),
+    )
+
+    def __repr__(self) -> str:
+        grade_str = f" grade {self.grade_level}" if self.grade_level else ""
+        return f"<Subject(id={self.id}, school={self.school.value}, name={self.name!r}{grade_str})>"

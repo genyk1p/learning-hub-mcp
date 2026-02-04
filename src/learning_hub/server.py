@@ -1,0 +1,32 @@
+"""Learning Hub MCP Server."""
+
+from mcp.server.fastmcp import FastMCP
+
+from learning_hub.tools.subjects import register_subject_tools
+from learning_hub.tools.subject_topics import register_subject_topic_tools
+from learning_hub.tools.grades import register_grade_tools
+from learning_hub.tools.bonus_tasks import register_bonus_task_tools
+from learning_hub.tools.homeworks import register_homework_tools
+from learning_hub.tools.weeks import register_week_tools
+from learning_hub.tools.edupage import register_edupage_tools
+
+# Create MCP server
+mcp = FastMCP("learning-hub")
+
+# Register all tools
+register_subject_tools(mcp)
+register_subject_topic_tools(mcp)
+register_grade_tools(mcp)
+register_bonus_task_tools(mcp)
+register_homework_tools(mcp)
+register_week_tools(mcp)
+register_edupage_tools(mcp)
+
+
+def main() -> None:
+    """Run the MCP server."""
+    mcp.run()
+
+
+if __name__ == "__main__":
+    main()
