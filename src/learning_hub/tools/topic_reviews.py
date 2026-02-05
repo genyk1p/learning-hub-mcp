@@ -1,0 +1,122 @@
+"""TopicReview tools for MCP server."""
+
+from datetime import datetime
+from mcp.server.fastmcp import FastMCP
+from pydantic import BaseModel
+
+from learning_hub.database.connection import AsyncSessionLocal
+from learning_hub.models.enums import TopicReviewStatus
+from learning_hub.repositories.topic_review import TopicReviewRepository
+
+
+class TopicReviewResponse(BaseModel):
+    """TopicReview response schema."""
+    id: int
+    subject_id: int
+    subject_topic_id: int
+    grade_id: int
+    status: str
+    repeat_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+def register_topic_review_tools(mcp: FastMCP) -> None:
+    """Register topic review related tools."""
+
+    status_options = ", ".join(f'"{s.value}"' for s in TopicReviewStatus)
+
+    @mcp.tool(description=f"""List topic reviews (topics that need reinforcement).
+
+    Topic reviews are created automatically when syncing grades > 1 from EduPage.
+    Shows topics where student needs additional practice.
+
+    Args:
+        subject_id: Filter by subject ID (optional)
+        subject_topic_id: Filter by topic ID (optional)
+        status: Filter by status - one of: {status_options} (optional)
+
+    Returns:
+        List of topic reviews
+    """)
+    async def list_topic_reviews(
+        subject_id: int | None = None,
+        subject_topic_id: int | None = None,
+        status: str | None = None,
+    ) -> list[TopicReviewResponse]:
+        status_enum = TopicReviewStatus(status) if status else None
+
+        async with AsyncSessionLocal() as session:
+            repo = TopicReviewRepository(session)
+            reviews = await repo.list(
+                subject_id=subject_id,
+                subject_topic_id=subject_topic_id,
+                status=status_enum,
+            )
+            return [
+                TopicReviewResponse(
+                    id=r.id,
+                    subject_id=r.subject_id,
+                    subject_topic_id=r.subject_topic_id,
+                    grade_id=r.grade_id,
+                    status=r.status.value,
+                    repeat_count=r.repeat_count,
+                    created_at=r.created_at,
+                    updated_at=r.updated_at,
+                )
+                for r in reviews
+            ]
+
+    @mcp.tool(description="""Mark topic review as reinforced.
+
+    Use this when the topic has been sufficiently practiced through bonus tasks.
+
+    Args:
+        review_id: ID of the topic review to mark as reinforced
+
+    Returns:
+        Updated topic review or null if not found
+    """)
+    async def mark_topic_reinforced(review_id: int) -> TopicReviewResponse | None:
+        async with AsyncSessionLocal() as session:
+            repo = TopicReviewRepository(session)
+            review = await repo.mark_reinforced(review_id)
+            if review is None:
+                return None
+            return TopicReviewResponse(
+                id=review.id,
+                subject_id=review.subject_id,
+                subject_topic_id=review.subject_topic_id,
+                grade_id=review.grade_id,
+                status=review.status.value,
+                repeat_count=review.repeat_count,
+                created_at=review.created_at,
+                updated_at=review.updated_at,
+            )
+
+    @mcp.tool(description="""Increment repeat count for a topic review.
+
+    Call this when a bonus task related to the topic is completed.
+
+    Args:
+        review_id: ID of the topic review
+
+    Returns:
+        Updated topic review or null if not found
+    """)
+    async def increment_topic_repeat_count(review_id: int) -> TopicReviewResponse | None:
+        async with AsyncSessionLocal() as session:
+            repo = TopicReviewRepository(session)
+            review = await repo.increment_repeat_count(review_id)
+            if review is None:
+                return None
+            return TopicReviewResponse(
+                id=review.id,
+                subject_id=review.subject_id,
+                subject_topic_id=review.subject_topic_id,
+                grade_id=review.grade_id,
+                status=review.status.value,
+                repeat_count=review.repeat_count,
+                created_at=review.created_at,
+                updated_at=review.updated_at,
+            )

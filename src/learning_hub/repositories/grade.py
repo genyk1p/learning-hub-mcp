@@ -27,7 +27,6 @@ class GradeRepository:
         subject_topic_id: int | None = None,
         bonus_task_id: int | None = None,
         homework_id: int | None = None,
-        topic_text: str | None = None,
         edupage_id: int | None = None,
     ) -> Grade:
         """Create a new grade."""
@@ -38,7 +37,6 @@ class GradeRepository:
             subject_topic_id=subject_topic_id,
             bonus_task_id=bonus_task_id,
             homework_id=homework_id,
-            topic_text=topic_text,
             edupage_id=edupage_id,
         )
         self.session.add(grade)
@@ -90,8 +88,6 @@ class GradeRepository:
     async def update(
         self,
         grade_id: int,
-        topic_text: str | None = None,
-        topic_received_at: datetime | None = None,
         penalty_applied: bool | None = None,
         rewarded: bool | None = None,
     ) -> Grade | None:
@@ -100,10 +96,6 @@ class GradeRepository:
         if grade is None:
             return None
 
-        if topic_text is not None:
-            grade.topic_text = topic_text
-        if topic_received_at is not None:
-            grade.topic_received_at = topic_received_at
         if penalty_applied is not None:
             grade.penalty_applied = penalty_applied
         if rewarded is not None:

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Integer, ForeignKey, DateTime
+from sqlalchemy import String, Integer, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -54,6 +54,15 @@ class SubjectTopic(Base, TimestampMixin):
     # Relationship to Homeworks
     homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="subject_topic")
 
+    # Unique constraint to prevent duplicate topics per subject
+    __table_args__ = (
+        UniqueConstraint("subject_id", "description", name="uq_subject_topic_subject_description"),
+    )
+
     def __repr__(self) -> str:
-        status = "active" if self.closed_at is None else f"closed ({self.close_reason.value})"
+        if self.closed_at is None:
+            status = "active"
+        else:
+            reason = self.close_reason.value if self.close_reason else "unknown"
+            status = f"closed ({reason})"
         return f"<SubjectTopic(id={self.id}, subject_id={self.subject_id}, status={status})>"

@@ -54,3 +54,9 @@ class HomeworkStatus(str, enum.Enum):
     """Status of homework."""
     PENDING = "pending"  # Not done yet
     DONE = "done"  # Completed
+
+
+class TopicReviewStatus(str, enum.Enum):
+    """Status of topic review."""
+    PENDING = "pending"  # Topic needs reinforcement
+    REINFORCED = "reinforced"  # Topic was reinforced through bonus tasks

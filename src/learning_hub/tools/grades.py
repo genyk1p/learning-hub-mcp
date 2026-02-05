@@ -19,8 +19,6 @@ class GradeResponse(BaseModel):
     subject_topic_id: int | None
     bonus_task_id: int | None
     homework_id: int | None
-    topic_text: str | None
-    topic_received_at: datetime | None
     penalty_applied: bool
     rewarded: bool
 
@@ -50,7 +48,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
         subject_topic_id: ID of the related topic (optional)
         bonus_task_id: ID of the related bonus task (optional)
         homework_id: ID of the related homework (optional)
-        topic_text: Topic description text (optional)
 
     Returns:
         Created grade
@@ -62,7 +59,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
         subject_topic_id: int | None = None,
         bonus_task_id: int | None = None,
         homework_id: int | None = None,
-        topic_text: str | None = None,
     ) -> GradeResponse:
         grade_enum = GradeValue(grade_value)
         date_parsed = datetime.fromisoformat(date)
@@ -76,7 +72,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 subject_topic_id=subject_topic_id,
                 bonus_task_id=bonus_task_id,
                 homework_id=homework_id,
-                topic_text=topic_text,
             )
             return GradeResponse(
                 id=grade.id,
@@ -86,8 +81,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
-                topic_text=grade.topic_text,
-                topic_received_at=None,
                 penalty_applied=grade.penalty_applied,
                 rewarded=grade.rewarded,
             )
@@ -133,8 +126,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     subject_topic_id=g.subject_topic_id,
                     bonus_task_id=g.bonus_task_id,
                     homework_id=g.homework_id,
-                    topic_text=g.topic_text,
-                    topic_received_at=g.topic_received_at,
                     penalty_applied=g.penalty_applied,
                     rewarded=g.rewarded,
                 )
@@ -145,8 +136,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
 
     Args:
         grade_id: ID of the grade to update
-        topic_text: New topic description text (optional)
-        topic_received_at: When topic was received, ISO format (optional)
         penalty_applied: Mark if penalty was applied (optional)
         rewarded: Mark if grade was rewarded with game minutes (optional)
 
@@ -155,19 +144,13 @@ def register_grade_tools(mcp: FastMCP) -> None:
     """)
     async def update_grade(
         grade_id: int,
-        topic_text: str | None = None,
-        topic_received_at: str | None = None,
         penalty_applied: bool | None = None,
         rewarded: bool | None = None,
     ) -> GradeResponse | None:
-        topic_received_parsed = datetime.fromisoformat(topic_received_at) if topic_received_at else None
-
         async with AsyncSessionLocal() as session:
             repo = GradeRepository(session)
             grade = await repo.update(
                 grade_id=grade_id,
-                topic_text=topic_text,
-                topic_received_at=topic_received_parsed,
                 penalty_applied=penalty_applied,
                 rewarded=rewarded,
             )
@@ -181,8 +164,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
-                topic_text=grade.topic_text,
-                topic_received_at=grade.topic_received_at,
                 penalty_applied=grade.penalty_applied,
                 rewarded=grade.rewarded,
             )

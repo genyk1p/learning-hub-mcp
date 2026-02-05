@@ -17,8 +17,10 @@ from learning_hub.models.homework import Homework  # noqa: F401
 from learning_hub.models.week import Week  # noqa: F401
 
 from learning_hub.repositories.subject import SubjectRepository
+from learning_hub.repositories.subject_topic import SubjectTopicRepository
 from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.homework import HomeworkRepository
+from learning_hub.repositories.topic_review import TopicReviewRepository
 
 
 class GradesSyncResult(BaseModel):
@@ -27,6 +29,8 @@ class GradesSyncResult(BaseModel):
     grades_created: int
     grades_skipped: int
     subjects_created: int
+    topics_created: int
+    reviews_created: int
     errors: list[str]
 
 
@@ -56,6 +60,8 @@ def register_edupage_tools(mcp: FastMCP) -> None:
         grades_created = 0
         grades_skipped = 0
         subjects_created = 0
+        topics_created = 0
+        reviews_created = 0
 
         # Check credentials
         if not settings.edupage_username or not settings.edupage_password:
@@ -64,6 +70,8 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 grades_created=0,
                 grades_skipped=0,
                 subjects_created=0,
+                topics_created=0,
+                reviews_created=0,
                 errors=["EduPage credentials not configured"],
             )
 
@@ -84,6 +92,8 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 grades_created=0,
                 grades_skipped=0,
                 subjects_created=0,
+                topics_created=0,
+                reviews_created=0,
                 errors=[f"EduPage login failed: {e}"],
             )
 
@@ -97,6 +107,8 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 grades_created=0,
                 grades_skipped=0,
                 subjects_created=0,
+                topics_created=0,
+                reviews_created=0,
                 errors=[f"Failed to fetch subjects: {e}"],
             )
 
@@ -109,6 +121,8 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 grades_created=0,
                 grades_skipped=0,
                 subjects_created=0,
+                topics_created=0,
+                reviews_created=0,
                 errors=[f"Failed to fetch grades: {e}"],
             )
 
@@ -116,7 +130,9 @@ def register_edupage_tools(mcp: FastMCP) -> None:
 
         async with AsyncSessionLocal() as session:
             subject_repo = SubjectRepository(session)
+            topic_repo = SubjectTopicRepository(session)
             grade_repo = GradeRepository(session)
+            review_repo = TopicReviewRepository(session)
 
             for eg in edupage_grades:
                 # Check if already synced
@@ -149,17 +165,40 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 if created:
                     subjects_created += 1
 
-                # Create grade
+                # Find or create topic if title exists
+                subject_topic_id = None
                 topic_text = eg.title.strip() if eg.title else None
+                if topic_text:
+                    topic, topic_created = await topic_repo.get_or_create(
+                        subject_id=subject.id,
+                        description=topic_text,
+                    )
+                    subject_topic_id = topic.id
+                    if topic_created:
+                        topics_created += 1
+
+                # Create grade
                 try:
-                    await grade_repo.create(
+                    grade = await grade_repo.create(
                         subject_id=subject.id,
                         grade_value=grade_value,
                         date=eg.date,
-                        topic_text=topic_text,
+                        subject_topic_id=subject_topic_id,
                         edupage_id=eg.event_id,
                     )
                     grades_created += 1
+
+                    # Create TopicReview for grades > 1 if topic exists
+                    if grade_int > 1 and subject_topic_id is not None:
+                        try:
+                            await review_repo.create(
+                                subject_id=subject.id,
+                                subject_topic_id=subject_topic_id,
+                                grade_id=grade.id,
+                            )
+                            reviews_created += 1
+                        except Exception as e:
+                            errors.append(f"Failed to create topic review: {e}")
                 except Exception as e:
                     errors.append(f"Failed to create grade: {e}")
 
@@ -168,6 +207,8 @@ def register_edupage_tools(mcp: FastMCP) -> None:
             grades_created=grades_created,
             grades_skipped=grades_skipped,
             subjects_created=subjects_created,
+            topics_created=topics_created,
+            reviews_created=reviews_created,
             errors=errors,
         )
 

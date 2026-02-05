@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey
+from sqlalchemy import Integer, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -60,15 +60,6 @@ class Grade(Base, TimestampMixin):
 
     # Date when grade was received (stored in UTC, displayed in Europe/Vienna)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-
-    # Topic text - required for grades 3/4/5, optional for 1/2
-    topic_text: Mapped[str | None] = mapped_column(String(500), nullable=True)
-
-    # When topic was received from student
-    topic_received_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True
-    )
 
     # Whether penalty was applied for not providing topic
     penalty_applied: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

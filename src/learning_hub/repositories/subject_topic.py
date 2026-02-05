@@ -32,6 +32,35 @@ class SubjectTopicRepository:
         await self.session.refresh(topic)
         return topic
 
+    async def get_or_create(
+        self,
+        subject_id: int,
+        description: str,
+    ) -> tuple[SubjectTopic, bool]:
+        """Get existing topic or create new one.
+
+        Returns:
+            Tuple of (topic, created). created is True if new topic was created.
+        """
+        query = select(SubjectTopic).where(
+            SubjectTopic.subject_id == subject_id,
+            SubjectTopic.description == description,
+        )
+        result = await self.session.execute(query)
+        topic = result.scalar_one_or_none()
+
+        if topic is not None:
+            return topic, False
+
+        topic = SubjectTopic(
+            subject_id=subject_id,
+            description=description,
+        )
+        self.session.add(topic)
+        await self.session.commit()
+        await self.session.refresh(topic)
+        return topic, True
+
     async def get_by_id(self, topic_id: int) -> SubjectTopic | None:
         """Get topic by ID."""
         return await self.session.get(SubjectTopic, topic_id)
