@@ -30,38 +30,51 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
     @mcp.tool(description="""Create a new bonus task.
 
     Bonus tasks are additional work that student can do to earn game minutes.
-    Tasks are linked to a subject topic.
+    Tasks are linked to a subject topic and a bonus fund.
+
+    Validates that the fund has enough minutes for the promised reward.
+    Minutes are NOT deducted at creation - only when task is completed.
 
     Args:
         subject_topic_id: ID of the topic this task is related to
         task_description: Description of what student needs to do
         minutes_promised: Number of game minutes promised for completing this task
+        fund_id: ID of the bonus fund that will pay for this task
 
     Returns:
-        Created bonus task
+        Created bonus task with fund info, or error message
     """)
     async def create_bonus_task(
         subject_topic_id: int,
         task_description: str,
         minutes_promised: int,
-    ) -> BonusTaskResponse:
+        fund_id: int,
+    ) -> dict:
         async with AsyncSessionLocal() as session:
             repo = BonusTaskRepository(session)
-            task = await repo.create(
+            task, fund, error = await repo.create(
                 subject_topic_id=subject_topic_id,
                 task_description=task_description,
                 minutes_promised=minutes_promised,
+                fund_id=fund_id,
             )
-            return BonusTaskResponse(
-                id=task.id,
-                subject_topic_id=task.subject_topic_id,
-                task_description=task.task_description,
-                minutes_promised=task.minutes_promised,
-                status=task.status.value,
-                created_at=task.created_at,
-                completed_at=None,
-                quality_notes=None,
-            )
+            if error is not None:
+                return {"error": error, "fund_minutes_available": fund.minutes if fund else None}
+            return {
+                "task": BonusTaskResponse(
+                    id=task.id,
+                    subject_topic_id=task.subject_topic_id,
+                    task_description=task.task_description,
+                    minutes_promised=task.minutes_promised,
+                    status=task.status.value,
+                    created_at=task.created_at,
+                    completed_at=None,
+                    quality_notes=None,
+                ).model_dump(),
+                "fund_id": fund.id,
+                "fund_name": fund.name,
+                "fund_minutes_available": fund.minutes,
+            }
 
     @mcp.tool(description=f"""List bonus tasks.
 
@@ -100,32 +113,46 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(description="""Mark a bonus task as completed.
 
+    Automatically deducts the promised minutes from the specified bonus fund.
+
     Args:
         task_id: ID of the bonus task to complete
+        fund_id: ID of the bonus fund to deduct minutes from
         quality_notes: Optional notes about quality of work done
 
     Returns:
-        Completed task or null if not found
+        Completed task with fund info, or error message
     """)
     async def complete_bonus_task(
         task_id: int,
+        fund_id: int,
         quality_notes: str | None = None,
-    ) -> BonusTaskResponse | None:
+    ) -> dict:
         async with AsyncSessionLocal() as session:
             repo = BonusTaskRepository(session)
-            task = await repo.complete(task_id=task_id, quality_notes=quality_notes)
-            if task is None:
-                return None
-            return BonusTaskResponse(
-                id=task.id,
-                subject_topic_id=task.subject_topic_id,
-                task_description=task.task_description,
-                minutes_promised=task.minutes_promised,
-                status=task.status.value,
-                created_at=task.created_at,
-                completed_at=task.completed_at,
-                quality_notes=task.quality_notes,
+            task, fund, error = await repo.complete(
+                task_id=task_id,
+                fund_id=fund_id,
+                quality_notes=quality_notes,
             )
+            if error is not None:
+                return {"error": error}
+            return {
+                "task": BonusTaskResponse(
+                    id=task.id,
+                    subject_topic_id=task.subject_topic_id,
+                    task_description=task.task_description,
+                    minutes_promised=task.minutes_promised,
+                    status=task.status.value,
+                    created_at=task.created_at,
+                    completed_at=task.completed_at,
+                    quality_notes=task.quality_notes,
+                ).model_dump(),
+                "fund_id": fund.id,
+                "fund_name": fund.name,
+                "fund_minutes_remaining": fund.minutes,
+                "minutes_deducted": task.minutes_promised,
+            }
 
     @mcp.tool(description="""Cancel a bonus task.
 

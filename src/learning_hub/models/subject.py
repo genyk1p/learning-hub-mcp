@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from learning_hub.models.subject_topic import SubjectTopic
     from learning_hub.models.grade import Grade
     from learning_hub.models.homework import Homework
+    from learning_hub.models.book import Book
 
 
 class Subject(Base, TimestampMixin):
@@ -47,6 +48,7 @@ class Subject(Base, TimestampMixin):
     topics: Mapped[list["SubjectTopic"]] = relationship("SubjectTopic", back_populates="subject")
     grades: Mapped[list["Grade"]] = relationship("Grade", back_populates="subject")
     homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="subject")
+    books: Mapped[list["Book"]] = relationship("Book", back_populates="subject")
 
     # Constraints
     __table_args__ = (

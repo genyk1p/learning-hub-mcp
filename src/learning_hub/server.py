@@ -9,6 +9,8 @@ from learning_hub.tools.bonus_tasks import register_bonus_task_tools
 from learning_hub.tools.homeworks import register_homework_tools
 from learning_hub.tools.weeks import register_week_tools
 from learning_hub.tools.edupage import register_edupage_tools
+from learning_hub.tools.books import register_book_tools
+from learning_hub.tools.bonus_funds import register_bonus_fund_tools
 
 # Create MCP server
 mcp = FastMCP("learning-hub")
@@ -21,6 +23,8 @@ register_bonus_task_tools(mcp)
 register_homework_tools(mcp)
 register_week_tools(mcp)
 register_edupage_tools(mcp)
+register_book_tools(mcp)
+register_bonus_fund_tools(mcp)
 
 
 def main() -> None:

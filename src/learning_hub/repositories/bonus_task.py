@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from learning_hub.models.bonus_task import BonusTask
+from learning_hub.models.bonus_fund import BonusFund
 from learning_hub.models.enums import BonusTaskStatus
 
 
@@ -22,8 +23,22 @@ class BonusTaskRepository:
         subject_topic_id: int,
         task_description: str,
         minutes_promised: int,
-    ) -> BonusTask:
-        """Create a new bonus task."""
+        fund_id: int,
+    ) -> tuple[BonusTask | None, BonusFund | None, str | None]:
+        """Create a new bonus task.
+
+        Validates that fund has enough minutes for the promised reward.
+
+        Returns:
+            Tuple of (task, fund, error). If error is not None, creation failed.
+        """
+        fund = await self.session.get(BonusFund, fund_id)
+        if fund is None:
+            return None, None, "Fund not found"
+
+        if fund.minutes < minutes_promised:
+            return None, fund, f"Not enough minutes in fund. Available: {fund.minutes}, requested: {minutes_promised}"
+
         task = BonusTask(
             subject_topic_id=subject_topic_id,
             task_description=task_description,
@@ -33,7 +48,7 @@ class BonusTaskRepository:
         self.session.add(task)
         await self.session.commit()
         await self.session.refresh(task)
-        return task
+        return task, fund, None
 
     async def get_by_id(self, task_id: int) -> BonusTask | None:
         """Get bonus task by ID."""
@@ -61,13 +76,26 @@ class BonusTaskRepository:
     async def complete(
         self,
         task_id: int,
+        fund_id: int,
         quality_notes: str | None = None,
-    ) -> BonusTask | None:
-        """Mark task as completed. Returns None if not found."""
+    ) -> tuple[BonusTask | None, BonusFund | None, str | None]:
+        """Mark task as completed and deduct minutes from fund.
+
+        Returns:
+            Tuple of (task, fund, error). If error is not None, operation failed.
+        """
         task = await self.get_by_id(task_id)
         if task is None:
-            return None
+            return None, None, "Task not found"
 
+        fund = await self.session.get(BonusFund, fund_id)
+        if fund is None:
+            return None, None, "Fund not found"
+
+        # Deduct minutes from fund
+        fund.minutes -= task.minutes_promised
+
+        # Mark task as completed
         task.status = BonusTaskStatus.COMPLETED
         task.completed_at = datetime.now(timezone.utc)
         if quality_notes is not None:
@@ -75,7 +103,8 @@ class BonusTaskRepository:
 
         await self.session.commit()
         await self.session.refresh(task)
-        return task
+        await self.session.refresh(fund)
+        return task, fund, None
 
     async def cancel(self, task_id: int) -> BonusTask | None:
         """Cancel a task. Returns None if not found."""

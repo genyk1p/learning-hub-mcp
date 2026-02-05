@@ -23,6 +23,8 @@ from learning_hub.models.subject_topic import SubjectTopic
 from learning_hub.models.bonus_task import BonusTask
 from learning_hub.models.homework import Homework
 from learning_hub.models.week import Week
+from learning_hub.models.book import Book
+from learning_hub.models.bonus_fund import BonusFund
 
 target_metadata = Base.metadata
 
