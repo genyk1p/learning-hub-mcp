@@ -25,6 +25,7 @@ class HomeworkRepository:
         assigned_at: datetime | None = None,
         deadline_at: datetime | None = None,
         edupage_id: str | None = None,
+        status: HomeworkStatus = HomeworkStatus.PENDING,
     ) -> Homework:
         """Create a new homework."""
         homework = Homework(
@@ -33,7 +34,7 @@ class HomeworkRepository:
             subject_topic_id=subject_topic_id,
             assigned_at=assigned_at,
             deadline_at=deadline_at,
-            status=HomeworkStatus.PENDING,
+            status=status,
             edupage_id=edupage_id,
         )
         self.session.add(homework)

@@ -336,6 +336,12 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                     except ValueError:
                         pass
 
+                # Check if deadline already passed - mark as done
+                from learning_hub.models.enums import HomeworkStatus
+                status = HomeworkStatus.PENDING
+                if deadline_at and deadline_at < datetime.now():
+                    status = HomeworkStatus.DONE
+
                 # Get description from nazov
                 description = data.get("nazov", "").strip()
                 if not description:
@@ -348,6 +354,7 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                         deadline_at=deadline_at,
                         assigned_at=event.timestamp,
                         edupage_id=edupage_id,
+                        status=status,
                     )
                     homeworks_created += 1
                 except Exception as e:
