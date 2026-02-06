@@ -61,9 +61,6 @@ class Grade(Base, TimestampMixin):
     # Date when grade was received (stored in UTC, displayed in Europe/Vienna)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    # Whether penalty was applied for not providing topic
-    penalty_applied: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
     # Whether bonuses/penalties for this grade were counted in weekly calculation
     rewarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

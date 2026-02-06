@@ -19,7 +19,6 @@ class GradeResponse(BaseModel):
     subject_topic_id: int | None
     bonus_task_id: int | None
     homework_id: int | None
-    penalty_applied: bool
     rewarded: bool
 
 
@@ -81,7 +80,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
-                penalty_applied=grade.penalty_applied,
                 rewarded=grade.rewarded,
             )
 
@@ -126,7 +124,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     subject_topic_id=g.subject_topic_id,
                     bonus_task_id=g.bonus_task_id,
                     homework_id=g.homework_id,
-                    penalty_applied=g.penalty_applied,
                     rewarded=g.rewarded,
                 )
                 for g in grades
@@ -136,7 +133,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
 
     Args:
         grade_id: ID of the grade to update
-        penalty_applied: Mark if penalty was applied (optional)
         rewarded: Mark if grade was rewarded with game minutes (optional)
 
     Returns:
@@ -144,14 +140,12 @@ def register_grade_tools(mcp: FastMCP) -> None:
     """)
     async def update_grade(
         grade_id: int,
-        penalty_applied: bool | None = None,
         rewarded: bool | None = None,
     ) -> GradeResponse | None:
         async with AsyncSessionLocal() as session:
             repo = GradeRepository(session)
             grade = await repo.update(
                 grade_id=grade_id,
-                penalty_applied=penalty_applied,
                 rewarded=rewarded,
             )
             if grade is None:
@@ -164,6 +158,5 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
-                penalty_applied=grade.penalty_applied,
                 rewarded=grade.rewarded,
             )

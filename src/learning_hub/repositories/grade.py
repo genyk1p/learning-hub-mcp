@@ -88,7 +88,6 @@ class GradeRepository:
     async def update(
         self,
         grade_id: int,
-        penalty_applied: bool | None = None,
         rewarded: bool | None = None,
     ) -> Grade | None:
         """Update grade fields. Returns None if not found."""
@@ -96,8 +95,6 @@ class GradeRepository:
         if grade is None:
             return None
 
-        if penalty_applied is not None:
-            grade.penalty_applied = penalty_applied
         if rewarded is not None:
             grade.rewarded = rewarded
 
