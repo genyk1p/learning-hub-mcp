@@ -268,14 +268,15 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 quality_notes=task.quality_notes,
             )
 
-    @mcp.tool(description="""Complete a bonus task and update related topic reviews in one step.
+    @mcp.tool(description="""Complete a bonus task and optionally update related topic reviews.
 
     1. Marks the bonus task as completed (deducts minutes from fund)
-    2. Finds all pending TopicReviews for the same subject topic
-    3. Increments repeat_count on each pending review
+    2. If count_repeat is true: finds all pending TopicReviews for the same subject topic
+       and increments repeat_count on each
 
     Args:
         task_id: ID of the bonus task to complete
+        count_repeat: Whether to increment repeat_count on pending topic reviews (default true)
         quality_notes: Optional notes about quality of work done
 
     Returns:
@@ -283,6 +284,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
     """)
     async def apply_bonus_task_result(
         task_id: int,
+        count_repeat: bool = True,
         quality_notes: str | None = None,
     ) -> dict:
         async with AsyncSessionLocal() as session:
@@ -299,19 +301,20 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             assert fund is not None
 
             # Find and increment pending reviews for the same topic
-            pending_reviews = await review_repo.list(
-                subject_topic_id=task.subject_topic_id,
-                status=TopicReviewStatus.PENDING,
-            )
             updated_reviews = []
-            for review in pending_reviews:
-                updated = await review_repo.increment_repeat_count(review.id)
-                if updated is not None:
-                    updated_reviews.append({
-                        "review_id": updated.id,
-                        "repeat_count": updated.repeat_count,
-                        "topic_description": updated.subject_topic.description,
-                    })
+            if count_repeat:
+                pending_reviews = await review_repo.list(
+                    subject_topic_id=task.subject_topic_id,
+                    status=TopicReviewStatus.PENDING,
+                )
+                for review in pending_reviews:
+                    updated = await review_repo.increment_repeat_count(review.id)
+                    if updated is not None:
+                        updated_reviews.append({
+                            "review_id": updated.id,
+                            "repeat_count": updated.repeat_count,
+                            "topic_description": updated.subject_topic.description,
+                        })
 
             return {
                 "task": BonusTaskResponse(
