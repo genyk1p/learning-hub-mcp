@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from learning_hub.models.topic_review import TopicReview
 from learning_hub.models.enums import TopicReviewStatus
@@ -35,8 +36,18 @@ class TopicReviewRepository:
         return review
 
     async def get_by_id(self, review_id: int) -> TopicReview | None:
-        """Get topic review by ID."""
-        return await self.session.get(TopicReview, review_id)
+        """Get topic review by ID with related grade, subject and topic."""
+        query = (
+            select(TopicReview)
+            .where(TopicReview.id == review_id)
+            .options(
+                selectinload(TopicReview.grade),
+                selectinload(TopicReview.subject),
+                selectinload(TopicReview.subject_topic),
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
 
     async def get_by_grade_id(self, grade_id: int) -> TopicReview | None:
         """Get topic review by grade ID."""
@@ -64,6 +75,12 @@ class TopicReviewRepository:
 
         query = query.order_by(TopicReview.created_at.desc())
 
+        query = query.options(
+            selectinload(TopicReview.grade),
+            selectinload(TopicReview.subject),
+            selectinload(TopicReview.subject_topic),
+        )
+
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
@@ -75,8 +92,8 @@ class TopicReviewRepository:
 
         review.status = TopicReviewStatus.REINFORCED
         await self.session.commit()
-        await self.session.refresh(review)
-        return review
+        # Re-fetch with eager loading (refresh doesn't reload relationships)
+        return await self.get_by_id(review_id)
 
     async def increment_repeat_count(self, review_id: int) -> TopicReview | None:
         """Increment repeat count by 1. Returns None if not found."""
@@ -86,5 +103,5 @@ class TopicReviewRepository:
 
         review.repeat_count += 1
         await self.session.commit()
-        await self.session.refresh(review)
-        return review
+        # Re-fetch with eager loading (refresh doesn't reload relationships)
+        return await self.get_by_id(review_id)

@@ -17,6 +17,10 @@ class TopicReviewResponse(BaseModel):
     grade_id: int
     status: str
     repeat_count: int
+    grade_value: int
+    grade_date: datetime
+    subject_name: str
+    topic_description: str
     created_at: datetime
     updated_at: datetime
 
@@ -61,6 +65,10 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                     grade_id=r.grade_id,
                     status=r.status.value,
                     repeat_count=r.repeat_count,
+                    grade_value=r.grade.grade_value.value,
+                    grade_date=r.grade.date,
+                    subject_name=r.subject.name,
+                    topic_description=r.subject_topic.description,
                     created_at=r.created_at,
                     updated_at=r.updated_at,
                 )
@@ -90,6 +98,10 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 grade_id=review.grade_id,
                 status=review.status.value,
                 repeat_count=review.repeat_count,
+                grade_value=review.grade.grade_value.value,
+                grade_date=review.grade.date,
+                subject_name=review.subject.name,
+                topic_description=review.subject_topic.description,
                 created_at=review.created_at,
                 updated_at=review.updated_at,
             )
@@ -117,6 +129,10 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 grade_id=review.grade_id,
                 status=review.status.value,
                 repeat_count=review.repeat_count,
+                grade_value=review.grade.grade_value.value,
+                grade_date=review.grade.date,
+                subject_name=review.subject.name,
+                topic_description=review.subject_topic.description,
                 created_at=review.created_at,
                 updated_at=review.updated_at,
             )
