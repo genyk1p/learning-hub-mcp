@@ -43,6 +43,7 @@ class BonusTaskRepository:
             subject_topic_id=subject_topic_id,
             task_description=task_description,
             minutes_promised=minutes_promised,
+            fund_id=fund_id,
             status=BonusTaskStatus.PROMISED,
         )
         self.session.add(task)
@@ -58,6 +59,10 @@ class BonusTaskRepository:
         self,
         subject_topic_id: int | None = None,
         status: BonusTaskStatus | None = None,
+        created_from: datetime | None = None,
+        created_to: datetime | None = None,
+        limit: int | None = None,
+        order_asc: bool = False,
     ) -> list[BonusTask]:
         """List bonus tasks with optional filters."""
         query = select(BonusTask)
@@ -68,7 +73,19 @@ class BonusTaskRepository:
         if status is not None:
             query = query.where(BonusTask.status == status)
 
-        query = query.order_by(BonusTask.created_at.desc())
+        if created_from is not None:
+            query = query.where(BonusTask.created_at >= created_from)
+
+        if created_to is not None:
+            query = query.where(BonusTask.created_at < created_to)
+
+        if order_asc:
+            query = query.order_by(BonusTask.created_at.asc())
+        else:
+            query = query.order_by(BonusTask.created_at.desc())
+
+        if limit is not None:
+            query = query.limit(limit)
 
         result = await self.session.execute(query)
         return list(result.scalars().all())
@@ -76,10 +93,9 @@ class BonusTaskRepository:
     async def complete(
         self,
         task_id: int,
-        fund_id: int,
         quality_notes: str | None = None,
     ) -> tuple[BonusTask | None, BonusFund | None, str | None]:
-        """Mark task as completed and deduct minutes from fund.
+        """Mark task as completed and deduct minutes from linked fund.
 
         Returns:
             Tuple of (task, fund, error). If error is not None, operation failed.
@@ -88,7 +104,7 @@ class BonusTaskRepository:
         if task is None:
             return None, None, "Task not found"
 
-        fund = await self.session.get(BonusFund, fund_id)
+        fund = await self.session.get(BonusFund, task.fund_id)
         if fund is None:
             return None, None, "Fund not found"
 

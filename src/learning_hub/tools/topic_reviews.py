@@ -106,6 +106,44 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 updated_at=review.updated_at,
             )
 
+    @mcp.tool(description="""Get pending topic reviews for a subject topic.
+
+    Use this to find what needs reinforcement for a specific topic,
+    e.g. after completing a bonus task linked to that topic.
+
+    Args:
+        subject_topic_id: ID of the subject topic
+
+    Returns:
+        List of pending topic reviews for this topic
+    """)
+    async def get_pending_reviews_for_topic(
+        subject_topic_id: int,
+    ) -> list[TopicReviewResponse]:
+        async with AsyncSessionLocal() as session:
+            repo = TopicReviewRepository(session)
+            reviews = await repo.list(
+                subject_topic_id=subject_topic_id,
+                status=TopicReviewStatus.PENDING,
+            )
+            return [
+                TopicReviewResponse(
+                    id=r.id,
+                    subject_id=r.subject_id,
+                    subject_topic_id=r.subject_topic_id,
+                    grade_id=r.grade_id,
+                    status=r.status.value,
+                    repeat_count=r.repeat_count,
+                    grade_value=r.grade.grade_value.value,
+                    grade_date=r.grade.date,
+                    subject_name=r.subject.name,
+                    topic_description=r.subject_topic.description,
+                    created_at=r.created_at,
+                    updated_at=r.updated_at,
+                )
+                for r in reviews
+            ]
+
     @mcp.tool(description="""Increment repeat count for a topic review.
 
     Call this when a bonus task related to the topic is completed.
