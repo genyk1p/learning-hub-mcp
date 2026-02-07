@@ -80,12 +80,14 @@ class WeekRepository:
         await self.session.refresh(week)
         return week
 
-    async def finalize(self, week_key: str) -> Week | None:
-        """Mark week as finalized. Returns None if not found."""
+    async def finalize(self, week_key: str, actual_played_minutes: int) -> Week | None:
+        """Finalize week: save played minutes, calculate total, mark as finalized."""
         week = await self.get_by_key(week_key)
         if week is None:
             return None
 
+        week.actual_played_minutes = actual_played_minutes
+        week.total_minutes = week.bonus_minutes + week.penalty_minutes - actual_played_minutes
         week.is_finalized = True
 
         await self.session.commit()

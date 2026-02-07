@@ -151,19 +151,20 @@ def register_week_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(description="""Finalize a week.
 
-    Once finalized, the week's data should not be modified.
-    Carryover minutes are calculated for the next week.
+    Saves actual played minutes, calculates total (bonus + penalty - played),
+    and marks the week as finalized. Once finalized, the week should not be modified.
 
     Args:
         week_key: Week key to finalize
+        actual_played_minutes: Minutes actually played this week
 
     Returns:
         Finalized week or null if not found
     """)
-    async def finalize_week(week_key: str) -> WeekResponse | None:
+    async def finalize_week(week_key: str, actual_played_minutes: int) -> WeekResponse | None:
         async with AsyncSessionLocal() as session:
             repo = WeekRepository(session)
-            week = await repo.finalize(week_key)
+            week = await repo.finalize(week_key, actual_played_minutes)
             if week is None:
                 return None
 
