@@ -87,7 +87,7 @@ class WeekRepository:
             return None
 
         week.actual_played_minutes = actual_played_minutes
-        week.carryover_out_minutes = week.bonus_minutes + week.penalty_minutes - actual_played_minutes
+        week.carryover_out_minutes = week.total_minutes - actual_played_minutes
         week.is_finalized = True
 
         await self.session.commit()

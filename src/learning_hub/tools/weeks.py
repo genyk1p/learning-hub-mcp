@@ -151,7 +151,7 @@ def register_week_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(description="""Finalize a week.
 
-    Saves actual played minutes, calculates carryover (bonus + penalty - played),
+    Saves actual played minutes, calculates carryover (total_minutes - actual_played_minutes),
     and marks the week as finalized. Once finalized, the week should not be modified.
 
     Args:
