@@ -17,7 +17,7 @@ class WeekResponse(BaseModel):
     grade_minutes: int
     bonus_minutes: int
     penalty_minutes: int
-    carryover_minutes: int
+    carryover_out_minutes: int
     actual_played_minutes: int
     total_minutes: int
     is_finalized: bool
@@ -60,7 +60,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
-                carryover_minutes=week.carryover_minutes,
+                carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
                 total_minutes=week.total_minutes,
                 is_finalized=week.is_finalized,
@@ -93,7 +93,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
-                carryover_minutes=week.carryover_minutes,
+                carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
                 total_minutes=week.total_minutes,
                 is_finalized=week.is_finalized,
@@ -106,7 +106,7 @@ def register_week_tools(mcp: FastMCP) -> None:
         grade_minutes: Minutes earned from grades (optional)
         bonus_minutes: Minutes earned from bonus tasks (optional)
         penalty_minutes: Minutes lost as penalty (optional)
-        carryover_minutes: Minutes carried over from previous week (optional)
+        carryover_out_minutes: Minutes carried over from previous week (optional)
         actual_played_minutes: Minutes actually played this week (optional)
         total_minutes: Calculated total available minutes (optional)
 
@@ -118,7 +118,7 @@ def register_week_tools(mcp: FastMCP) -> None:
         grade_minutes: int | None = None,
         bonus_minutes: int | None = None,
         penalty_minutes: int | None = None,
-        carryover_minutes: int | None = None,
+        carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
         total_minutes: int | None = None,
     ) -> WeekResponse | None:
@@ -129,7 +129,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 grade_minutes=grade_minutes,
                 bonus_minutes=bonus_minutes,
                 penalty_minutes=penalty_minutes,
-                carryover_minutes=carryover_minutes,
+                carryover_out_minutes=carryover_out_minutes,
                 actual_played_minutes=actual_played_minutes,
                 total_minutes=total_minutes,
             )
@@ -143,7 +143,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
-                carryover_minutes=week.carryover_minutes,
+                carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
                 total_minutes=week.total_minutes,
                 is_finalized=week.is_finalized,
@@ -175,7 +175,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
-                carryover_minutes=week.carryover_minutes,
+                carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
                 total_minutes=week.total_minutes,
                 is_finalized=week.is_finalized,

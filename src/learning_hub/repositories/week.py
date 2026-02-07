@@ -54,7 +54,7 @@ class WeekRepository:
         grade_minutes: int | None = None,
         bonus_minutes: int | None = None,
         penalty_minutes: int | None = None,
-        carryover_minutes: int | None = None,
+        carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
         total_minutes: int | None = None,
     ) -> Week | None:
@@ -69,8 +69,8 @@ class WeekRepository:
             week.bonus_minutes = bonus_minutes
         if penalty_minutes is not None:
             week.penalty_minutes = penalty_minutes
-        if carryover_minutes is not None:
-            week.carryover_minutes = carryover_minutes
+        if carryover_out_minutes is not None:
+            week.carryover_out_minutes = carryover_out_minutes
         if actual_played_minutes is not None:
             week.actual_played_minutes = actual_played_minutes
         if total_minutes is not None:
@@ -87,7 +87,7 @@ class WeekRepository:
             return None
 
         week.actual_played_minutes = actual_played_minutes
-        week.carryover_minutes = week.bonus_minutes + week.penalty_minutes - actual_played_minutes
+        week.carryover_out_minutes = week.bonus_minutes + week.penalty_minutes - actual_played_minutes
         week.is_finalized = True
 
         await self.session.commit()

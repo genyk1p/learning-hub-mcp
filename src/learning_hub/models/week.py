@@ -38,8 +38,8 @@ class Week(Base, TimestampMixin):
     # Penalty minutes (for late topics, missed deadlines, etc.)
     penalty_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    # Carryover from previous week (can be positive or negative)
-    carryover_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Carryover out: remaining minutes after finalization (can be positive or negative)
+    carryover_out_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # How many minutes actually played
     actual_played_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
