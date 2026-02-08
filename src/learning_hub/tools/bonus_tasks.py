@@ -126,8 +126,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                     task_description=t.task_description,
                     minutes_promised=t.minutes_promised,
                     status=t.status.value,
-                    created_at=t.created_at,
-                    completed_at=t.completed_at,
+                    created_at=dt_to_str(t.created_at),
+                    completed_at=dt_to_str(t.completed_at),
                     quality_notes=t.quality_notes,
                 )
                 for t in tasks
@@ -196,8 +196,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 task_description=task.task_description,
                 minutes_promised=task.minutes_promised,
                 status=task.status.value,
-                created_at=task.created_at,
-                completed_at=task.completed_at,
+                created_at=dt_to_str(task.created_at),
+                completed_at=dt_to_str(task.completed_at),
                 quality_notes=task.quality_notes,
             )
 
@@ -236,8 +236,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 task_description=task.task_description,
                 minutes_promised=task.minutes_promised,
                 status=task.status.value,
-                created_at=task.created_at,
-                completed_at=task.completed_at,
+                created_at=dt_to_str(task.created_at),
+                completed_at=dt_to_str(task.completed_at),
                 quality_notes=task.quality_notes,
             )
 
@@ -264,8 +264,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 task_description=task.task_description,
                 minutes_promised=task.minutes_promised,
                 status=task.status.value,
-                created_at=task.created_at,
-                completed_at=task.completed_at,
+                created_at=dt_to_str(task.created_at),
+                completed_at=dt_to_str(task.completed_at),
                 quality_notes=task.quality_notes,
             )
 

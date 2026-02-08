@@ -121,7 +121,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     id=g.id,
                     subject_id=g.subject_id,
                     grade_value=g.grade_value.value,
-                    date=g.date,
+                    date=dt_to_str(g.date),
                     subject_topic_id=g.subject_topic_id,
                     bonus_task_id=g.bonus_task_id,
                     homework_id=g.homework_id,

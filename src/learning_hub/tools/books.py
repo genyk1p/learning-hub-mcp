@@ -86,8 +86,8 @@ def register_book_tools(mcp: FastMCP) -> None:
                     original_path=b.original_path,
                     summary_path=b.summary_path,
                     subject_id=b.subject_id,
-                    created_at=b.created_at,
-                    updated_at=b.updated_at,
+                    created_at=dt_to_str(b.created_at),
+                    updated_at=dt_to_str(b.updated_at),
                 )
                 for b in books
             ]

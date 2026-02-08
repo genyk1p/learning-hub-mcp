@@ -73,8 +73,8 @@ def register_subject_topic_tools(mcp: FastMCP) -> None:
                     id=t.id,
                     subject_id=t.subject_id,
                     description=t.description,
-                    created_at=t.created_at,
-                    closed_at=t.closed_at,
+                    created_at=dt_to_str(t.created_at),
+                    closed_at=dt_to_str(t.closed_at),
                     close_reason=t.close_reason.value if t.close_reason else None,
                 )
                 for t in topics

@@ -73,8 +73,8 @@ def register_bonus_fund_tools(mcp: FastMCP) -> None:
                     id=fund.id,
                     name=fund.name,
                     minutes=fund.minutes,
-                    created_at=fund.created_at,
-                    updated_at=fund.updated_at,
+                    created_at=dt_to_str(fund.created_at),
+                    updated_at=dt_to_str(fund.updated_at),
                 ).model_dump(),
                 "minutes_added": minutes,
                 "minutes_before": minutes_before,
@@ -123,8 +123,8 @@ def register_bonus_fund_tools(mcp: FastMCP) -> None:
                     id=f.id,
                     name=f.name,
                     minutes=f.minutes,
-                    created_at=f.created_at,
-                    updated_at=f.updated_at,
+                    created_at=dt_to_str(f.created_at),
+                    updated_at=dt_to_str(f.updated_at),
                 )
                 for f in funds
             ]
