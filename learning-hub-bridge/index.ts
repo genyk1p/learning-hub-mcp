@@ -61,7 +61,13 @@ function mergeTextBlocks(blocks: ContentBlock[]): ContentBlock[] {
 
 export default function learningHubBridge(api: PluginApi) {
   // Read config (command and args are required in openclaw.json)
-  const config = api.config ?? {};
+  // OpenClaw wraps plugin config in { enabled, config: { ... } },
+  // so we unwrap it. Also handle the case where config is passed directly.
+  const entry: Record<string, unknown> = api.config ?? {};
+  const config: Record<string, unknown> =
+    entry.config && typeof entry.config === "object"
+      ? (entry.config as Record<string, unknown>)
+      : entry;
 
   if (!config.command || !config.args) {
     console.error(
