@@ -16,8 +16,8 @@ class BookResponse(BaseModel):
     original_path: str | None
     summary_path: str | None
     subject_id: int | None
-    created_at: str
-    updated_at: str
+    created_at: str | None
+    updated_at: str | None
 
 
 def register_book_tools(mcp: FastMCP) -> None:

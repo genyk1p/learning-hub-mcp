@@ -16,7 +16,6 @@ class WeekResponse(BaseModel):
     start_at: str | None
     end_at: str | None
     grade_minutes: int
-    bonus_minutes: int
     penalty_minutes: int
     carryover_out_minutes: int
     actual_played_minutes: int
@@ -59,7 +58,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 start_at=dt_to_str(week.start_at),
                 end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
-                bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
                 carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
@@ -92,7 +90,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 start_at=dt_to_str(week.start_at),
                 end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
-                bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
                 carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
@@ -105,7 +102,6 @@ def register_week_tools(mcp: FastMCP) -> None:
     Args:
         week_key: Week key to update
         grade_minutes: Minutes earned from grades (optional)
-        bonus_minutes: Minutes earned from bonus tasks (optional)
         penalty_minutes: Minutes lost as penalty (optional)
         carryover_out_minutes: Minutes carried over from previous week (optional)
         actual_played_minutes: Minutes actually played this week (optional)
@@ -117,7 +113,6 @@ def register_week_tools(mcp: FastMCP) -> None:
     async def update_week(
         week_key: str,
         grade_minutes: int | None = None,
-        bonus_minutes: int | None = None,
         penalty_minutes: int | None = None,
         carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
@@ -128,7 +123,6 @@ def register_week_tools(mcp: FastMCP) -> None:
             week = await repo.update(
                 week_key=week_key,
                 grade_minutes=grade_minutes,
-                bonus_minutes=bonus_minutes,
                 penalty_minutes=penalty_minutes,
                 carryover_out_minutes=carryover_out_minutes,
                 actual_played_minutes=actual_played_minutes,
@@ -142,7 +136,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 start_at=dt_to_str(week.start_at),
                 end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
-                bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
                 carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,
@@ -174,7 +167,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 start_at=dt_to_str(week.start_at),
                 end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
-                bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
                 carryover_out_minutes=week.carryover_out_minutes,
                 actual_played_minutes=week.actual_played_minutes,

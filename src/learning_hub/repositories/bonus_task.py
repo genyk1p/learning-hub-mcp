@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from learning_hub.models.bonus_task import BonusTask
 from learning_hub.models.bonus_fund import BonusFund
 from learning_hub.models.enums import BonusTaskStatus
+
+FUND_ID = 1
 
 
 class BonusTaskRepository:
@@ -18,33 +20,53 @@ class BonusTaskRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def _get_fund(self) -> BonusFund | None:
+        """Get the singleton bonus fund."""
+        return await self.session.get(BonusFund, FUND_ID)
+
+    async def _count_pending(self) -> int:
+        """Count bonus tasks with PENDING status."""
+        query = (
+            select(func.count())
+            .select_from(BonusTask)
+            .where(BonusTask.status == BonusTaskStatus.PENDING)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one()
+
     async def create(
         self,
         subject_topic_id: int,
         task_description: str,
-        minutes_promised: int,
-        fund_id: int,
     ) -> tuple[BonusTask | None, BonusFund | None, str | None]:
         """Create a new bonus task.
 
-        Validates that fund has enough minutes for the promised reward.
+        Validates that fund has enough slots for all pending tasks + this new one.
+        Does NOT deduct from fund - that happens on completion.
 
         Returns:
             Tuple of (task, fund, error). If error is not None, creation failed.
         """
-        fund = await self.session.get(BonusFund, fund_id)
+        fund = await self._get_fund()
         if fund is None:
-            return None, None, "Fund not found"
+            return None, None, "Bonus fund not found. Create it first."
 
-        if fund.minutes < minutes_promised:
-            return None, fund, f"Not enough minutes in fund. Available: {fund.minutes}, requested: {minutes_promised}"
+        pending_count = await self._count_pending()
+        needed = pending_count + 1
+
+        if fund.available_tasks < needed:
+            return None, fund, (
+                f"Not enough task slots in fund. "
+                f"Available: {fund.available_tasks}, "
+                f"pending tasks: {pending_count}, "
+                f"need at least {needed} to create a new one."
+            )
 
         task = BonusTask(
             subject_topic_id=subject_topic_id,
             task_description=task_description,
-            minutes_promised=minutes_promised,
-            fund_id=fund_id,
-            status=BonusTaskStatus.PROMISED,
+            fund_id=FUND_ID,
+            status=BonusTaskStatus.PENDING,
         )
         self.session.add(task)
         await self.session.commit()
@@ -95,7 +117,7 @@ class BonusTaskRepository:
         task_id: int,
         quality_notes: str | None = None,
     ) -> tuple[BonusTask | None, BonusFund | None, str | None]:
-        """Mark task as completed and deduct minutes from linked fund.
+        """Mark task as completed and deduct one slot from fund.
 
         Returns:
             Tuple of (task, fund, error). If error is not None, operation failed.
@@ -104,12 +126,12 @@ class BonusTaskRepository:
         if task is None:
             return None, None, "Task not found"
 
-        fund = await self.session.get(BonusFund, task.fund_id)
+        fund = await self._get_fund()
         if fund is None:
-            return None, None, "Fund not found"
+            return None, None, "Bonus fund not found"
 
-        # Deduct minutes from fund
-        fund.minutes -= task.minutes_promised
+        # Deduct one task slot from fund
+        fund.available_tasks -= 1
 
         # Mark task as completed
         task.status = BonusTaskStatus.COMPLETED

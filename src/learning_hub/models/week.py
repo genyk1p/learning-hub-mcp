@@ -32,9 +32,6 @@ class Week(Base, TimestampMixin):
     # Minutes from grades (1→+15, 2→+10, 3→0, 4→-20, 5→-25)
     grade_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    # Minutes from completed bonus tasks
-    bonus_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-
     # Penalty minutes (for late topics, missed deadlines, etc.)
     penalty_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
@@ -44,7 +41,7 @@ class Week(Base, TimestampMixin):
     # How many minutes actually played
     actual_played_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    # Total balance (grade + bonus - penalty + carryover - played)
+    # Total balance (grade - penalty + carryover - played)
     total_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Whether this week is finalized (closed for changes)

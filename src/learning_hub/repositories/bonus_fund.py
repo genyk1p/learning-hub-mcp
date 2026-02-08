@@ -2,59 +2,43 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from learning_hub.models.bonus_fund import BonusFund
 
+FUND_ID = 1
+
 
 class BonusFundRepository:
-    """Repository for BonusFund CRUD operations."""
+    """Repository for BonusFund CRUD operations (singleton fund, id=1)."""
 
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, name: str, minutes: int = 0) -> BonusFund:
-        """Create a new bonus fund."""
-        fund = BonusFund(name=name, minutes=minutes)
+    async def create(self, name: str, available_tasks: int = 0) -> BonusFund:
+        """Create the singleton bonus fund (id=1)."""
+        fund = BonusFund(id=FUND_ID, name=name, available_tasks=available_tasks)
         self.session.add(fund)
         await self.session.commit()
         await self.session.refresh(fund)
         return fund
 
-    async def get_by_id(self, fund_id: int) -> BonusFund | None:
-        """Get fund by ID."""
-        return await self.session.get(BonusFund, fund_id)
+    async def get(self) -> BonusFund | None:
+        """Get the singleton bonus fund."""
+        return await self.session.get(BonusFund, FUND_ID)
 
-    async def list(self) -> list[BonusFund]:
-        """List all bonus funds."""
-        query = select(BonusFund).order_by(BonusFund.name)
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-
-    async def rename(self, fund_id: int, name: str) -> BonusFund | None:
-        """Rename the fund. Returns None if not found."""
-        fund = await self.get_by_id(fund_id)
-        if fund is None:
-            return None
-
-        fund.name = name
-        await self.session.commit()
-        await self.session.refresh(fund)
-        return fund
-
-    async def add_minutes(self, fund_id: int, minutes: int) -> tuple[BonusFund | None, int]:
-        """Add minutes to the fund balance.
+    async def add_tasks(self, count: int) -> tuple[BonusFund | None, int]:
+        """Add available task slots to the fund.
 
         Returns:
-            Tuple of (fund, minutes_before). Fund is None if not found.
+            Tuple of (fund, available_before). Fund is None if not found.
         """
-        fund = await self.get_by_id(fund_id)
+        fund = await self.get()
         if fund is None:
             return None, 0
 
-        minutes_before = fund.minutes
-        fund.minutes += minutes
+        available_before = fund.available_tasks
+        fund.available_tasks += count
         await self.session.commit()
         await self.session.refresh(fund)
-        return fund, minutes_before
+        return fund, available_before

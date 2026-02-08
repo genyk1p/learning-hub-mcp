@@ -45,7 +45,7 @@ class CloseReason(str, enum.Enum):
 
 class BonusTaskStatus(str, enum.Enum):
     """Status of bonus task."""
-    PROMISED = "promised"  # Task was promised to student
+    PENDING = "pending"  # Task created, waiting for completion
     COMPLETED = "completed"  # Student completed the task
     CANCELLED = "cancelled"  # Task was cancelled
 

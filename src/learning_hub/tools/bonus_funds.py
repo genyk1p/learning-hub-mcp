@@ -12,119 +12,61 @@ class BonusFundResponse(BaseModel):
     """BonusFund response schema."""
     id: int
     name: str
-    minutes: int
-    created_at: str
-    updated_at: str
+    available_tasks: int
+    created_at: str | None
+    updated_at: str | None
 
 
 def register_bonus_fund_tools(mcp: FastMCP) -> None:
     """Register bonus fund related tools."""
 
-    @mcp.tool(description="""Create a new bonus fund.
+    @mcp.tool(description="""Get the bonus fund.
 
-    Bonus funds store minutes that can be awarded for extra tasks.
-    The agent should create a creative name for each fund.
-
-    Args:
-        name: Creative name for the fund (agent invents this)
-        minutes: Initial minutes in the fund (default 0)
+    Shows the fund name and how many bonus task slots are available.
 
     Returns:
-        Created bonus fund
+        Bonus fund or null if not found
     """)
-    async def create_bonus_fund(
-        name: str,
-        minutes: int = 0,
-    ) -> BonusFundResponse:
+    async def get_bonus_fund() -> BonusFundResponse | None:
         async with AsyncSessionLocal() as session:
             repo = BonusFundRepository(session)
-            fund = await repo.create(name=name, minutes=minutes)
+            fund = await repo.get()
+            if fund is None:
+                return None
             return BonusFundResponse(
                 id=fund.id,
                 name=fund.name,
-                minutes=fund.minutes,
+                available_tasks=fund.available_tasks,
                 created_at=dt_to_str(fund.created_at),
                 updated_at=dt_to_str(fund.updated_at),
             )
 
-    @mcp.tool(description="""Add minutes to a bonus fund.
+    @mcp.tool(description="""Add task slots to the bonus fund.
 
-    Use this to deposit minutes into a fund.
-    Minutes will be automatically deducted when bonus tasks are completed.
+    Use this to increase the number of bonus tasks that can be assigned.
+    Slots are deducted when bonus tasks are completed.
 
     Args:
-        fund_id: ID of the fund
-        minutes: Minutes to add to the fund balance
+        count: Number of task slots to add
 
     Returns:
         Updated fund with before/after balance, or null if not found
     """)
-    async def add_minutes_to_fund(
-        fund_id: int,
-        minutes: int,
-    ) -> dict | None:
+    async def add_tasks_to_fund(count: int) -> dict | None:
         async with AsyncSessionLocal() as session:
             repo = BonusFundRepository(session)
-            fund, minutes_before = await repo.add_minutes(fund_id=fund_id, minutes=minutes)
+            fund, available_before = await repo.add_tasks(count=count)
             if fund is None:
                 return None
             return {
                 "fund": BonusFundResponse(
                     id=fund.id,
                     name=fund.name,
-                    minutes=fund.minutes,
+                    available_tasks=fund.available_tasks,
                     created_at=dt_to_str(fund.created_at),
                     updated_at=dt_to_str(fund.updated_at),
                 ).model_dump(),
-                "minutes_added": minutes,
-                "minutes_before": minutes_before,
-                "minutes_after": fund.minutes,
+                "tasks_added": count,
+                "available_before": available_before,
+                "available_after": fund.available_tasks,
             }
-
-    @mcp.tool(description="""Rename a bonus fund.
-
-    Args:
-        fund_id: ID of the fund to rename
-        name: New name for the fund
-
-    Returns:
-        Updated fund or null if not found
-    """)
-    async def rename_bonus_fund(
-        fund_id: int,
-        name: str,
-    ) -> BonusFundResponse | None:
-        async with AsyncSessionLocal() as session:
-            repo = BonusFundRepository(session)
-            fund = await repo.rename(fund_id=fund_id, name=name)
-            if fund is None:
-                return None
-            return BonusFundResponse(
-                id=fund.id,
-                name=fund.name,
-                minutes=fund.minutes,
-                created_at=dt_to_str(fund.created_at),
-                updated_at=dt_to_str(fund.updated_at),
-            )
-
-    @mcp.tool(description="""List all bonus funds.
-
-    Shows all funds with their names and available minutes.
-
-    Returns:
-        List of bonus funds
-    """)
-    async def list_bonus_funds() -> list[BonusFundResponse]:
-        async with AsyncSessionLocal() as session:
-            repo = BonusFundRepository(session)
-            funds = await repo.list()
-            return [
-                BonusFundResponse(
-                    id=f.id,
-                    name=f.name,
-                    minutes=f.minutes,
-                    created_at=dt_to_str(f.created_at),
-                    updated_at=dt_to_str(f.updated_at),
-                )
-                for f in funds
-            ]

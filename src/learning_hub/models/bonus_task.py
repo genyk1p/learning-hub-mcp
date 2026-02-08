@@ -19,7 +19,7 @@ class BonusTask(Base, TimestampMixin):
     Bonus task that student can complete to earn extra game minutes.
 
     Lifecycle:
-    1. PROMISED - task was promised to student
+    1. PENDING - task created, waiting for completion
     2. COMPLETED - student completed the task
     3. CANCELLED - task was cancelled
     """
@@ -35,7 +35,7 @@ class BonusTask(Base, TimestampMixin):
         nullable=False
     )
 
-    # Foreign key to bonus fund that pays for this task
+    # Foreign key to bonus fund (singleton, always id=1)
     fund_id: Mapped[int] = mapped_column(
         ForeignKey("bonus_funds.id"),
         nullable=False
@@ -44,12 +44,9 @@ class BonusTask(Base, TimestampMixin):
     # Description of the task
     task_description: Mapped[str] = mapped_column(String(1000), nullable=False)
 
-    # How many minutes promised for this task
-    minutes_promised: Mapped[int] = mapped_column(Integer, nullable=False)
-
     # Current status of the task
     status: Mapped[BonusTaskStatus] = mapped_column(
-        default=BonusTaskStatus.PROMISED,
+        default=BonusTaskStatus.PENDING,
         nullable=False
     )
 
@@ -74,5 +71,5 @@ class BonusTask(Base, TimestampMixin):
     def __repr__(self) -> str:
         return (
             f"<BonusTask(id={self.id}, topic_id={self.subject_topic_id}, "
-            f"minutes={self.minutes_promised}, status={self.status.value})>"
+            f"status={self.status.value})>"
         )
