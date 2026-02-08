@@ -15,7 +15,10 @@ src/learning_hub/
 │   ├── subject_topic.py # Topics within subjects
 │   ├── grade.py       # Student grades
 │   ├── bonus_task.py  # Bonus tasks for extra game time
+│   ├── bonus_fund.py  # Bonus funds (game minutes pool)
 │   ├── homework.py    # Homework assignments
+│   ├── book.py        # Books library
+│   ├── topic_review.py # Topic reviews for reinforcement
 │   └── week.py        # Weekly game time calculations
 ├── repositories/      # Data access layer (async SQLAlchemy)
 ├── tools/             # MCP tool definitions
@@ -23,10 +26,21 @@ src/learning_hub/
 │   ├── subject_topics.py
 │   ├── grades.py
 │   ├── bonus_tasks.py
+│   ├── bonus_funds.py
 │   ├── homeworks.py
+│   ├── books.py
+│   ├── topic_reviews.py
 │   ├── weeks.py
 │   └── edupage.py     # EduPage sync tools
 └── database/          # Database session management
+```
+
+```
+learning-hub-bridge/           # OpenClaw bridge plugin (TypeScript)
+├── openclaw.plugin.json       # Plugin manifest
+├── index.ts                   # Entry point (MCP client → OpenClaw tools proxy)
+├── package.json               # Dependencies (@modelcontextprotocol/sdk)
+└── tsconfig.json              # TypeScript config
 ```
 
 ## Tech Stack

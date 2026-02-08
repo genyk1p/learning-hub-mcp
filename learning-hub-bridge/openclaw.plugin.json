@@ -1,0 +1,27 @@
+{
+  "id": "learning-hub",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "type": "string",
+        "description": "Command to start the MCP server (e.g. /bin/bash)"
+      },
+      "args": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Arguments for the command"
+      },
+      "cwd": {
+        "type": "string",
+        "description": "Working directory for the MCP server process"
+      },
+      "toolPrefix": {
+        "type": "string",
+        "default": "learning_hub",
+        "description": "Prefix for tool names (e.g. learning_hub_list_subjects)"
+      }
+    }
+  }
+}

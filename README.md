@@ -84,8 +84,17 @@ Add to your MCP client config:
 ### Bonus Tasks
 - `create_bonus_task` - create a bonus task with promised game minutes
 - `list_bonus_tasks` - list tasks (filter: status, topic)
+- `get_bonus_task` - get a bonus task by ID
+- `get_latest_bonus_task` - get the most recent bonus task
 - `complete_bonus_task` - mark task as completed
+- `apply_bonus_task_result` - complete task and update related topic reviews
 - `cancel_bonus_task` - cancel a task
+
+### Bonus Funds
+- `create_bonus_fund` - create a new bonus fund
+- `list_bonus_funds` - list all bonus funds
+- `add_minutes_to_fund` - add minutes to a fund
+- `rename_bonus_fund` - rename a fund
 
 ### Homework
 - `create_homework` - create homework assignment
@@ -99,9 +108,50 @@ Add to your MCP client config:
 - `update_week` - update week minutes
 - `finalize_week` - finalize week and calculate carryover
 
+### Topic Reviews
+- `list_topic_reviews` - list topic reviews (filter: subject, status)
+- `get_pending_reviews_for_topic` - get pending reviews for a topic
+- `mark_topic_reinforced` - mark review as reinforced
+- `increment_topic_repeat_count` - increment repeat count for a review
+
+### Books
+- `add_book` - add a book to the library
+- `list_books` - list books (filter: subject, has_summary)
+- `get_book` - get a book by ID
+- `update_book` - update book details
+- `delete_book` - delete a book
+
 ### EduPage Sync
 - `sync_edupage_grades` - sync grades from EduPage
 - `sync_edupage_homeworks` - sync homework from EduPage
+
+## OpenClaw Integration
+
+The `learning-hub-bridge/` directory contains a TypeScript plugin that makes all MCP tools available as native OpenClaw agent tools. Instead of calling the MCP server through `exec + mcporter`, the model sees tools like `learning_hub_list_subjects` directly in its tool list.
+
+### Setup
+
+```bash
+cd learning-hub-bridge
+npm install
+```
+
+### OpenClaw config (`openclaw.json`)
+
+```json
+{
+  "plugins": {
+    "entries": {
+      "learning-hub": {
+        "enabled": true,
+        "command": "/bin/bash",
+        "args": ["-lc", "cd /path/to/learning-hub-mcp && exec .venv/bin/learning-hub-mcp"],
+        "cwd": "/path/to/learning-hub-mcp"
+      }
+    }
+  }
+}
+```
 
 ## Development
 
