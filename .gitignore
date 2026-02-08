@@ -71,6 +71,10 @@ data/*.db
 *.log
 logs/
 
+# Node.js (learning-hub-bridge)
+node_modules/
+package-lock.json
+
 # OS
 .DS_Store
 Thumbs.db
