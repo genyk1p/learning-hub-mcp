@@ -9,6 +9,7 @@ from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import BonusTaskStatus, TopicReviewStatus
 from learning_hub.repositories.bonus_task import BonusTaskRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.utils import dt_to_str
 
 
 class BonusTaskResponse(BaseModel):
@@ -19,8 +20,8 @@ class BonusTaskResponse(BaseModel):
     task_description: str
     minutes_promised: int
     status: str
-    created_at: datetime | None
-    completed_at: datetime | None
+    created_at: str | None
+    completed_at: str | None
     quality_notes: str | None
 
 
@@ -72,7 +73,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                     task_description=task.task_description,
                     minutes_promised=task.minutes_promised,
                     status=task.status.value,
-                    created_at=task.created_at,
+                    created_at=dt_to_str(task.created_at),
                     completed_at=None,
                     quality_notes=None,
                 ).model_dump(),
@@ -165,8 +166,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                     task_description=task.task_description,
                     minutes_promised=task.minutes_promised,
                     status=task.status.value,
-                    created_at=task.created_at,
-                    completed_at=task.completed_at,
+                    created_at=dt_to_str(task.created_at),
+                    completed_at=dt_to_str(task.completed_at),
                     quality_notes=task.quality_notes,
                 ).model_dump(),
                 "fund_name": fund.name,
@@ -324,8 +325,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                     task_description=task.task_description,
                     minutes_promised=task.minutes_promised,
                     status=task.status.value,
-                    created_at=task.created_at,
-                    completed_at=task.completed_at,
+                    created_at=dt_to_str(task.created_at),
+                    completed_at=dt_to_str(task.completed_at),
                     quality_notes=task.quality_notes,
                 ).model_dump(),
                 "fund_name": fund.name,

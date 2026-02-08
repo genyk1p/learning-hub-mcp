@@ -1,13 +1,12 @@
 """SubjectTopic tools for MCP server."""
 
-from datetime import datetime
-
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import CloseReason
 from learning_hub.repositories.subject_topic import SubjectTopicRepository
+from learning_hub.utils import dt_to_str
 
 
 class SubjectTopicResponse(BaseModel):
@@ -15,8 +14,8 @@ class SubjectTopicResponse(BaseModel):
     id: int
     subject_id: int
     description: str
-    created_at: datetime | None
-    closed_at: datetime | None
+    created_at: str | None
+    closed_at: str | None
     close_reason: str | None
 
 
@@ -48,7 +47,7 @@ def register_subject_topic_tools(mcp: FastMCP) -> None:
                 id=topic.id,
                 subject_id=topic.subject_id,
                 description=topic.description,
-                created_at=topic.created_at,
+                created_at=dt_to_str(topic.created_at),
                 closed_at=None,
                 close_reason=None,
             )
@@ -105,7 +104,7 @@ def register_subject_topic_tools(mcp: FastMCP) -> None:
                 id=topic.id,
                 subject_id=topic.subject_id,
                 description=topic.description,
-                created_at=topic.created_at,
-                closed_at=topic.closed_at,
+                created_at=dt_to_str(topic.created_at),
+                closed_at=dt_to_str(topic.closed_at),
                 close_reason=topic.close_reason.value if topic.close_reason else None,
             )

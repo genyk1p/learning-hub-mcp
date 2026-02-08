@@ -1,11 +1,11 @@
 """BonusFund tools for MCP server."""
 
-from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.bonus_fund import BonusFundRepository
+from learning_hub.utils import dt_to_str
 
 
 class BonusFundResponse(BaseModel):
@@ -13,8 +13,8 @@ class BonusFundResponse(BaseModel):
     id: int
     name: str
     minutes: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: str
+    updated_at: str
 
 
 def register_bonus_fund_tools(mcp: FastMCP) -> None:
@@ -43,8 +43,8 @@ def register_bonus_fund_tools(mcp: FastMCP) -> None:
                 id=fund.id,
                 name=fund.name,
                 minutes=fund.minutes,
-                created_at=fund.created_at,
-                updated_at=fund.updated_at,
+                created_at=dt_to_str(fund.created_at),
+                updated_at=dt_to_str(fund.updated_at),
             )
 
     @mcp.tool(description="""Add minutes to a bonus fund.
@@ -103,8 +103,8 @@ def register_bonus_fund_tools(mcp: FastMCP) -> None:
                 id=fund.id,
                 name=fund.name,
                 minutes=fund.minutes,
-                created_at=fund.created_at,
-                updated_at=fund.updated_at,
+                created_at=dt_to_str(fund.created_at),
+                updated_at=dt_to_str(fund.updated_at),
             )
 
     @mcp.tool(description="""List all bonus funds.

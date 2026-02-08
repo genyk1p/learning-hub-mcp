@@ -7,13 +7,14 @@ from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.week import WeekRepository
+from learning_hub.utils import dt_to_str
 
 
 class WeekResponse(BaseModel):
     """Week response schema."""
     week_key: str
-    start_at: datetime | None
-    end_at: datetime | None
+    start_at: str | None
+    end_at: str | None
     grade_minutes: int
     bonus_minutes: int
     penalty_minutes: int
@@ -55,8 +56,8 @@ def register_week_tools(mcp: FastMCP) -> None:
             )
             return WeekResponse(
                 week_key=week.week_key,
-                start_at=week.start_at,
-                end_at=week.end_at,
+                start_at=dt_to_str(week.start_at),
+                end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
@@ -88,8 +89,8 @@ def register_week_tools(mcp: FastMCP) -> None:
 
             return WeekResponse(
                 week_key=week.week_key,
-                start_at=week.start_at,
-                end_at=week.end_at,
+                start_at=dt_to_str(week.start_at),
+                end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
@@ -138,8 +139,8 @@ def register_week_tools(mcp: FastMCP) -> None:
 
             return WeekResponse(
                 week_key=week.week_key,
-                start_at=week.start_at,
-                end_at=week.end_at,
+                start_at=dt_to_str(week.start_at),
+                end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,
@@ -170,8 +171,8 @@ def register_week_tools(mcp: FastMCP) -> None:
 
             return WeekResponse(
                 week_key=week.week_key,
-                start_at=week.start_at,
-                end_at=week.end_at,
+                start_at=dt_to_str(week.start_at),
+                end_at=dt_to_str(week.end_at),
                 grade_minutes=week.grade_minutes,
                 bonus_minutes=week.bonus_minutes,
                 penalty_minutes=week.penalty_minutes,

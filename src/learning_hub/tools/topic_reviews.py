@@ -1,12 +1,12 @@
 """TopicReview tools for MCP server."""
 
-from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import TopicReviewStatus
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.utils import dt_to_str
 
 
 class TopicReviewResponse(BaseModel):
@@ -18,11 +18,11 @@ class TopicReviewResponse(BaseModel):
     status: str
     repeat_count: int
     grade_value: int
-    grade_date: datetime
+    grade_date: str | None
     subject_name: str
     topic_description: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: str | None
+    updated_at: str | None
 
 
 def register_topic_review_tools(mcp: FastMCP) -> None:
@@ -66,11 +66,11 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                     status=r.status.value,
                     repeat_count=r.repeat_count,
                     grade_value=r.grade.grade_value.value,
-                    grade_date=r.grade.date,
+                    grade_date=dt_to_str(r.grade.date),
                     subject_name=r.subject.name,
                     topic_description=r.subject_topic.description,
-                    created_at=r.created_at,
-                    updated_at=r.updated_at,
+                    created_at=dt_to_str(r.created_at),
+                    updated_at=dt_to_str(r.updated_at),
                 )
                 for r in reviews
             ]
@@ -99,11 +99,11 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 status=review.status.value,
                 repeat_count=review.repeat_count,
                 grade_value=review.grade.grade_value.value,
-                grade_date=review.grade.date,
+                grade_date=dt_to_str(review.grade.date),
                 subject_name=review.subject.name,
                 topic_description=review.subject_topic.description,
-                created_at=review.created_at,
-                updated_at=review.updated_at,
+                created_at=dt_to_str(review.created_at),
+                updated_at=dt_to_str(review.updated_at),
             )
 
     @mcp.tool(description="""Get pending topic reviews for a subject topic.
@@ -135,11 +135,11 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                     status=r.status.value,
                     repeat_count=r.repeat_count,
                     grade_value=r.grade.grade_value.value,
-                    grade_date=r.grade.date,
+                    grade_date=dt_to_str(r.grade.date),
                     subject_name=r.subject.name,
                     topic_description=r.subject_topic.description,
-                    created_at=r.created_at,
-                    updated_at=r.updated_at,
+                    created_at=dt_to_str(r.created_at),
+                    updated_at=dt_to_str(r.updated_at),
                 )
                 for r in reviews
             ]
@@ -168,9 +168,9 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 status=review.status.value,
                 repeat_count=review.repeat_count,
                 grade_value=review.grade.grade_value.value,
-                grade_date=review.grade.date,
+                grade_date=dt_to_str(review.grade.date),
                 subject_name=review.subject.name,
                 topic_description=review.subject_topic.description,
-                created_at=review.created_at,
-                updated_at=review.updated_at,
+                created_at=dt_to_str(review.created_at),
+                updated_at=dt_to_str(review.updated_at),
             )

@@ -1,11 +1,11 @@
 """Book tools for MCP server."""
 
-from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.book import BookRepository
+from learning_hub.utils import dt_to_str
 
 
 class BookResponse(BaseModel):
@@ -16,8 +16,8 @@ class BookResponse(BaseModel):
     original_path: str | None
     summary_path: str | None
     subject_id: int | None
-    created_at: datetime
-    updated_at: datetime
+    created_at: str
+    updated_at: str
 
 
 def register_book_tools(mcp: FastMCP) -> None:
@@ -58,8 +58,8 @@ def register_book_tools(mcp: FastMCP) -> None:
                 original_path=book.original_path,
                 summary_path=book.summary_path,
                 subject_id=book.subject_id,
-                created_at=book.created_at,
-                updated_at=book.updated_at,
+                created_at=dt_to_str(book.created_at),
+                updated_at=dt_to_str(book.updated_at),
             )
 
     @mcp.tool(description="""List books from the library.
@@ -113,8 +113,8 @@ def register_book_tools(mcp: FastMCP) -> None:
                 original_path=book.original_path,
                 summary_path=book.summary_path,
                 subject_id=book.subject_id,
-                created_at=book.created_at,
-                updated_at=book.updated_at,
+                created_at=dt_to_str(book.created_at),
+                updated_at=dt_to_str(book.updated_at),
             )
 
     @mcp.tool(description="""Update a book.
@@ -160,8 +160,8 @@ def register_book_tools(mcp: FastMCP) -> None:
                 original_path=book.original_path,
                 summary_path=book.summary_path,
                 subject_id=book.subject_id,
-                created_at=book.created_at,
-                updated_at=book.updated_at,
+                created_at=dt_to_str(book.created_at),
+                updated_at=dt_to_str(book.updated_at),
             )
 
     @mcp.tool(description="""Delete a book from the library.

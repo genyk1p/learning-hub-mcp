@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import GradeValue, SchoolType
 from learning_hub.repositories.grade import GradeRepository
+from learning_hub.utils import dt_to_str
 
 
 class GradeResponse(BaseModel):
@@ -15,7 +16,7 @@ class GradeResponse(BaseModel):
     id: int
     subject_id: int
     grade_value: int
-    date: datetime | None
+    date: str | None
     subject_topic_id: int | None
     bonus_task_id: int | None
     homework_id: int | None
@@ -76,7 +77,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 id=grade.id,
                 subject_id=grade.subject_id,
                 grade_value=grade.grade_value.value,
-                date=grade.date,
+                date=dt_to_str(grade.date),
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
@@ -154,7 +155,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 id=grade.id,
                 subject_id=grade.subject_id,
                 grade_value=grade.grade_value.value,
-                date=grade.date,
+                date=dt_to_str(grade.date),
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,

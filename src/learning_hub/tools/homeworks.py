@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import HomeworkStatus, GradeValue
 from learning_hub.repositories.homework import HomeworkRepository
+from learning_hub.utils import dt_to_str
 
 
 class HomeworkResponse(BaseModel):
@@ -17,9 +18,9 @@ class HomeworkResponse(BaseModel):
     subject_topic_id: int | None
     description: str
     status: str
-    assigned_at: datetime | None
-    deadline_at: datetime | None
-    completed_at: datetime | None
+    assigned_at: str | None
+    deadline_at: str | None
+    completed_at: str | None
     penalty_applied: bool
     recommended_grade: int | None
 
@@ -67,8 +68,8 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 subject_topic_id=hw.subject_topic_id,
                 description=hw.description,
                 status=hw.status.value,
-                assigned_at=hw.assigned_at,
-                deadline_at=hw.deadline_at,
+                assigned_at=dt_to_str(hw.assigned_at),
+                deadline_at=dt_to_str(hw.deadline_at),
                 completed_at=None,
                 penalty_applied=hw.penalty_applied,
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
@@ -101,7 +102,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                     status=hw.status.value,
                     assigned_at=hw.assigned_at,
                     deadline_at=hw.deadline_at,
-                    completed_at=hw.completed_at,
+                    completed_at=dt_to_str(hw.completed_at),
                     penalty_applied=hw.penalty_applied,
                     recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
                 )
@@ -128,9 +129,9 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 subject_topic_id=hw.subject_topic_id,
                 description=hw.description,
                 status=hw.status.value,
-                assigned_at=hw.assigned_at,
-                deadline_at=hw.deadline_at,
-                completed_at=hw.completed_at,
+                assigned_at=dt_to_str(hw.assigned_at),
+                deadline_at=dt_to_str(hw.deadline_at),
+                completed_at=dt_to_str(hw.completed_at),
                 penalty_applied=hw.penalty_applied,
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )
@@ -174,9 +175,9 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 subject_topic_id=hw.subject_topic_id,
                 description=hw.description,
                 status=hw.status.value,
-                assigned_at=hw.assigned_at,
-                deadline_at=hw.deadline_at,
-                completed_at=hw.completed_at,
+                assigned_at=dt_to_str(hw.assigned_at),
+                deadline_at=dt_to_str(hw.deadline_at),
+                completed_at=dt_to_str(hw.completed_at),
                 penalty_applied=hw.penalty_applied,
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )
