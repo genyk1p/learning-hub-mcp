@@ -1,6 +1,6 @@
 """EduPage integration tools for MCP server."""
 
-from edupage_api import Edupage
+from edupage_api import Edupage  # type: ignore[import-untyped]
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
@@ -223,7 +223,7 @@ def register_edupage_tools(mcp: FastMCP) -> None:
     """)
     async def sync_edupage_homeworks() -> HomeworksSyncResult:
         from datetime import datetime
-        from edupage_api.timeline import EventType
+        from edupage_api.timeline import EventType  # type: ignore[import-untyped]
 
         errors = []
         homeworks_created = 0
@@ -314,6 +314,9 @@ def register_edupage_tools(mcp: FastMCP) -> None:
 
                 # Get subject by predmetid
                 predmet_id = data.get("predmetid")
+                if not predmet_id:
+                    homeworks_skipped += 1
+                    continue
                 full_name = subject_names.get(predmet_id)
                 if not full_name:
                     errors.append(f"Unknown subject {predmet_id} for homework {edupage_id}")

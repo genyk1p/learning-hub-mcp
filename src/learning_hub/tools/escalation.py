@@ -4,7 +4,6 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import GradeValue
 from learning_hub.repositories.grade import GradeRepository
 from learning_hub.utils import dt_to_str
 
@@ -32,16 +31,14 @@ class MarkEscalatedResponse(BaseModel):
 def register_escalation_tools(mcp: FastMCP) -> None:
     """Register escalation-related tools."""
 
-    grade_value_options = ", ".join(str(g.value) for g in GradeValue)
-
-    @mcp.tool(description=f"""Get grades that need escalation (notifying adult about bad grades).
+    @mcp.tool(description="""Get grades that need escalation (notifying adult about bad grades).
 
     Returns grades where escalated_at is NULL and grade_value >= threshold.
     Each grade includes full context: subject name, school, topic description.
 
     Args:
         threshold: Grade value threshold (inclusive). Grades with this value
-            and worse will be returned. One of: {grade_value_options}
+            and worse will be returned. One of: 2, 3, 4, 5
             (1=best, 5=worst). For example, threshold=3 returns grades 3, 4, 5.
 
     Returns:
@@ -50,11 +47,9 @@ def register_escalation_tools(mcp: FastMCP) -> None:
     async def get_grades_pending_escalation(
         threshold: int,
     ) -> list[EscalationGradeResponse]:
-        threshold_enum = GradeValue(threshold)
-
         async with AsyncSessionLocal() as session:
             repo = GradeRepository(session)
-            grades = await repo.list_pending_escalation(threshold_enum)
+            grades = await repo.list_pending_escalation(threshold)
             return [
                 EscalationGradeResponse(
                     grade_id=g.id,

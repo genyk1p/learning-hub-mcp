@@ -104,16 +104,17 @@ class GradeRepository:
         await self.session.refresh(grade)
         return grade
 
-    async def list_pending_escalation(self, threshold: GradeValue) -> list[Grade]:
+    async def list_pending_escalation(self, threshold: int) -> list[Grade]:
         """List grades that need escalation (grade_value >= threshold, not yet escalated).
 
         Eager-loads subject and subject_topic for full context.
         """
+        bad_grades = [g for g in GradeValue if g.value >= threshold]
         query = (
             select(Grade)
             .options(joinedload(Grade.subject), joinedload(Grade.subject_topic))
             .where(Grade.escalated_at.is_(None))
-            .where(Grade.grade_value >= threshold)
+            .where(Grade.grade_value.in_(bad_grades))
             .order_by(Grade.date.desc())
         )
         result = await self.session.execute(query)
@@ -132,4 +133,4 @@ class GradeRepository:
         )
         result = await self.session.execute(stmt)
         await self.session.commit()
-        return result.rowcount
+        return result.rowcount  # type: ignore[union-attr]
