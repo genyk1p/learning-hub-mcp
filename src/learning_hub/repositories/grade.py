@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import select
+from datetime import timezone
+
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -101,3 +103,33 @@ class GradeRepository:
         await self.session.commit()
         await self.session.refresh(grade)
         return grade
+
+    async def list_pending_escalation(self, threshold: GradeValue) -> list[Grade]:
+        """List grades that need escalation (grade_value >= threshold, not yet escalated).
+
+        Eager-loads subject and subject_topic for full context.
+        """
+        query = (
+            select(Grade)
+            .options(joinedload(Grade.subject), joinedload(Grade.subject_topic))
+            .where(Grade.escalated_at.is_(None))
+            .where(Grade.grade_value >= threshold)
+            .order_by(Grade.date.desc())
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().unique().all())
+
+    async def mark_escalated(self, grade_ids: list[int]) -> int:
+        """Set escalated_at to now for given grade IDs.
+
+        Returns count of updated rows.
+        """
+        now = datetime.now(timezone.utc)
+        stmt = (
+            update(Grade)
+            .where(Grade.id.in_(grade_ids))
+            .values(escalated_at=now)
+        )
+        result = await self.session.execute(stmt)
+        await self.session.commit()
+        return result.rowcount

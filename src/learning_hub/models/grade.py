@@ -64,6 +64,9 @@ class Grade(Base, TimestampMixin):
     # Whether bonuses/penalties for this grade were counted in weekly calculation
     rewarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Date when escalation was performed (notifying adult about bad grade)
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # External ID from EduPage (for sync deduplication)
     edupage_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
 
