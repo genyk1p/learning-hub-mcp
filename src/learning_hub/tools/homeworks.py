@@ -144,6 +144,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
         deadline_at: New deadline, ISO format (optional)
         recommended_grade: Expected grade - one of: {grade_options} (1=best, 5=worst) (optional)
         penalty_applied: Mark if penalty was applied for late submission (optional)
+        status: New status - one of: {status_options} (optional)
 
     Returns:
         Updated homework or null if not found
@@ -154,9 +155,11 @@ def register_homework_tools(mcp: FastMCP) -> None:
         deadline_at: str | None = None,
         recommended_grade: int | None = None,
         penalty_applied: bool | None = None,
+        status: str | None = None,
     ) -> HomeworkResponse | None:
         deadline_parsed = datetime.fromisoformat(deadline_at) if deadline_at else None
         grade_enum = GradeValue(recommended_grade) if recommended_grade else None
+        status_enum = HomeworkStatus(status) if status else None
 
         async with AsyncSessionLocal() as session:
             repo = HomeworkRepository(session)
@@ -166,6 +169,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 deadline_at=deadline_parsed,
                 recommended_grade=grade_enum,
                 penalty_applied=penalty_applied,
+                status=status_enum,
             )
             if hw is None:
                 return None

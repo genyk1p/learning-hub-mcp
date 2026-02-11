@@ -96,7 +96,7 @@ class HomeworkRepository:
         query = select(Homework).where(
             Homework.status == HomeworkStatus.PENDING,
             Homework.deadline_at < now,
-            Homework.penalty_applied == False,
+            Homework.penalty_applied.is_(False),
         ).order_by(Homework.deadline_at.asc())
 
         result = await self.session.execute(query)
@@ -122,6 +122,7 @@ class HomeworkRepository:
         deadline_at: datetime | None = None,
         recommended_grade: GradeValue | None = None,
         penalty_applied: bool | None = None,
+        status: HomeworkStatus | None = None,
     ) -> Homework | None:
         """Update homework fields. Returns None if not found."""
         homework = await self.get_by_id(homework_id)
@@ -136,6 +137,14 @@ class HomeworkRepository:
             homework.recommended_grade = recommended_grade
         if penalty_applied is not None:
             homework.penalty_applied = penalty_applied
+        if status is not None:
+            homework.status = status
+            # Clear completed_at when reopening
+            if status == HomeworkStatus.PENDING:
+                homework.completed_at = None
+            # Set completed_at when marking as done
+            elif status == HomeworkStatus.DONE:
+                homework.completed_at = datetime.now(timezone.utc)
 
         await self.session.commit()
         await self.session.refresh(homework)
