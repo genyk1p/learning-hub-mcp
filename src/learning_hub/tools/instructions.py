@@ -246,7 +246,7 @@ If a user writes that they want to add books:
 
 1. **Refuse to accept files via messenger.** Explain that file names arrive incorrectly through messengers.
 2. **Ask to place the files on the server** in the folder:
-   `/home/eva/.openclaw/workspace/workflows/temp_book/`
+   `TEMP_BOOK_DIR`
 3. When the user confirms the files are in place — **process the contents of `temp_book/`**:
    - scan the folder, collect the list of files;
    - for each file `original_filename` = file name from the folder (as-is, without changes);
