@@ -12,6 +12,7 @@ class BookResponse(BaseModel):
     """Book response schema."""
     id: int
     title: str
+    original_filename: str
     description: str | None
     original_path: str | None
     summary_path: str | None
@@ -27,6 +28,7 @@ def register_book_tools(mcp: FastMCP) -> None:
 
     Args:
         title: Book title
+        original_filename: Original filename of the uploaded book file
         description: Brief description of the book (optional)
         original_path: Path to the original book file (optional)
         summary_path: Path to the summary file (optional)
@@ -37,6 +39,7 @@ def register_book_tools(mcp: FastMCP) -> None:
     """)
     async def add_book(
         title: str,
+        original_filename: str,
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
@@ -46,6 +49,7 @@ def register_book_tools(mcp: FastMCP) -> None:
             repo = BookRepository(session)
             book = await repo.create(
                 title=title,
+                original_filename=original_filename,
                 description=description,
                 original_path=original_path,
                 summary_path=summary_path,
@@ -54,6 +58,7 @@ def register_book_tools(mcp: FastMCP) -> None:
             return BookResponse(
                 id=book.id,
                 title=book.title,
+                original_filename=book.original_filename,
                 description=book.description,
                 original_path=book.original_path,
                 summary_path=book.summary_path,
@@ -82,6 +87,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 BookResponse(
                     id=b.id,
                     title=b.title,
+                    original_filename=b.original_filename,
                     description=b.description,
                     original_path=b.original_path,
                     summary_path=b.summary_path,
@@ -109,6 +115,7 @@ def register_book_tools(mcp: FastMCP) -> None:
             return BookResponse(
                 id=book.id,
                 title=book.title,
+                original_filename=book.original_filename,
                 description=book.description,
                 original_path=book.original_path,
                 summary_path=book.summary_path,
@@ -122,6 +129,7 @@ def register_book_tools(mcp: FastMCP) -> None:
     Args:
         book_id: ID of the book to update
         title: New title (optional)
+        original_filename: New original filename (optional)
         description: New description (optional)
         original_path: New original file path (optional)
         summary_path: New summary file path (optional)
@@ -134,6 +142,7 @@ def register_book_tools(mcp: FastMCP) -> None:
     async def update_book(
         book_id: int,
         title: str | None = None,
+        original_filename: str | None = None,
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
@@ -145,6 +154,7 @@ def register_book_tools(mcp: FastMCP) -> None:
             book = await repo.update(
                 book_id=book_id,
                 title=title,
+                original_filename=original_filename,
                 description=description,
                 original_path=original_path,
                 summary_path=summary_path,
@@ -156,6 +166,7 @@ def register_book_tools(mcp: FastMCP) -> None:
             return BookResponse(
                 id=book.id,
                 title=book.title,
+                original_filename=book.original_filename,
                 description=book.description,
                 original_path=book.original_path,
                 summary_path=book.summary_path,

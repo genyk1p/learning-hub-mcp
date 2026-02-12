@@ -17,6 +17,7 @@ class BookRepository:
     async def create(
         self,
         title: str,
+        original_filename: str,
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
@@ -25,6 +26,7 @@ class BookRepository:
         """Create a new book."""
         book = Book(
             title=title,
+            original_filename=original_filename,
             description=description,
             original_path=original_path,
             summary_path=summary_path,
@@ -64,6 +66,7 @@ class BookRepository:
         self,
         book_id: int,
         title: str | None = None,
+        original_filename: str | None = None,
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
@@ -75,6 +78,7 @@ class BookRepository:
         Args:
             book_id: ID of the book to update
             title: New title (optional)
+            original_filename: New original filename (optional)
             description: New description (optional)
             original_path: New original path (optional)
             summary_path: New summary path (optional)
@@ -87,6 +91,8 @@ class BookRepository:
 
         if title is not None:
             book.title = title
+        if original_filename is not None:
+            book.original_filename = original_filename
         if description is not None:
             book.description = description
         if original_path is not None:

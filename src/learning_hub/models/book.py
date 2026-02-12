@@ -26,6 +26,9 @@ class Book(Base, TimestampMixin):
     # Book title
     title: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    # Original filename of the uploaded book file
+    original_filename: Mapped[str] = mapped_column(String(500), nullable=False)
+
     # Brief description of the book
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
