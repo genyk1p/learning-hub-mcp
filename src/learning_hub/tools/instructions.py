@@ -112,7 +112,20 @@ Which subject do you need the textbook for? If you have a specific topic or less
 
 ## Step 4 — Extraction and delivery
 
-When the book is identified and the needed pages are known:
+When the book is identified and the needed topic/section is known, deliver **both text and PDF**. \
+The PDF may contain images, diagrams, and illustrations that are not present in markdown.
+
+### 4.1 Text from markdown chunks (if `contents_path` exists)
+
+1. Get book details via `get_book` — check if `contents_path` is set.
+2. **Read `contents.md`** — find which chunk file (`part_XX.md`) covers the needed topic/pages.
+3. **Read the chunk** — open the matching `part_XX.md` file.
+4. **Find the relevant fragment** inside the chunk — the specific section, exercise, or topic the user asked for.
+5. **Return the text directly** to the user as a message (markdown formatted).
+
+If the needed material spans **multiple chunks** — read all relevant chunks and combine the text.
+
+### 4.2 PDF extraction (always, when pages are known)
 
 1. Get the path to the book file from the `original_path` field (via `get_book`).
 2. **+1 page buffer rule**: if extracting a fragment (not the whole book) — always include **+1 page before** the first target page and **+1 page after** the last target page (to avoid cutting off the beginning/end of a section, task, or illustration). If the target page is the first or last in the book, do not add a buffer on that side.
@@ -123,7 +136,7 @@ When the book is identified and the needed pages are known:
 4. **Build a new PDF** from the expanded page range (target + buffer pages):
    - take only the identified pages from the original;
    - combine into a single new document (name format: `<slug>_extract_<topic>.pdf`).
-5. **Send the PDF** to the user.
+5. **Send the PDF** to the user alongside the text.
 6. **Add a brief explanation**: which book, which pages, why these specific pages (indicate both target and added "buffer" pages).
 
 If the user needs the **entire book** — send the file at `original_path` without extraction.
@@ -133,15 +146,16 @@ If the user needs the **entire book** — send the file at `original_path` witho
 If the request is related to homework:
 
 1. Check current homework via `list_homeworks(status="pending")`.
-2. Extract hints from the homework description: subject, lesson, topic.
-3. Use this information to search for the book (step 2).
+2. If the homework has a `book_id` — the book is already known. Call `get_book(book_id)` and **skip step 2 entirely** — go straight to step 3/4.
+3. If no `book_id` — extract hints from the homework description: subject, lesson, topic.
+4. Use this information to search for the book (step 2).
 
-Example: homework "Complete task 2 from lesson 5" → search for a book by the homework's subject, lesson 5, task 2.
+Example: homework "Complete task 2 from lesson 5" → check `book_id` first; if set — use that book directly; if empty — search for a book by the homework's subject, lesson 5, task 2.
 
 ## Tools used
 
 - `list_books` — search books (filter by `subject_id`, `has_summary`)
-- `get_book` — get a book by ID (contains `original_path`, `summary_path`, `original_filename`)
+- `get_book` — get a book by ID (contains `original_path`, `summary_path`, `contents_path`, `original_filename`)
 - `list_subjects` — list of subjects for determining `subject_id`
 - `list_homeworks` — list of homework (for request context)
 """
@@ -164,6 +178,8 @@ A separate folder is created for each book:
 Folder contents:
 - `original.pdf` — the original book file
 - `book.md` — brief description + approximate table of contents
+- `contents.md` — index of markdown chunks (which file covers which topics/pages)
+- `parts/` — folder with markdown chunks of the book (part_01.md, part_02.md, ...)
 
 ---
 
@@ -218,9 +234,53 @@ If the subject cannot be determined or it doesn't exist in Learning Hub:
 
 ---
 
-## 4) Registering the book in Learning Hub
+## 4) Converting PDF to markdown chunks
 
-After preparing the folder and `book.md`, call:
+After creating the book folder and `book.md`, convert the entire book to markdown:
+
+### 4.1 Splitting into chunks
+
+1. Read the PDF page by page.
+2. Group pages into chunks of **10–15 pages** each (~5–9k tokens per chunk).
+3. Convert each chunk to markdown, preserving:
+   - headings and structure
+   - lists, tables
+   - task numbers and exercise text
+   - important formatting (bold, italic)
+4. Save each chunk as `parts/part_01.md`, `parts/part_02.md`, etc.
+
+### 4.2 Creating the contents index (`contents.md`)
+
+After all chunks are ready, create `contents.md` — a compact index file that maps each chunk to its content.
+
+Recommended format:
+
+```md
+# <Book title> — Contents
+
+## part_01.md
+Pages 1–12. Chapter 1: Natural numbers. Topics: divisibility, GCD, LCM.
+
+## part_02.md
+Pages 13–25. Chapter 2: Fractions. Topics: addition, subtraction of common fractions.
+
+## part_03.md
+Pages 26–38. Chapter 3: Decimal fractions. Topics: multiplication, division.
+```
+
+Each entry should include:
+- **file name** (part_XX.md)
+- **page range** from the original PDF
+- **chapter / section name** (if identifiable)
+- **key topics** covered (2–5 keywords)
+
+Keep entries short — the whole file should be quickly scannable by the agent.
+
+---
+
+## 5) Registering the book in Learning Hub
+
+After preparing the folder, `book.md`, and markdown chunks with `contents.md`, call:
 
 - `add_book`
 
@@ -234,11 +294,12 @@ Fields:
 - `description` (optional): brief description from `book.md`
 - `original_path`: absolute path to `original.pdf`
 - `summary_path`: absolute path to `book.md`
+- `contents_path`: absolute path to `contents.md` (optional, set after markdown conversion)
 - `subject_id` (optional but recommended): id of the selected/confirmed subject
 
 ---
 
-## 5) Adding books — receiving files
+## 6) Adding books — receiving files
 
 **Important: do not accept files via messengers (Telegram, etc.).** When forwarding through a messenger, file names get corrupted, leading to loss of the original name and errors during registration.
 
@@ -258,6 +319,8 @@ If a user writes that they want to add books:
      - create folder `school/<book_slug>/`;
      - copy the file as `original.pdf`;
      - prepare `book.md` (brief description + approximate table of contents);
+     - convert PDF to markdown chunks (see section 4);
+     - create `contents.md` index;
      - register the book via `add_book`.
 4. Send a summary report to the user:
    - what was added,
@@ -267,12 +330,14 @@ If a user writes that they want to add books:
 
 ---
 
-## 6) Quality requirements
+## 7) Quality requirements
 
 - `book.md` should be short enough for quick reading, but contain a guide to the book's structure.
 - An **approximate** table of contents is acceptable if the full ToC is unavailable.
 - Do not guess the subject — if uncertain, ask for confirmation.
 - Save all paths in absolute form for stable tool operation.
+- Markdown chunks should be self-contained and readable — do not split in the middle of a section or exercise.
+- `contents.md` should be compact — the agent must be able to read it in one go to find the right chunk.
 
 ## Tools used
 
@@ -280,6 +345,7 @@ If a user writes that they want to add books:
 - `list_books` — check existing books
 - `list_subjects` — check existing subjects
 - `get_book` — get book details
+- `update_book` — update book fields (e.g. set `contents_path` after markdown conversion)
 """
 
 

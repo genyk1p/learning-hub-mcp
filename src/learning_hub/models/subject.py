@@ -1,7 +1,7 @@
 """Subject model - school subjects catalog."""
 
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean, Integer, CheckConstraint, UniqueConstraint
+from sqlalchemy import String, Boolean, Integer, ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -44,11 +44,18 @@ class Subject(Base, TimestampMixin):
     # Whether this subject is active (can deactivate old subjects)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # Current textbook used for this subject (SET NULL on book delete)
+    current_book_id: Mapped[int | None] = mapped_column(
+        ForeignKey("books.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
     # Relationships
     topics: Mapped[list["SubjectTopic"]] = relationship("SubjectTopic", back_populates="subject")
     grades: Mapped[list["Grade"]] = relationship("Grade", back_populates="subject")
     homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="subject")
-    books: Mapped[list["Book"]] = relationship("Book", back_populates="subject")
+    books: Mapped[list["Book"]] = relationship("Book", back_populates="subject", foreign_keys="Book.subject_id")
+    current_book: Mapped["Book | None"] = relationship("Book", foreign_keys=[current_book_id])
 
     # Constraints
     __table_args__ = (

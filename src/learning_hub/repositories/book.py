@@ -21,6 +21,7 @@ class BookRepository:
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
+        contents_path: str | None = None,
         subject_id: int | None = None,
     ) -> Book:
         """Create a new book."""
@@ -30,6 +31,7 @@ class BookRepository:
             description=description,
             original_path=original_path,
             summary_path=summary_path,
+            contents_path=contents_path,
             subject_id=subject_id,
         )
         self.session.add(book)
@@ -70,6 +72,7 @@ class BookRepository:
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
+        contents_path: str | None = None,
         subject_id: int | None = None,
         clear_subject: bool = False,
     ) -> Book | None:
@@ -82,6 +85,7 @@ class BookRepository:
             description: New description (optional)
             original_path: New original path (optional)
             summary_path: New summary path (optional)
+            contents_path: New contents index path (optional)
             subject_id: New subject ID (optional)
             clear_subject: If True, sets subject_id to None (optional)
         """
@@ -99,6 +103,8 @@ class BookRepository:
             book.original_path = original_path
         if summary_path is not None:
             book.summary_path = summary_path
+        if contents_path is not None:
+            book.contents_path = contents_path
         if clear_subject:
             book.subject_id = None
         elif subject_id is not None:

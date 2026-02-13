@@ -16,6 +16,7 @@ class SubjectResponse(BaseModel):
     name_ru: str | None
     grade_level: int | None
     is_active: bool
+    current_book_id: int | None
 
 
 def register_subject_tools(mcp: FastMCP) -> None:
@@ -57,6 +58,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 name_ru=subject.name_ru,
                 grade_level=subject.grade_level,
                 is_active=subject.is_active,
+                current_book_id=subject.current_book_id,
             )
 
     @mcp.tool(description=f"""List school subjects.
@@ -85,6 +87,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                     name_ru=s.name_ru,
                     grade_level=s.grade_level,
                     is_active=s.is_active,
+                    current_book_id=s.current_book_id,
                 )
                 for s in subjects
             ]
@@ -97,6 +100,8 @@ def register_subject_tools(mcp: FastMCP) -> None:
         name_ru: New Russian name (optional)
         grade_level: New grade level (optional)
         is_active: Set active status (optional)
+        current_book_id: ID of the current textbook for this subject (optional)
+        clear_current_book: Set to true to remove current textbook link (optional)
 
     Returns:
         Updated subject or null if not found
@@ -107,6 +112,8 @@ def register_subject_tools(mcp: FastMCP) -> None:
         name_ru: str | None = None,
         grade_level: int | None = None,
         is_active: bool | None = None,
+        current_book_id: int | None = None,
+        clear_current_book: bool = False,
     ) -> SubjectResponse | None:
         async with AsyncSessionLocal() as session:
             repo = SubjectRepository(session)
@@ -116,6 +123,8 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 name_ru=name_ru,
                 grade_level=grade_level,
                 is_active=is_active,
+                current_book_id=current_book_id,
+                clear_current_book=clear_current_book,
             )
             if subject is None:
                 return None
@@ -126,4 +135,5 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 name_ru=subject.name_ru,
                 grade_level=subject.grade_level,
                 is_active=subject.is_active,
+                current_book_id=subject.current_book_id,
             )

@@ -16,6 +16,7 @@ class HomeworkResponse(BaseModel):
     id: int
     subject_id: int
     subject_topic_id: int | None
+    book_id: int | None
     description: str
     status: str
     assigned_at: str | None
@@ -37,6 +38,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
         subject_id: ID of the subject
         description: Homework description
         subject_topic_id: ID of the related topic (optional)
+        book_id: ID of the related book (optional)
         assigned_at: When homework was assigned, ISO format (optional, defaults to now)
         deadline_at: Deadline for homework, ISO format (optional)
 
@@ -47,6 +49,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
         subject_id: int,
         description: str,
         subject_topic_id: int | None = None,
+        book_id: int | None = None,
         assigned_at: str | None = None,
         deadline_at: str | None = None,
     ) -> HomeworkResponse:
@@ -59,6 +62,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 subject_id=subject_id,
                 description=description,
                 subject_topic_id=subject_topic_id,
+                book_id=book_id,
                 assigned_at=assigned_parsed,
                 deadline_at=deadline_parsed,
             )
@@ -66,6 +70,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 id=hw.id,
                 subject_id=hw.subject_id,
                 subject_topic_id=hw.subject_topic_id,
+                book_id=hw.book_id,
                 description=hw.description,
                 status=hw.status.value,
                 assigned_at=dt_to_str(hw.assigned_at),
@@ -98,6 +103,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                     id=hw.id,
                     subject_id=hw.subject_id,
                     subject_topic_id=hw.subject_topic_id,
+                    book_id=hw.book_id,
                     description=hw.description,
                     status=hw.status.value,
                     assigned_at=dt_to_str(hw.assigned_at),
@@ -127,6 +133,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 id=hw.id,
                 subject_id=hw.subject_id,
                 subject_topic_id=hw.subject_topic_id,
+                book_id=hw.book_id,
                 description=hw.description,
                 status=hw.status.value,
                 assigned_at=dt_to_str(hw.assigned_at),
@@ -145,6 +152,8 @@ def register_homework_tools(mcp: FastMCP) -> None:
         recommended_grade: Expected grade - one of: {grade_options} (1=best, 5=worst) (optional)
         penalty_applied: Mark if penalty was applied for late submission (optional)
         status: New status - one of: {status_options} (optional)
+        book_id: ID of the related book (optional)
+        clear_book: Set to true to remove book link (optional)
 
     Returns:
         Updated homework or null if not found
@@ -156,6 +165,8 @@ def register_homework_tools(mcp: FastMCP) -> None:
         recommended_grade: int | None = None,
         penalty_applied: bool | None = None,
         status: str | None = None,
+        book_id: int | None = None,
+        clear_book: bool = False,
     ) -> HomeworkResponse | None:
         deadline_parsed = datetime.fromisoformat(deadline_at) if deadline_at else None
         grade_enum = GradeValue(recommended_grade) if recommended_grade else None
@@ -170,6 +181,8 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 recommended_grade=grade_enum,
                 penalty_applied=penalty_applied,
                 status=status_enum,
+                book_id=book_id,
+                clear_book=clear_book,
             )
             if hw is None:
                 return None
@@ -177,6 +190,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 id=hw.id,
                 subject_id=hw.subject_id,
                 subject_topic_id=hw.subject_topic_id,
+                book_id=hw.book_id,
                 description=hw.description,
                 status=hw.status.value,
                 assigned_at=dt_to_str(hw.assigned_at),

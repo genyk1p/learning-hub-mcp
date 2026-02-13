@@ -26,6 +26,7 @@ class HomeworkRepository:
         deadline_at: datetime | None = None,
         edupage_id: str | None = None,
         status: HomeworkStatus = HomeworkStatus.PENDING,
+        book_id: int | None = None,
     ) -> Homework:
         """Create a new homework."""
         homework = Homework(
@@ -36,6 +37,7 @@ class HomeworkRepository:
             deadline_at=deadline_at,
             status=status,
             edupage_id=edupage_id,
+            book_id=book_id,
         )
         self.session.add(homework)
         await self.session.commit()
@@ -123,6 +125,8 @@ class HomeworkRepository:
         recommended_grade: GradeValue | None = None,
         penalty_applied: bool | None = None,
         status: HomeworkStatus | None = None,
+        book_id: int | None = None,
+        clear_book: bool = False,
     ) -> Homework | None:
         """Update homework fields. Returns None if not found."""
         homework = await self.get_by_id(homework_id)
@@ -137,6 +141,10 @@ class HomeworkRepository:
             homework.recommended_grade = recommended_grade
         if penalty_applied is not None:
             homework.penalty_applied = penalty_applied
+        if clear_book:
+            homework.book_id = None
+        elif book_id is not None:
+            homework.book_id = book_id
         if status is not None:
             homework.status = status
             # Clear completed_at when reopening

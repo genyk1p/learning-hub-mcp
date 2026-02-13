@@ -88,6 +88,8 @@ class SubjectRepository:
         name_ru: str | None = None,
         grade_level: int | None = None,
         is_active: bool | None = None,
+        current_book_id: int | None = None,
+        clear_current_book: bool = False,
     ) -> Subject | None:
         """Update subject fields. Returns None if not found."""
         subject = await self.get_by_id(subject_id)
@@ -102,6 +104,10 @@ class SubjectRepository:
             subject.grade_level = grade_level
         if is_active is not None:
             subject.is_active = is_active
+        if clear_current_book:
+            subject.current_book_id = None
+        elif current_book_id is not None:
+            subject.current_book_id = current_book_id
 
         await self.session.commit()
         await self.session.refresh(subject)

@@ -8,6 +8,7 @@ from learning_hub.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from learning_hub.models.subject import Subject
+    from learning_hub.models.homework import Homework
 
 
 class Book(Base, TimestampMixin):
@@ -38,6 +39,9 @@ class Book(Base, TimestampMixin):
     # Path to the summary file (agent decides where to store it)
     summary_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Path to the contents index file (maps markdown chunks to topics/pages)
+    contents_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # Optional link to a school subject (SET NULL on subject delete)
     subject_id: Mapped[int | None] = mapped_column(
         Integer,
@@ -47,6 +51,7 @@ class Book(Base, TimestampMixin):
 
     # Relationships
     subject: Mapped["Subject | None"] = relationship("Subject", back_populates="books")
+    homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="book")
 
     def __repr__(self) -> str:
         subject_str = f", subject_id={self.subject_id}" if self.subject_id else ""

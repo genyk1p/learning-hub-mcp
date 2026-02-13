@@ -16,6 +16,7 @@ class BookResponse(BaseModel):
     description: str | None
     original_path: str | None
     summary_path: str | None
+    contents_path: str | None
     subject_id: int | None
     created_at: str | None
     updated_at: str | None
@@ -32,6 +33,7 @@ def register_book_tools(mcp: FastMCP) -> None:
         description: Brief description of the book (optional)
         original_path: Path to the original book file (optional)
         summary_path: Path to the summary file (optional)
+        contents_path: Path to the contents index file that maps markdown chunks to topics/pages (optional)
         subject_id: ID of the related subject (optional)
 
     Returns:
@@ -43,6 +45,7 @@ def register_book_tools(mcp: FastMCP) -> None:
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
+        contents_path: str | None = None,
         subject_id: int | None = None,
     ) -> BookResponse:
         async with AsyncSessionLocal() as session:
@@ -53,6 +56,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 description=description,
                 original_path=original_path,
                 summary_path=summary_path,
+                contents_path=contents_path,
                 subject_id=subject_id,
             )
             return BookResponse(
@@ -62,6 +66,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 description=book.description,
                 original_path=book.original_path,
                 summary_path=book.summary_path,
+                contents_path=book.contents_path,
                 subject_id=book.subject_id,
                 created_at=dt_to_str(book.created_at),
                 updated_at=dt_to_str(book.updated_at),
@@ -91,6 +96,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                     description=b.description,
                     original_path=b.original_path,
                     summary_path=b.summary_path,
+                    contents_path=b.contents_path,
                     subject_id=b.subject_id,
                     created_at=dt_to_str(b.created_at),
                     updated_at=dt_to_str(b.updated_at),
@@ -119,6 +125,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 description=book.description,
                 original_path=book.original_path,
                 summary_path=book.summary_path,
+                contents_path=book.contents_path,
                 subject_id=book.subject_id,
                 created_at=dt_to_str(book.created_at),
                 updated_at=dt_to_str(book.updated_at),
@@ -133,6 +140,7 @@ def register_book_tools(mcp: FastMCP) -> None:
         description: New description (optional)
         original_path: New original file path (optional)
         summary_path: New summary file path (optional)
+        contents_path: New contents index file path (optional)
         subject_id: New subject ID (optional)
         clear_subject: Set to true to remove subject link (optional)
 
@@ -146,6 +154,7 @@ def register_book_tools(mcp: FastMCP) -> None:
         description: str | None = None,
         original_path: str | None = None,
         summary_path: str | None = None,
+        contents_path: str | None = None,
         subject_id: int | None = None,
         clear_subject: bool = False,
     ) -> BookResponse | None:
@@ -158,6 +167,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 description=description,
                 original_path=original_path,
                 summary_path=summary_path,
+                contents_path=contents_path,
                 subject_id=subject_id,
                 clear_subject=clear_subject,
             )
@@ -170,6 +180,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 description=book.description,
                 original_path=book.original_path,
                 summary_path=book.summary_path,
+                contents_path=book.contents_path,
                 subject_id=book.subject_id,
                 created_at=dt_to_str(book.created_at),
                 updated_at=dt_to_str(book.updated_at),

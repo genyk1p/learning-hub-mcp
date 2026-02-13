@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from learning_hub.models.subject import Subject
     from learning_hub.models.subject_topic import SubjectTopic
     from learning_hub.models.grade import Grade
+    from learning_hub.models.book import Book
 
 
 class Homework(Base, TimestampMixin):
@@ -68,12 +69,19 @@ class Homework(Base, TimestampMixin):
     # Recommended grade from Emma (before teacher's final grade)
     recommended_grade: Mapped[GradeValue | None] = mapped_column(nullable=True)
 
+    # Optional link to a book
+    book_id: Mapped[int | None] = mapped_column(
+        ForeignKey("books.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
     # External ID from EduPage (for sync deduplication)
     edupage_id: Mapped[str | None] = mapped_column(String(50), nullable=True, unique=True)
 
     # Relationships
     subject: Mapped["Subject"] = relationship("Subject", back_populates="homeworks")
     subject_topic: Mapped["SubjectTopic | None"] = relationship("SubjectTopic", back_populates="homeworks")
+    book: Mapped["Book | None"] = relationship("Book", back_populates="homeworks")
     grade: Mapped["Grade | None"] = relationship("Grade", back_populates="homework")
 
     def __repr__(self) -> str:
