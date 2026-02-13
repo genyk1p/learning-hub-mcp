@@ -50,7 +50,9 @@ class Book(Base, TimestampMixin):
     )
 
     # Relationships
-    subject: Mapped["Subject | None"] = relationship("Subject", back_populates="books")
+    subject: Mapped["Subject | None"] = relationship(
+        "Subject", back_populates="books", foreign_keys=[subject_id]
+    )
     homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="book")
 
     def __repr__(self) -> str:
