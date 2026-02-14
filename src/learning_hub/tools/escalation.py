@@ -5,6 +5,10 @@ from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.grade import GradeRepository
+from learning_hub.tools.tool_names import (
+    TOOL_GET_GRADES_PENDING_ESCALATION,
+    TOOL_MARK_GRADES_ESCALATED,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -31,7 +35,7 @@ class MarkEscalatedResponse(BaseModel):
 def register_escalation_tools(mcp: FastMCP) -> None:
     """Register escalation-related tools."""
 
-    @mcp.tool(description="""Get grades that need escalation (notifying adult about bad grades).
+    @mcp.tool(name=TOOL_GET_GRADES_PENDING_ESCALATION, description="""Get grades that need escalation (notifying adult about bad grades).
 
     Returns grades where escalated_at is NULL and grade_value >= threshold.
     Each grade includes full context: subject name, school, topic description.

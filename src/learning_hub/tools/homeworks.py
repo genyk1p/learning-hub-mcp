@@ -8,6 +8,12 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import HomeworkStatus, GradeValue
 from learning_hub.repositories.homework import HomeworkRepository
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_HOMEWORK,
+    TOOL_LIST_HOMEWORKS,
+    TOOL_COMPLETE_HOMEWORK,
+    TOOL_UPDATE_HOMEWORK,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -32,7 +38,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
     status_options = ", ".join(f'"{s.value}"' for s in HomeworkStatus)
     grade_options = ", ".join(str(g.value) for g in GradeValue)
 
-    @mcp.tool(description="""Create a new homework assignment.
+    @mcp.tool(name=TOOL_CREATE_HOMEWORK, description="""Create a new homework assignment.
 
     Args:
         subject_id: ID of the subject
@@ -80,7 +86,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )
 
-    @mcp.tool(description=f"""List homeworks.
+    @mcp.tool(name=TOOL_LIST_HOMEWORKS, description=f"""List homeworks.
 
     Args:
         subject_id: Filter by subject ID (optional)
@@ -115,7 +121,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 for hw in homeworks
             ]
 
-    @mcp.tool(description="""Mark homework as completed.
+    @mcp.tool(name=TOOL_COMPLETE_HOMEWORK, description="""Mark homework as completed.
 
     Args:
         homework_id: ID of the homework to complete
@@ -143,7 +149,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )
 
-    @mcp.tool(description=f"""Update homework.
+    @mcp.tool(name=TOOL_UPDATE_HOMEWORK, description=f"""Update homework.
 
     Args:
         homework_id: ID of the homework to update

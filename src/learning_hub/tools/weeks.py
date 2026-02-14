@@ -7,6 +7,12 @@ from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.week import WeekRepository
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_WEEK,
+    TOOL_GET_WEEK,
+    TOOL_UPDATE_WEEK,
+    TOOL_FINALIZE_WEEK,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -26,7 +32,7 @@ class WeekResponse(BaseModel):
 def register_week_tools(mcp: FastMCP) -> None:
     """Register week-related tools."""
 
-    @mcp.tool(description="""Create a new week period.
+    @mcp.tool(name=TOOL_CREATE_WEEK, description="""Create a new week period.
 
     Weeks run Saturday to Saturday. The week_key is the start date (YYYY-MM-DD).
 
@@ -65,7 +71,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 is_finalized=week.is_finalized,
             )
 
-    @mcp.tool(description="""Get a week by key or get current week.
+    @mcp.tool(name=TOOL_GET_WEEK, description="""Get a week by key or get current week.
 
     Args:
         week_key: Week key to fetch (e.g. "2026-02-01"). If not provided, returns current week.
@@ -97,7 +103,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 is_finalized=week.is_finalized,
             )
 
-    @mcp.tool(description="""Update week minutes.
+    @mcp.tool(name=TOOL_UPDATE_WEEK, description="""Update week minutes.
 
     Args:
         week_key: Week key to update
@@ -143,7 +149,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 is_finalized=week.is_finalized,
             )
 
-    @mcp.tool(description="""Finalize a week.
+    @mcp.tool(name=TOOL_FINALIZE_WEEK, description="""Finalize a week.
 
     Saves actual played minutes, calculates carryover (total_minutes - actual_played_minutes),
     and marks the week as finalized. Once finalized, the week should not be modified.

@@ -8,6 +8,11 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import GradeValue, SchoolType
 from learning_hub.repositories.grade import GradeRepository
+from learning_hub.tools.tool_names import (
+    TOOL_ADD_GRADE,
+    TOOL_LIST_GRADES,
+    TOOL_UPDATE_GRADE,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -29,7 +34,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
     grade_value_options = ", ".join(str(g.value) for g in GradeValue)
     school_options = ", ".join(f'"{s.value}"' for s in SchoolType)
 
-    @mcp.tool(description=f"""Add a new grade.
+    @mcp.tool(name=TOOL_ADD_GRADE, description=f"""Add a new grade.
 
     IMPORTANT: Uses 5-point European grading scale where 1 is BEST and 5 is WORST:
     - 1 = Excellent (A)
@@ -84,7 +89,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 rewarded=grade.rewarded,
             )
 
-    @mcp.tool(description=f"""List grades with filters.
+    @mcp.tool(name=TOOL_LIST_GRADES, description=f"""List grades with filters.
 
     Args:
         subject_id: Filter by subject ID (optional)
@@ -130,7 +135,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 for g in grades
             ]
 
-    @mcp.tool(description="""Update a grade.
+    @mcp.tool(name=TOOL_UPDATE_GRADE, description="""Update a grade.
 
     Args:
         grade_id: ID of the grade to update

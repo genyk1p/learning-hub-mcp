@@ -5,6 +5,13 @@ from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.book import BookRepository
+from learning_hub.tools.tool_names import (
+    TOOL_ADD_BOOK,
+    TOOL_LIST_BOOKS,
+    TOOL_GET_BOOK,
+    TOOL_UPDATE_BOOK,
+    TOOL_DELETE_BOOK,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -25,7 +32,7 @@ class BookResponse(BaseModel):
 def register_book_tools(mcp: FastMCP) -> None:
     """Register book-related tools."""
 
-    @mcp.tool(description="""Add a new book to the library.
+    @mcp.tool(name=TOOL_ADD_BOOK, description="""Add a new book to the library.
 
     Args:
         title: Book title
@@ -72,7 +79,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 updated_at=dt_to_str(book.updated_at),
             )
 
-    @mcp.tool(description="""List books from the library.
+    @mcp.tool(name=TOOL_LIST_BOOKS, description="""List books from the library.
 
     Args:
         subject_id: Filter by subject ID (optional)
@@ -104,7 +111,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 for b in books
             ]
 
-    @mcp.tool(description="""Get a book by ID.
+    @mcp.tool(name=TOOL_GET_BOOK, description="""Get a book by ID.
 
     Args:
         book_id: ID of the book
@@ -131,7 +138,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 updated_at=dt_to_str(book.updated_at),
             )
 
-    @mcp.tool(description="""Update a book.
+    @mcp.tool(name=TOOL_UPDATE_BOOK, description="""Update a book.
 
     Args:
         book_id: ID of the book to update
@@ -186,7 +193,7 @@ def register_book_tools(mcp: FastMCP) -> None:
                 updated_at=dt_to_str(book.updated_at),
             )
 
-    @mcp.tool(description="""Delete a book from the library.
+    @mcp.tool(name=TOOL_DELETE_BOOK, description="""Delete a book from the library.
 
     Args:
         book_id: ID of the book to delete

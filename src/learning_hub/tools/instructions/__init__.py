@@ -6,6 +6,17 @@ when performing various operations.
 
 from mcp.server.fastmcp import FastMCP
 
+from learning_hub.tools.tool_names import (
+    TOOL_GET_BOOK_LOOKUP_INSTRUCTIONS,
+    TOOL_GET_BOOKS_WORKFLOW_INSTRUCTIONS,
+    TOOL_GET_HOMEWORK_MANUAL_INSTRUCTIONS,
+    TOOL_GET_STUDENT_REQUEST_ROUTER_INSTRUCTIONS,
+    TOOL_GET_BONUS_TASK_ASSIGNMENT_INSTRUCTIONS,
+    TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS,
+    TOOL_GET_BONUS_TASK_EVALUATION_INSTRUCTIONS,
+    TOOL_GET_HOMEWORK_EVALUATION_INSTRUCTIONS,
+    TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS,
+)
 from learning_hub.tools.instructions.book_lookup import BOOK_LOOKUP_INSTRUCTIONS
 from learning_hub.tools.instructions.books_workflow import BOOKS_WORKFLOW_INSTRUCTIONS
 from learning_hub.tools.instructions.homework_manual import HOMEWORK_MANUAL_INSTRUCTIONS
@@ -32,7 +43,7 @@ from learning_hub.tools.instructions.topic_review_curation import (
 def register_instruction_tools(mcp: FastMCP) -> None:
     """Register instruction tools that return workflow guides for the agent."""
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_BOOK_LOOKUP_INSTRUCTIONS, description="""\
       Get step-by-step instructions for finding and delivering educational materials (textbooks).
 
       Call this tool when a user asks for a textbook, specific pages, lesson materials,
@@ -43,7 +54,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_book_lookup_instructions() -> str:
         return BOOK_LOOKUP_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_BOOKS_WORKFLOW_INSTRUCTIONS, description="""\
       Get step-by-step instructions for processing and registering new books into Learning Hub.
 
       Call this tool when new book files need to be added to the system — typically from
@@ -54,7 +65,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_books_workflow_instructions() -> str:
         return BOOKS_WORKFLOW_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_HOMEWORK_MANUAL_INSTRUCTIONS, description="""\
       Get step-by-step instructions for manually adding homework assignments.
 
       Call this tool when a parent or other authorized person (NOT the child)
@@ -65,7 +76,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_homework_manual_instructions() -> str:
         return HOMEWORK_MANUAL_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_STUDENT_REQUEST_ROUTER_INSTRUCTIONS, description="""\
       Get the entry-point instruction for handling student messages about learning.
 
       Call this tool FIRST when the student writes anything related to homework,
@@ -77,7 +88,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_student_request_router_instructions() -> str:
         return STUDENT_REQUEST_ROUTER_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_BONUS_TASK_ASSIGNMENT_INSTRUCTIONS, description="""\
       Get step-by-step instructions for creating and assigning a bonus task.
 
       Call this tool when the student asks for a bonus task to earn game minutes.
@@ -88,7 +99,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_bonus_task_assignment_instructions() -> str:
         return BONUS_TASK_ASSIGNMENT_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS, description="""\
       Get step-by-step instructions for classifying a student's submission.
 
       Call this tool when the student sends an answer or completed work,
@@ -100,7 +111,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_submission_routing_instructions() -> str:
         return SUBMISSION_ROUTING_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_BONUS_TASK_EVALUATION_INSTRUCTIONS, description="""\
       Get step-by-step instructions for evaluating a bonus task submission.
 
       Call this tool after determining that the student is submitting a bonus task.
@@ -111,7 +122,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_bonus_task_evaluation_instructions() -> str:
         return BONUS_TASK_EVALUATION_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_HOMEWORK_EVALUATION_INSTRUCTIONS, description="""\
       Get step-by-step instructions for evaluating a homework submission.
 
       Call this tool after determining that the student is submitting homework.
@@ -123,7 +134,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_homework_evaluation_instructions() -> str:
         return HOMEWORK_EVALUATION_INSTRUCTIONS
 
-    @mcp.tool(description="""\
+    @mcp.tool(name=TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS, description="""\
       Get step-by-step instructions for curating TopicReviews after EduPage sync.
 
       Call this tool after running sync_edupage_grades. The sync may create

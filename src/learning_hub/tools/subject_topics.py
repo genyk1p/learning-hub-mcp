@@ -6,6 +6,11 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import CloseReason
 from learning_hub.repositories.subject_topic import SubjectTopicRepository
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_TOPIC,
+    TOOL_LIST_TOPICS,
+    TOOL_CLOSE_TOPIC,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -24,7 +29,7 @@ def register_subject_topic_tools(mcp: FastMCP) -> None:
 
     close_reason_options = ", ".join(f'"{r.value}"' for r in CloseReason)
 
-    @mcp.tool(description="""Create a new subject topic.
+    @mcp.tool(name=TOOL_CREATE_TOPIC, description="""Create a new subject topic.
 
     Args:
         subject_id: ID of the subject this topic belongs to
@@ -52,7 +57,7 @@ def register_subject_topic_tools(mcp: FastMCP) -> None:
                 close_reason=None,
             )
 
-    @mcp.tool(description="""List subject topics.
+    @mcp.tool(name=TOOL_LIST_TOPICS, description="""List subject topics.
 
     Args:
         subject_id: Filter by subject ID (optional)
@@ -80,7 +85,7 @@ def register_subject_topic_tools(mcp: FastMCP) -> None:
                 for t in topics
             ]
 
-    @mcp.tool(description=f"""Close a subject topic.
+    @mcp.tool(name=TOOL_CLOSE_TOPIC, description=f"""Close a subject topic.
 
     Args:
         topic_id: ID of the topic to close

@@ -6,6 +6,11 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import SchoolType
 from learning_hub.repositories.subject import SubjectRepository
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_SUBJECT,
+    TOOL_LIST_SUBJECTS,
+    TOOL_UPDATE_SUBJECT,
+)
 
 
 class SubjectResponse(BaseModel):
@@ -24,7 +29,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
 
     school_options = ", ".join(f'"{s.value}"' for s in SchoolType)
 
-    @mcp.tool(description=f"""Create a new school subject.
+    @mcp.tool(name=TOOL_CREATE_SUBJECT, description=f"""Create a new school subject.
 
     Args:
         school: School type - one of: {school_options}
@@ -61,7 +66,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 current_book_id=subject.current_book_id,
             )
 
-    @mcp.tool(description=f"""List school subjects.
+    @mcp.tool(name=TOOL_LIST_SUBJECTS, description=f"""List school subjects.
 
     Args:
         school: Filter by school type - one of: {school_options} (optional)
@@ -92,7 +97,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 for s in subjects
             ]
 
-    @mcp.tool(description="""Update a school subject.
+    @mcp.tool(name=TOOL_UPDATE_SUBJECT, description="""Update a school subject.
 
     Args:
         subject_id: ID of the subject to update

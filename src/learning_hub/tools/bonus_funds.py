@@ -5,6 +5,10 @@ from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.repositories.bonus_fund import BonusFundRepository
+from learning_hub.tools.tool_names import (
+    TOOL_GET_BONUS_FUND,
+    TOOL_ADD_TASKS_TO_FUND,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -20,7 +24,7 @@ class BonusFundResponse(BaseModel):
 def register_bonus_fund_tools(mcp: FastMCP) -> None:
     """Register bonus fund related tools."""
 
-    @mcp.tool(description="""Get the bonus fund.
+    @mcp.tool(name=TOOL_GET_BONUS_FUND, description="""Get the bonus fund.
 
     Shows the fund name and how many bonus task slots are available.
 
@@ -41,7 +45,7 @@ def register_bonus_fund_tools(mcp: FastMCP) -> None:
                 updated_at=dt_to_str(fund.updated_at),
             )
 
-    @mcp.tool(description="""Add task slots to the bonus fund.
+    @mcp.tool(name=TOOL_ADD_TASKS_TO_FUND, description="""Add task slots to the bonus fund.
 
     Use this to increase the number of bonus tasks that can be assigned.
     Slots are deducted when bonus tasks are completed.

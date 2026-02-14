@@ -21,6 +21,10 @@ from learning_hub.repositories.subject_topic import SubjectTopicRepository
 from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.homework import HomeworkRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.tools.tool_names import (
+    TOOL_SYNC_EDUPAGE_GRADES,
+    TOOL_SYNC_EDUPAGE_HOMEWORKS,
+)
 
 
 class GradesSyncResult(BaseModel):
@@ -46,7 +50,7 @@ class HomeworksSyncResult(BaseModel):
 def register_edupage_tools(mcp: FastMCP) -> None:
     """Register EduPage-related tools."""
 
-    @mcp.tool(description="""Sync grades from EduPage to local database.
+    @mcp.tool(name=TOOL_SYNC_EDUPAGE_GRADES, description="""Sync grades from EduPage to local database.
 
     Fetches all grades from EduPage and saves them to the database.
     Creates subjects automatically if they don't exist.
@@ -212,7 +216,7 @@ def register_edupage_tools(mcp: FastMCP) -> None:
             errors=errors,
         )
 
-    @mcp.tool(description="""Sync homeworks from EduPage to local database.
+    @mcp.tool(name=TOOL_SYNC_EDUPAGE_HOMEWORKS, description="""Sync homeworks from EduPage to local database.
 
     Fetches homework assignments from EduPage notifications and saves them.
     Creates subjects automatically if they don't exist.

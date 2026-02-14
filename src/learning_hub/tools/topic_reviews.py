@@ -6,6 +6,12 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import TopicReviewStatus
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.tools.tool_names import (
+    TOOL_LIST_TOPIC_REVIEWS,
+    TOOL_MARK_TOPIC_REINFORCED,
+    TOOL_GET_PENDING_REVIEWS_FOR_TOPIC,
+    TOOL_INCREMENT_TOPIC_REPEAT_COUNT,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -30,7 +36,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
 
     status_options = ", ".join(f'"{s.value}"' for s in TopicReviewStatus)
 
-    @mcp.tool(description=f"""List topic reviews (topics that need reinforcement).
+    @mcp.tool(name=TOOL_LIST_TOPIC_REVIEWS, description=f"""List topic reviews (topics that need reinforcement).
 
     Topic reviews are created automatically when syncing grades > 1 from EduPage.
     Shows topics where student needs additional practice.
@@ -75,7 +81,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 for r in reviews
             ]
 
-    @mcp.tool(description="""Mark topic review as reinforced.
+    @mcp.tool(name=TOOL_MARK_TOPIC_REINFORCED, description="""Mark topic review as reinforced.
 
     Use this when the topic has been sufficiently practiced through bonus tasks.
 
@@ -106,7 +112,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 updated_at=dt_to_str(review.updated_at),
             )
 
-    @mcp.tool(description="""Get pending topic reviews for a subject topic.
+    @mcp.tool(name=TOOL_GET_PENDING_REVIEWS_FOR_TOPIC, description="""Get pending topic reviews for a subject topic.
 
     Use this to find what needs reinforcement for a specific topic,
     e.g. after completing a bonus task linked to that topic.
@@ -144,7 +150,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 for r in reviews
             ]
 
-    @mcp.tool(description="""Increment repeat count for a topic review.
+    @mcp.tool(name=TOOL_INCREMENT_TOPIC_REPEAT_COUNT, description="""Increment repeat count for a topic review.
 
     Call this when a bonus task related to the topic is completed.
 

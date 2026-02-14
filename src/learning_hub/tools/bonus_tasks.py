@@ -9,6 +9,15 @@ from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import BonusTaskStatus, TopicReviewStatus
 from learning_hub.repositories.bonus_task import BonusTaskRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_BONUS_TASK,
+    TOOL_LIST_BONUS_TASKS,
+    TOOL_COMPLETE_BONUS_TASK,
+    TOOL_GET_BONUS_TASK,
+    TOOL_GET_LATEST_BONUS_TASK,
+    TOOL_CANCEL_BONUS_TASK,
+    TOOL_APPLY_BONUS_TASK_RESULT,
+)
 from learning_hub.utils import dt_to_str
 
 
@@ -28,7 +37,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
 
     status_options = ", ".join(f'"{s.value}"' for s in BonusTaskStatus)
 
-    @mcp.tool(description="""Create a new bonus task.
+    @mcp.tool(name=TOOL_CREATE_BONUS_TASK, description="""Create a new bonus task.
 
     Bonus tasks are additional work that student can do to earn a grade.
     Tasks are linked to a subject topic. A slot is deducted from the bonus fund.
@@ -70,7 +79,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 "fund_available_tasks": fund.available_tasks,
             }
 
-    @mcp.tool(description=f"""List bonus tasks.
+    @mcp.tool(name=TOOL_LIST_BONUS_TASKS, description=f"""List bonus tasks.
 
     Args:
         subject_topic_id: Filter by topic ID (optional)
@@ -120,7 +129,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 for t in tasks
             ]
 
-    @mcp.tool(description="""Mark a bonus task as completed.
+    @mcp.tool(name=TOOL_COMPLETE_BONUS_TASK, description="""Mark a bonus task as completed.
 
     Deducts one task slot from the bonus fund.
 
@@ -159,7 +168,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 "fund_available_tasks": fund.available_tasks,
             }
 
-    @mcp.tool(description="""Get a bonus task by ID.
+    @mcp.tool(name=TOOL_GET_BONUS_TASK, description="""Get a bonus task by ID.
 
     Args:
         task_id: ID of the bonus task
@@ -183,7 +192,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 quality_notes=task.quality_notes,
             )
 
-    @mcp.tool(description=f"""Get the most recent bonus task matching filters.
+    @mcp.tool(name=TOOL_GET_LATEST_BONUS_TASK, description=f"""Get the most recent bonus task matching filters.
 
     Useful for quickly finding the latest task without listing all.
 
@@ -221,7 +230,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 quality_notes=task.quality_notes,
             )
 
-    @mcp.tool(description="""Cancel a bonus task.
+    @mcp.tool(name=TOOL_CANCEL_BONUS_TASK, description="""Cancel a bonus task.
 
     Use this when a pending task is no longer relevant or was cancelled.
 
@@ -247,7 +256,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 quality_notes=task.quality_notes,
             )
 
-    @mcp.tool(description="""Complete a bonus task and optionally update related topic reviews.
+    @mcp.tool(name=TOOL_APPLY_BONUS_TASK_RESULT, description="""Complete a bonus task and optionally update related topic reviews.
 
     1. Marks the bonus task as completed (deducts one slot from fund)
     2. If count_repeat is true: finds all pending TopicReviews for the same subject topic
