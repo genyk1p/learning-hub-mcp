@@ -10,6 +10,10 @@ MCP server for student learning workflow with SQLite database.
 - **Homework** - assignment tracking with deadlines
 - **Bonus Tasks** - motivational tasks that reward game minutes
 - **Weeks** - weekly game time calculations based on performance
+- **Books** - textbook library with markdown summaries and content indexing
+- **Topic Reviews** - reinforcement tracking for weak topics
+- **Escalation** - bad grade notifications for parents
+- **Instruction Tools** - markdown algorithms that guide AI agents through workflows
 - **EduPage Sync** - automatic sync of grades and homework from EduPage
 
 ## Installation
@@ -64,7 +68,7 @@ Add to your MCP client config:
 }
 ```
 
-## MCP Tools
+## MCP Tools (47 total)
 
 ### Subjects
 - `create_subject` - create a new school subject
@@ -82,7 +86,7 @@ Add to your MCP client config:
 - `update_grade` - update grade details
 
 ### Bonus Tasks
-- `create_bonus_task` - create a bonus task with promised game minutes
+- `create_bonus_task` - create a bonus task linked to a topic
 - `list_bonus_tasks` - list tasks (filter: status, topic)
 - `get_bonus_task` - get a bonus task by ID
 - `get_latest_bonus_task` - get the most recent bonus task
@@ -91,16 +95,21 @@ Add to your MCP client config:
 - `cancel_bonus_task` - cancel a task
 
 ### Bonus Funds
-- `create_bonus_fund` - create a new bonus fund
-- `list_bonus_funds` - list all bonus funds
-- `add_minutes_to_fund` - add minutes to a fund
-- `rename_bonus_fund` - rename a fund
+- `get_bonus_fund` - get the bonus fund
+- `add_tasks_to_fund` - add task slots to the fund
 
 ### Homework
 - `create_homework` - create homework assignment
 - `list_homeworks` - list homework (filter: status, subject)
 - `complete_homework` - mark homework as done
 - `update_homework` - update homework details
+
+### Books
+- `add_book` - add a book to the library
+- `list_books` - list books (filter: subject, has_summary)
+- `get_book` - get a book by ID
+- `update_book` - update book details
+- `delete_book` - delete a book
 
 ### Weeks
 - `create_week` - create a new week period
@@ -114,16 +123,23 @@ Add to your MCP client config:
 - `mark_topic_reinforced` - mark review as reinforced
 - `increment_topic_repeat_count` - increment repeat count for a review
 
-### Books
-- `add_book` - add a book to the library
-- `list_books` - list books (filter: subject, has_summary)
-- `get_book` - get a book by ID
-- `update_book` - update book details
-- `delete_book` - delete a book
+### Escalation
+- `get_grades_pending_escalation` - get grades needing parent notification
+- `mark_grades_escalated` - mark grades as escalated (parent was notified)
 
 ### EduPage Sync
 - `sync_edupage_grades` - sync grades from EduPage
 - `sync_edupage_homeworks` - sync homework from EduPage
+
+### Instruction Tools
+- `get_student_request_router_instructions` - classify student request (A/B/C scenarios)
+- `get_bonus_task_assignment_instructions` - assign a new bonus task
+- `get_submission_routing_instructions` - route submitted work to evaluator
+- `get_bonus_task_evaluation_instructions` - evaluate completed bonus task
+- `get_homework_evaluation_instructions` - evaluate homework submission
+- `get_book_lookup_instructions` - find and deliver textbook pages
+- `get_books_workflow_instructions` - process and register new books
+- `get_homework_manual_instructions` - manually add homework (parent only)
 
 ## OpenClaw Integration
 

@@ -7,6 +7,7 @@
 
 # Claude Code
 .claude/
+CLAUDE.md
 
 # Local project configs
 .local/
