@@ -1,4 +1,11 @@
-BOOK_LOOKUP_INSTRUCTIONS = """\
+from learning_hub.tools.tool_names import (
+    TOOL_GET_BOOK,
+    TOOL_LIST_BOOKS,
+    TOOL_LIST_HOMEWORKS,
+    TOOL_LIST_SUBJECTS,
+)
+
+BOOK_LOOKUP_INSTRUCTIONS = f"""\
 # Book Lookup — universal instruction for finding and delivering educational materials
 
 > This instruction describes the algorithm for finding the right textbook (or a part of it) and delivering the result to the user.
@@ -33,12 +40,12 @@ If the request only makes it clear that some textbook is needed, but not which o
 
 ### 2.1 Search by subject (if the subject is known)
 
-1. Call `list_subjects` — find the `subject_id` for the subject.
-2. Call `list_books(subject_id=<id>)` — get the list of books for that subject.
+1. Call `{TOOL_LIST_SUBJECTS}` — find the `subject_id` for the subject.
+2. Call `{TOOL_LIST_BOOKS}(subject_id=<id>)` — get the list of books for that subject.
 
 ### 2.2 Search across the entire library (if the subject is unclear)
 
-1. Call `list_books()` — get all registered books.
+1. Call `{TOOL_LIST_BOOKS}()` — get all registered books.
 2. Filter by `title`, `description`, and `original_filename` — look for matches with the request (topic, lesson, keywords). The original filename often contains useful information about the book's content.
 
 ### 2.3 Refine using the book's summary file
@@ -108,7 +115,7 @@ The PDF may contain images, diagrams, and illustrations that are not present in 
 
 ### 4.1 Text from markdown chunks (if `contents_path` exists)
 
-1. Get book details via `get_book` — check if `contents_path` is set.
+1. Get book details via `{TOOL_GET_BOOK}` — check if `contents_path` is set.
 2. **Read `contents.md`** — find which chunk file (`part_XX.md`) covers the needed topic/pages.
 3. **Read the chunk** — open the matching `part_XX.md` file.
 4. **Find the relevant fragment** inside the chunk — the specific section, exercise, or topic the user asked for.
@@ -118,7 +125,7 @@ If the needed material spans **multiple chunks** — read all relevant chunks an
 
 ### 4.2 PDF extraction (always, when pages are known)
 
-1. Get the path to the book file from the `original_path` field (via `get_book`).
+1. Get the path to the book file from the `original_path` field (via `{TOOL_GET_BOOK}`).
 2. **+1 page buffer rule**: if extracting a fragment (not the whole book) — always include **+1 page before** the first target page and **+1 page after** the last target page (to avoid cutting off the beginning/end of a section, task, or illustration). If the target page is the first or last in the book, do not add a buffer on that side.
 3. **Determine the needed pages** using one of these methods:
    - by page range (e.g., "pages 3–4")
@@ -136,8 +143,8 @@ If the user needs the **entire book** — send the file at `original_path` witho
 
 If the request is related to homework:
 
-1. Check current homework via `list_homeworks(status="pending")`.
-2. If the homework has a `book_id` — the book is already known. Call `get_book(book_id)` and **skip step 2 entirely** — go straight to step 3/4.
+1. Check current homework via `{TOOL_LIST_HOMEWORKS}(status="pending")`.
+2. If the homework has a `book_id` — the book is already known. Call `{TOOL_GET_BOOK}(book_id)` and **skip step 2 entirely** — go straight to step 3/4.
 3. If no `book_id` — extract hints from the homework description: subject, lesson, topic.
 4. Use this information to search for the book (step 2).
 
@@ -145,8 +152,8 @@ Example: homework "Complete task 2 from lesson 5" → check `book_id` first; if 
 
 ## Tools used
 
-- `list_books` — search books (filter by `subject_id`, `has_summary`)
-- `get_book` — get a book by ID (contains `original_path`, `summary_path`, `contents_path`, `original_filename`)
-- `list_subjects` — list of subjects for determining `subject_id`
-- `list_homeworks` — list of homework (for request context)
+- `{TOOL_LIST_BOOKS}` — search books (filter by `subject_id`, `has_summary`)
+- `{TOOL_GET_BOOK}` — get a book by ID (contains `original_path`, `summary_path`, `contents_path`, `original_filename`)
+- `{TOOL_LIST_SUBJECTS}` — list of subjects for determining `subject_id`
+- `{TOOL_LIST_HOMEWORKS}` — list of homework (for request context)
 """

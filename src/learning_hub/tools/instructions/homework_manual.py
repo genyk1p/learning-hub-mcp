@@ -1,4 +1,15 @@
-HOMEWORK_MANUAL_INSTRUCTIONS = """\
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_HOMEWORK,
+    TOOL_CREATE_TOPIC,
+    TOOL_GET_BOOK,
+    TOOL_LIST_BOOKS,
+    TOOL_LIST_HOMEWORKS,
+    TOOL_LIST_SUBJECTS,
+    TOOL_LIST_TOPICS,
+    TOOL_UPDATE_SUBJECT,
+)
+
+HOMEWORK_MANUAL_INSTRUCTIONS = f"""\
 # Manual homework creation
 
 > This instruction describes the algorithm for adding homework manually — \
@@ -38,7 +49,7 @@ Extract as much information as possible from the user's message:
 
 ## Step 2 — Determine the subject (`subject_id`)
 
-1. Call `list_subjects` (with `school` filter if the school is known from context).
+1. Call `{TOOL_LIST_SUBJECTS}` (with `school` filter if the school is known from context).
 2. Find the matching subject by name.
 3. If the subject is not found — ask the user, clarify the name and school.
 
@@ -46,9 +57,9 @@ Extract as much information as possible from the user's message:
 
 ## Step 3 — Determine the topic (`subject_topic_id`)
 
-1. Call `list_topics(subject_id=...)` — get the list of topics for the subject.
+1. Call `{TOOL_LIST_TOPICS}(subject_id=...)` — get the list of topics for the subject.
 2. Find a topic that matches the assignment.
-3. If no matching topic exists — create a new one via `create_topic(subject_id=..., description=...)`.
+3. If no matching topic exists — create a new one via `{TOOL_CREATE_TOPIC}(subject_id=..., description=...)`.
 
 ---
 
@@ -69,7 +80,7 @@ book verification is not needed, `book_id` can be omitted.
 
 ### 4.3 Algorithm for verifying the assignment in the textbook
 
-1. Call `get_book(book_id=current_book_id)` — get the book data.
+1. Call `{TOOL_GET_BOOK}(book_id=current_book_id)` — get the book data.
 2. If the book has a `contents_path`:
    - read the `contents_path` file (`contents.md`) — this is the chunk index;
    - find which chunk (`part_XX.md`) covers the needed pages/topic;
@@ -85,8 +96,8 @@ does not contain that assignment (missing page, missing exercise):
 
 1. Inform the user about the mismatch.
 2. The user may have forgotten to re-link the textbook.
-3. Show the list of available books for the subject via `list_books(subject_id=...)`.
-4. If re-linking is needed — call `update_subject(subject_id=..., current_book_id=<new_id>)`.
+3. Show the list of available books for the subject via `{TOOL_LIST_BOOKS}(subject_id=...)`.
+4. If re-linking is needed — call `{TOOL_UPDATE_SUBJECT}(subject_id=..., current_book_id=<new_id>)`.
 5. After re-linking, repeat the assignment verification in the new book.
 
 ---
@@ -136,7 +147,7 @@ show the updated card. Repeat until the user confirms.
 After user confirmation, call:
 
 ```
-create_homework(
+{TOOL_CREATE_HOMEWORK}(
     subject_id=<subject id>,
     description=<assignment description>,
     subject_topic_id=<topic id>,       # if determined
@@ -162,12 +173,12 @@ The message should include:
 
 ## Tools used
 
-- `list_subjects` — find the subject
-- `list_topics` — find the subject topic
-- `create_topic` — create a new topic
-- `get_book` — get book data (file paths, `contents_path`)
-- `list_books` — list of books for the subject
-- `update_subject` — re-link the current textbook
-- `create_homework` — register the assignment
-- `list_homeworks` — check existing assignments (for deduplication)
+- `{TOOL_LIST_SUBJECTS}` — find the subject
+- `{TOOL_LIST_TOPICS}` — find the subject topic
+- `{TOOL_CREATE_TOPIC}` — create a new topic
+- `{TOOL_GET_BOOK}` — get book data (file paths, `contents_path`)
+- `{TOOL_LIST_BOOKS}` — list of books for the subject
+- `{TOOL_UPDATE_SUBJECT}` — re-link the current textbook
+- `{TOOL_CREATE_HOMEWORK}` — register the assignment
+- `{TOOL_LIST_HOMEWORKS}` — check existing assignments (for deduplication)
 """

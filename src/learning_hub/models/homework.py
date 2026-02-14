@@ -66,7 +66,7 @@ class Homework(Base, TimestampMixin):
     # Whether penalty was applied for late/missing homework
     penalty_applied: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    # Recommended grade from Emma (before teacher's final grade)
+    # Recommended grade from AI agent (before teacher's final grade)
     recommended_grade: Mapped[GradeValue | None] = mapped_column(nullable=True)
 
     # Optional link to a book

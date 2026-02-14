@@ -9,6 +9,21 @@ from mcp.server.fastmcp import FastMCP
 from learning_hub.tools.instructions.book_lookup import BOOK_LOOKUP_INSTRUCTIONS
 from learning_hub.tools.instructions.books_workflow import BOOKS_WORKFLOW_INSTRUCTIONS
 from learning_hub.tools.instructions.homework_manual import HOMEWORK_MANUAL_INSTRUCTIONS
+from learning_hub.tools.instructions.student_request_router import (
+    STUDENT_REQUEST_ROUTER_INSTRUCTIONS,
+)
+from learning_hub.tools.instructions.bonus_task_assignment import (
+    BONUS_TASK_ASSIGNMENT_INSTRUCTIONS,
+)
+from learning_hub.tools.instructions.submission_routing import (
+    SUBMISSION_ROUTING_INSTRUCTIONS,
+)
+from learning_hub.tools.instructions.bonus_task_evaluation import (
+    BONUS_TASK_EVALUATION_INSTRUCTIONS,
+)
+from learning_hub.tools.instructions.homework_evaluation import (
+    HOMEWORK_EVALUATION_INSTRUCTIONS,
+)
 
 
 def register_instruction_tools(mcp: FastMCP) -> None:
@@ -46,3 +61,61 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       verify textbook references, confirm with the user, and register the homework.""")
     async def get_homework_manual_instructions() -> str:
         return HOMEWORK_MANUAL_INSTRUCTIONS
+
+    @mcp.tool(description="""\
+      Get the entry-point instruction for handling student messages about learning.
+
+      Call this tool FIRST when the student writes anything related to homework,
+      grades, bonus tasks, or game minutes. It classifies the request type
+      (facts / bonus task request / submission) and tells which instruction tool
+      to call next.
+
+      Returns a classification flowchart with scenario descriptions.""")
+    async def get_student_request_router_instructions() -> str:
+        return STUDENT_REQUEST_ROUTER_INSTRUCTIONS
+
+    @mcp.tool(description="""\
+      Get step-by-step instructions for creating and assigning a bonus task.
+
+      Call this tool when the student asks for a bonus task to earn game minutes.
+      Covers: checking the bonus fund, selecting a TopicReview by priority,
+      formulating the task, and registering it in Learning Hub.
+
+      Returns a detailed algorithm for bonus task assignment.""")
+    async def get_bonus_task_assignment_instructions() -> str:
+        return BONUS_TASK_ASSIGNMENT_INSTRUCTIONS
+
+    @mcp.tool(description="""\
+      Get step-by-step instructions for classifying a student's submission.
+
+      Call this tool when the student sends an answer or completed work,
+      and you need to determine whether it is a bonus task or homework
+      (and which school). Covers: checking pending tasks, matching by context,
+      and asking clarifying questions.
+
+      Returns a classification algorithm with decision tree.""")
+    async def get_submission_routing_instructions() -> str:
+        return SUBMISSION_ROUTING_INSTRUCTIONS
+
+    @mcp.tool(description="""\
+      Get step-by-step instructions for evaluating a bonus task submission.
+
+      Call this tool after determining that the student is submitting a bonus task.
+      Covers: loading the task, evaluating the answer, commit-before-confirm rule,
+      applying results, grading, and closing TopicReview.
+
+      Returns a detailed evaluation algorithm.""")
+    async def get_bonus_task_evaluation_instructions() -> str:
+        return BONUS_TASK_EVALUATION_INSTRUCTIONS
+
+    @mcp.tool(description="""\
+      Get step-by-step instructions for evaluating a homework submission.
+
+      Call this tool after determining that the student is submitting homework.
+      Covers: finding the homework, loading book context, evaluating the answer,
+      handling unverifiable tasks, setting recommended grade, and escalation.
+      Works for any school type.
+
+      Returns a detailed evaluation algorithm.""")
+    async def get_homework_evaluation_instructions() -> str:
+        return HOMEWORK_EVALUATION_INSTRUCTIONS

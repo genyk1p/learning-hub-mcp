@@ -1,17 +1,26 @@
-BOOKS_WORKFLOW_INSTRUCTIONS = """\
+from learning_hub.tools.config_vars import CFG_BOOKS_STORAGE_DIR, CFG_TEMP_BOOK_DIR
+from learning_hub.tools.tool_names import (
+    TOOL_ADD_BOOK,
+    TOOL_GET_BOOK,
+    TOOL_LIST_BOOKS,
+    TOOL_LIST_SUBJECTS,
+    TOOL_UPDATE_BOOK,
+)
+
+BOOKS_WORKFLOW_INSTRUCTIONS = f"""\
 # Books workflow — storing and registering books in Learning Hub
 
-Goal: uniformly accept books (from the `temp_book/` folder on the server), store them in the file structure, generate a brief `book.md`, and register them in Learning Hub.
+Goal: uniformly accept books (from the `{CFG_TEMP_BOOK_DIR}` folder on the server), store them in the file structure, generate a brief `book.md`, and register them in Learning Hub.
 
 ## 1) Storage base
 
 All books are stored in:
 
-`/home/eva/.openclaw/workspace/school`
+`{CFG_BOOKS_STORAGE_DIR}`
 
 A separate folder is created for each book:
 
-`/home/eva/.openclaw/workspace/school/<book_slug>/`
+`{CFG_BOOKS_STORAGE_DIR}/<book_slug>/`
 
 Folder contents:
 - `original.pdf` — the original book file
@@ -61,7 +70,7 @@ For each book, determine the subject:
 - by keywords/table of contents.
 
 ### 3.2 Checking against the subject database
-- Check existing subjects via `list_subjects`.
+- Check existing subjects via `{TOOL_LIST_SUBJECTS}`.
 - If the subject is found — use its `subject_id`.
 
 ### 3.3 If the subject is undetermined or missing
@@ -120,7 +129,7 @@ Keep entries short — the whole file should be quickly scannable by the agent.
 
 After preparing the folder, `book.md`, and markdown chunks with `contents.md`, call:
 
-- `add_book`
+- `{TOOL_ADD_BOOK}`
 
 Fields:
 - `title` (required):
@@ -145,8 +154,8 @@ If a user writes that they want to add books:
 
 1. **Refuse to accept files via messenger.** Explain that file names arrive incorrectly through messengers.
 2. **Ask to place the files on the server** in the folder:
-   `TEMP_BOOK_DIR`
-3. When the user confirms the files are in place — **process the contents of `temp_book/`**:
+   `{CFG_TEMP_BOOK_DIR}`
+3. When the user confirms the files are in place — **process the contents of `{CFG_TEMP_BOOK_DIR}`**:
    - scan the folder, collect the list of files;
    - for each file `original_filename` = file name from the folder (as-is, without changes);
    - determine the assumed subject;
@@ -154,17 +163,17 @@ If a user writes that they want to add books:
      - if found — record the `subject_id`;
      - if not found/unclear — ask the user for confirmation;
    - after confirmation, process each book:
-     - create folder `school/<book_slug>/`;
+     - create folder `{CFG_BOOKS_STORAGE_DIR}/<book_slug>/`;
      - copy the file as `original.pdf`;
      - prepare `book.md` (brief description + approximate table of contents);
      - convert PDF to markdown chunks (see section 4);
      - create `contents.md` index;
-     - register the book via `add_book`.
+     - register the book via `{TOOL_ADD_BOOK}`.
 4. Send a summary report to the user:
    - what was added,
    - which `subject_id` values were used,
    - which books require further clarification (if any).
-5. After successful processing — **delete the processed files from `temp_book/`**.
+5. After successful processing — **delete the processed files from `{CFG_TEMP_BOOK_DIR}`**.
 
 ---
 
@@ -179,9 +188,9 @@ If a user writes that they want to add books:
 
 ## Tools used
 
-- `add_book` — register a new book
-- `list_books` — check existing books
-- `list_subjects` — check existing subjects
-- `get_book` — get book details
-- `update_book` — update book fields (e.g. set `contents_path` after markdown conversion)
+- `{TOOL_ADD_BOOK}` — register a new book
+- `{TOOL_LIST_BOOKS}` — check existing books
+- `{TOOL_LIST_SUBJECTS}` — check existing subjects
+- `{TOOL_GET_BOOK}` — get book details
+- `{TOOL_UPDATE_BOOK}` — update book fields (e.g. set `contents_path` after markdown conversion)
 """
