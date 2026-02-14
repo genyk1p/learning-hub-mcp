@@ -141,18 +141,42 @@ Add to your MCP client config:
 - `get_books_workflow_instructions` - process and register new books
 - `get_homework_manual_instructions` - manually add homework (parent only)
 
-## OpenClaw Integration
+## OpenClaw Bridge Plugin
 
-The `learning-hub-bridge/` directory contains a TypeScript plugin that makes all MCP tools available as native OpenClaw agent tools. Instead of calling the MCP server through `exec + mcporter`, the model sees tools like `learning_hub_list_subjects` directly in its tool list.
+The `learning-hub-bridge/` directory contains a TypeScript plugin that makes all MCP tools available as native [OpenClaw](https://github.com/open-claw/openclaw) agent tools.
 
-### Setup
+### Why
+
+OpenClaw doesn't support MCP servers natively. Without the bridge, the agent would need `exec + mcporter` — slow (~3s per call), buggy (mcporter serialization issues with lists), and invisible to the model (tools not in tool list).
+
+### How it works
+
+1. On gateway startup, the bridge spawns the Python MCP server as a child process (STDIO)
+2. Discovers all tools via `client.listTools()` (MCP protocol)
+3. Registers each as a native OpenClaw tool via `api.registerTool()` with prefix `learning_hub_`
+4. Proxies `execute()` → `client.callTool()`, merging multiple TextContent blocks into a single JSON array
+5. Auto-reconnects if the Python process dies
+
+After this, the model sees `learning_hub_list_subjects`, `learning_hub_add_grade`, etc. directly in its tool list.
+
+### Deployment
+
+The bridge must be installed as an OpenClaw extension. The source lives in `learning-hub-bridge/` inside this repo, but OpenClaw loads plugins from `~/.openclaw/extensions/<pluginId>/`.
+
+**Step 1.** Copy the bridge to extensions:
 
 ```bash
-cd learning-hub-bridge
+cp -r /path/to/learning-hub-mcp/learning-hub-bridge ~/.openclaw/extensions/learning-hub
+```
+
+**Step 2.** Install dependencies:
+
+```bash
+cd ~/.openclaw/extensions/learning-hub
 npm install
 ```
 
-### OpenClaw config (`openclaw.json`)
+**Step 3.** Add plugin config to `openclaw.json`:
 
 ```json
 {
@@ -160,13 +184,56 @@ npm install
     "entries": {
       "learning-hub": {
         "enabled": true,
-        "command": "/bin/bash",
-        "args": ["-lc", "cd /path/to/learning-hub-mcp && exec .venv/bin/learning-hub-mcp"],
-        "cwd": "/path/to/learning-hub-mcp"
+        "config": {
+          "command": "/bin/bash",
+          "args": ["-lc", "cd /path/to/learning-hub-mcp && exec .venv/bin/learning-hub-mcp"],
+          "cwd": "/path/to/learning-hub-mcp",
+          "toolPrefix": "learning_hub"
+        }
       }
     }
   }
 }
+```
+
+**Step 4.** Allow tools for the agent in `openclaw.json`:
+
+```json
+{
+  "agents": {
+    "list": [
+      {
+        "id": "main",
+        "tools": {
+          "alsoAllow": ["learning-hub"]
+        }
+      }
+    ]
+  }
+}
+```
+
+**Step 5.** Restart gateway:
+
+```bash
+openclaw gateway restart
+```
+
+### Config options
+
+| Option | Description | Default |
+|---|---|---|
+| `command` | Command to start MCP server | (required) |
+| `args` | Arguments for the command | (required) |
+| `cwd` | Working directory for MCP server process | — |
+| `toolPrefix` | Prefix for registered tool names | `learning_hub` |
+
+### Updating after MCP changes
+
+When new tools are added to the MCP server, the bridge picks them up automatically on gateway restart — no bridge code changes needed. Just restart:
+
+```bash
+openclaw gateway restart
 ```
 
 ## Development
