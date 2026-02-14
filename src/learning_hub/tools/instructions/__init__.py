@@ -24,6 +24,9 @@ from learning_hub.tools.instructions.bonus_task_evaluation import (
 from learning_hub.tools.instructions.homework_evaluation import (
     HOMEWORK_EVALUATION_INSTRUCTIONS,
 )
+from learning_hub.tools.instructions.topic_review_curation import (
+    TOPIC_REVIEW_CURATION_INSTRUCTIONS,
+)
 
 
 def register_instruction_tools(mcp: FastMCP) -> None:
@@ -119,3 +122,15 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       Returns a detailed evaluation algorithm.""")
     async def get_homework_evaluation_instructions() -> str:
         return HOMEWORK_EVALUATION_INSTRUCTIONS
+
+    @mcp.tool(description="""\
+      Get step-by-step instructions for curating TopicReviews after EduPage sync.
+
+      Call this tool after running sync_edupage_grades. The sync may create
+      TopicReview records for non-academic subjects (PE, crafts, music, art)
+      that don't need reinforcement. This instruction tells how to identify
+      and close them.
+
+      Returns a curation algorithm with examples of irrelevant subjects.""")
+    async def get_topic_review_curation_instructions() -> str:
+        return TOPIC_REVIEW_CURATION_INSTRUCTIONS
