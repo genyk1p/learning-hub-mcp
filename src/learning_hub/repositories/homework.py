@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -59,6 +59,7 @@ class HomeworkRepository:
         self,
         subject_id: int | None = None,
         status: HomeworkStatus | None = None,
+        limit: int = 20,
     ) -> list[Homework]:
         """List homeworks with optional filters."""
         query = select(Homework)
@@ -70,6 +71,7 @@ class HomeworkRepository:
             query = query.where(Homework.status == status)
 
         query = query.order_by(Homework.deadline_at.asc().nullslast())
+        query = query.limit(limit)
 
         result = await self.session.execute(query)
         return list(result.scalars().all())
@@ -79,7 +81,7 @@ class HomeworkRepository:
         delta: timedelta,
     ) -> list[Homework]:
         """List pending homeworks with deadline within given delta from now."""
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         deadline_threshold = now + delta
 
         query = select(Homework).where(
@@ -98,7 +100,7 @@ class HomeworkRepository:
         Each overdue homework gets status=OVERDUE and bonus=-5 min via complete().
         Returns the list of closed homeworks.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
 
         query = select(Homework).where(
             Homework.status == HomeworkStatus.PENDING,
@@ -133,7 +135,7 @@ class HomeworkRepository:
         if homework.status in (HomeworkStatus.DONE, HomeworkStatus.OVERDUE):
             return homework
 
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         homework.completed_at = now
 
         is_overdue = (

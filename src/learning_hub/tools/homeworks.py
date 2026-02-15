@@ -90,6 +90,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
     Args:
         subject_id: Filter by subject ID (optional)
         status: Filter by status - one of: {status_options} (optional)
+        limit: Max number of results, 1-200 (optional, default 20)
 
     Returns:
         List of homeworks
@@ -97,12 +98,13 @@ def register_homework_tools(mcp: FastMCP) -> None:
     async def list_homeworks(
         subject_id: int | None = None,
         status: str | None = None,
+        limit: int = 20,
     ) -> list[HomeworkResponse]:
         status_enum = HomeworkStatus(status) if status else None
 
         async with AsyncSessionLocal() as session:
             repo = HomeworkRepository(session)
-            homeworks = await repo.list(subject_id=subject_id, status=status_enum)
+            homeworks = await repo.list(subject_id=subject_id, status=status_enum, limit=limit)
             return [
                 HomeworkResponse(
                     id=hw.id,
