@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Integer, ForeignKey, DateTime, Boolean
+from sqlalchemy import String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from learning_hub.models.subject_topic import SubjectTopic
     from learning_hub.models.grade import Grade
     from learning_hub.models.book import Book
+    from learning_hub.models.bonus import Bonus
 
 
 class Homework(Base, TimestampMixin):
@@ -63,9 +64,6 @@ class Homework(Base, TimestampMixin):
         nullable=True
     )
 
-    # Whether penalty was applied for late/missing homework
-    penalty_applied: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
     # Recommended grade from AI agent (before teacher's final grade)
     recommended_grade: Mapped[GradeValue | None] = mapped_column(nullable=True)
 
@@ -83,6 +81,7 @@ class Homework(Base, TimestampMixin):
     subject_topic: Mapped["SubjectTopic | None"] = relationship("SubjectTopic", back_populates="homeworks")
     book: Mapped["Book | None"] = relationship("Book", back_populates="homeworks")
     grade: Mapped["Grade | None"] = relationship("Grade", back_populates="homework")
+    bonus: Mapped["Bonus | None"] = relationship("Bonus", back_populates="homework")
 
     def __repr__(self) -> str:
         return (

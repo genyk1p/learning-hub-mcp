@@ -11,6 +11,7 @@ from learning_hub.repositories.homework import HomeworkRepository
 from learning_hub.tools.tool_names import (
     TOOL_CREATE_HOMEWORK,
     TOOL_LIST_HOMEWORKS,
+    TOOL_CLOSE_OVERDUE_HOMEWORKS,
     TOOL_COMPLETE_HOMEWORK,
     TOOL_UPDATE_HOMEWORK,
 )
@@ -28,7 +29,6 @@ class HomeworkResponse(BaseModel):
     assigned_at: str | None
     deadline_at: str | None
     completed_at: str | None
-    penalty_applied: bool
     recommended_grade: int | None
 
 
@@ -82,7 +82,6 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 assigned_at=dt_to_str(hw.assigned_at),
                 deadline_at=dt_to_str(hw.deadline_at),
                 completed_at=None,
-                penalty_applied=hw.penalty_applied,
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )
 
@@ -115,10 +114,38 @@ def register_homework_tools(mcp: FastMCP) -> None:
                     assigned_at=dt_to_str(hw.assigned_at),
                     deadline_at=dt_to_str(hw.deadline_at),
                     completed_at=dt_to_str(hw.completed_at),
-                    penalty_applied=hw.penalty_applied,
                     recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
                 )
                 for hw in homeworks
+            ]
+
+    @mcp.tool(name=TOOL_CLOSE_OVERDUE_HOMEWORKS, description="""Close all overdue homeworks.
+
+    Finds all pending homeworks where deadline has passed and marks them
+    as overdue with a -5 minute bonus penalty each.
+    Homeworks without a deadline are not affected.
+
+    Returns:
+        List of closed homeworks
+    """)
+    async def close_overdue_homeworks() -> list[HomeworkResponse]:
+        async with AsyncSessionLocal() as session:
+            repo = HomeworkRepository(session)
+            closed = await repo.close_overdue()
+            return [
+                HomeworkResponse(
+                    id=hw.id,
+                    subject_id=hw.subject_id,
+                    subject_topic_id=hw.subject_topic_id,
+                    book_id=hw.book_id,
+                    description=hw.description,
+                    status=hw.status.value,
+                    assigned_at=dt_to_str(hw.assigned_at),
+                    deadline_at=dt_to_str(hw.deadline_at),
+                    completed_at=dt_to_str(hw.completed_at),
+                    recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
+                )
+                for hw in closed
             ]
 
     @mcp.tool(name=TOOL_COMPLETE_HOMEWORK, description="""Mark homework as completed.
@@ -145,19 +172,18 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 assigned_at=dt_to_str(hw.assigned_at),
                 deadline_at=dt_to_str(hw.deadline_at),
                 completed_at=dt_to_str(hw.completed_at),
-                penalty_applied=hw.penalty_applied,
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )
 
     @mcp.tool(name=TOOL_UPDATE_HOMEWORK, description=f"""Update homework.
+
+    To change homework status use complete_homework instead.
 
     Args:
         homework_id: ID of the homework to update
         description: New description (optional)
         deadline_at: New deadline, ISO format (optional)
         recommended_grade: Expected grade - one of: {grade_options} (1=best, 5=worst) (optional)
-        penalty_applied: Mark if penalty was applied for late submission (optional)
-        status: New status - one of: {status_options} (optional)
         book_id: ID of the related book (optional)
         clear_book: Set to true to remove book link (optional)
 
@@ -169,14 +195,11 @@ def register_homework_tools(mcp: FastMCP) -> None:
         description: str | None = None,
         deadline_at: str | None = None,
         recommended_grade: int | None = None,
-        penalty_applied: bool | None = None,
-        status: str | None = None,
         book_id: int | None = None,
         clear_book: bool = False,
     ) -> HomeworkResponse | None:
         deadline_parsed = datetime.fromisoformat(deadline_at) if deadline_at else None
         grade_enum = GradeValue(recommended_grade) if recommended_grade else None
-        status_enum = HomeworkStatus(status) if status else None
 
         async with AsyncSessionLocal() as session:
             repo = HomeworkRepository(session)
@@ -185,8 +208,6 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 description=description,
                 deadline_at=deadline_parsed,
                 recommended_grade=grade_enum,
-                penalty_applied=penalty_applied,
-                status=status_enum,
                 book_id=book_id,
                 clear_book=clear_book,
             )
@@ -202,6 +223,5 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 assigned_at=dt_to_str(hw.assigned_at),
                 deadline_at=dt_to_str(hw.deadline_at),
                 completed_at=dt_to_str(hw.completed_at),
-                penalty_applied=hw.penalty_applied,
                 recommended_grade=hw.recommended_grade.value if hw.recommended_grade else None,
             )

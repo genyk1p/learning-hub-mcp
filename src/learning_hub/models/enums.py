@@ -54,6 +54,7 @@ class HomeworkStatus(str, enum.Enum):
     """Status of homework."""
     PENDING = "pending"  # Not done yet
     DONE = "done"  # Completed
+    OVERDUE = "overdue"  # Deadline passed, not completed
 
 
 class TopicReviewStatus(str, enum.Enum):

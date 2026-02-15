@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from learning_hub.models.homework import Homework
+from learning_hub.models.bonus import Bonus
 from learning_hub.models.enums import HomeworkStatus, GradeValue
 
 
@@ -91,27 +92,76 @@ class HomeworkRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def list_overdue_without_penalty(self) -> list[Homework]:
-        """List overdue homeworks where penalty was not yet applied."""
+    async def close_overdue(self) -> list[Homework]:
+        """Find all pending homeworks past deadline and complete them.
+
+        Each overdue homework gets status=OVERDUE and bonus=-5 min via complete().
+        Returns the list of closed homeworks.
+        """
         now = datetime.now(timezone.utc)
 
         query = select(Homework).where(
             Homework.status == HomeworkStatus.PENDING,
+            Homework.deadline_at.is_not(None),
             Homework.deadline_at < now,
-            Homework.penalty_applied.is_(False),
         ).order_by(Homework.deadline_at.asc())
 
         result = await self.session.execute(query)
-        return list(result.scalars().all())
+        overdue = list(result.scalars().all())
+
+        closed = []
+        for hw in overdue:
+            completed = await self.complete(hw.id)
+            if completed is not None:
+                closed.append(completed)
+
+        return closed
 
     async def complete(self, homework_id: int) -> Homework | None:
-        """Mark homework as completed. Returns None if not found."""
+        """Mark homework as completed with bonus minutes.
+
+        If already DONE or OVERDUE — returns homework as-is (nothing to close).
+        If PENDING — sets completed_at, checks deadline, assigns status and bonus:
+        - On time (or no deadline): status=DONE, bonus=+5 min
+        - Overdue: status=OVERDUE, bonus=-5 min
+        Creates new bonus or updates existing one for this homework.
+        """
         homework = await self.get_by_id(homework_id)
         if homework is None:
             return None
 
-        homework.status = HomeworkStatus.DONE
-        homework.completed_at = datetime.now(timezone.utc)
+        if homework.status in (HomeworkStatus.DONE, HomeworkStatus.OVERDUE):
+            return homework
+
+        now = datetime.now(timezone.utc)
+        homework.completed_at = now
+
+        is_overdue = (
+            homework.deadline_at is not None
+            and now > homework.deadline_at
+        )
+
+        if is_overdue:
+            homework.status = HomeworkStatus.OVERDUE
+            bonus_minutes = -5
+        else:
+            homework.status = HomeworkStatus.DONE
+            bonus_minutes = 5
+
+        # Find existing bonus for this homework or create new one
+        query = select(Bonus).where(Bonus.homework_id == homework_id)
+        result = await self.session.execute(query)
+        bonus = result.scalar_one_or_none()
+
+        if bonus is not None:
+            bonus.minutes = bonus_minutes
+            bonus.rewarded = False
+        else:
+            bonus = Bonus(
+                homework_id=homework_id,
+                minutes=bonus_minutes,
+            )
+            self.session.add(bonus)
 
         await self.session.commit()
         await self.session.refresh(homework)
@@ -123,12 +173,13 @@ class HomeworkRepository:
         description: str | None = None,
         deadline_at: datetime | None = None,
         recommended_grade: GradeValue | None = None,
-        penalty_applied: bool | None = None,
-        status: HomeworkStatus | None = None,
         book_id: int | None = None,
         clear_book: bool = False,
     ) -> Homework | None:
-        """Update homework fields. Returns None if not found."""
+        """Update homework fields. Returns None if not found.
+
+        Does not change status — use complete() for that.
+        """
         homework = await self.get_by_id(homework_id)
         if homework is None:
             return None
@@ -139,20 +190,10 @@ class HomeworkRepository:
             homework.deadline_at = deadline_at
         if recommended_grade is not None:
             homework.recommended_grade = recommended_grade
-        if penalty_applied is not None:
-            homework.penalty_applied = penalty_applied
         if clear_book:
             homework.book_id = None
         elif book_id is not None:
             homework.book_id = book_id
-        if status is not None:
-            homework.status = status
-            # Clear completed_at when reopening
-            if status == HomeworkStatus.PENDING:
-                homework.completed_at = None
-            # Set completed_at when marking as done
-            elif status == HomeworkStatus.DONE:
-                homework.completed_at = datetime.now(timezone.utc)
 
         await self.session.commit()
         await self.session.refresh(homework)

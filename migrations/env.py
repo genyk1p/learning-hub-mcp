@@ -26,6 +26,7 @@ from learning_hub.models.week import Week
 from learning_hub.models.book import Book
 from learning_hub.models.bonus_fund import BonusFund
 from learning_hub.models.topic_review import TopicReview
+from learning_hub.models.bonus import Bonus
 
 target_metadata = Base.metadata
 
