@@ -4,6 +4,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_BOOK,
     TOOL_LIST_BOOKS,
     TOOL_LIST_HOMEWORKS,
+    TOOL_LIST_SCHOOLS,
     TOOL_LIST_SUBJECTS,
     TOOL_LIST_TOPICS,
     TOOL_UPDATE_SUBJECT,
@@ -47,11 +48,22 @@ Extract as much information as possible from the user's message:
 
 ---
 
-## Step 2 — Determine the subject (`subject_id`)
+## Step 2 — Determine the school and subject (`subject_id`)
 
-1. Call `{TOOL_LIST_SUBJECTS}` (with `school_id` filter if the school is known from context).
+### 2.1 Determine the school
+
+1. Call `{TOOL_LIST_SCHOOLS}(is_active=true)` — get the list of active schools.
+2. If there is **only one** active school — use it (no need to ask).
+3. If there are **multiple** active schools — try to infer from context \
+(subject name, language hints, prior conversation). If still unclear — ask the user \
+which school the homework belongs to.
+
+### 2.2 Find the subject
+
+1. Call `{TOOL_LIST_SUBJECTS}(school_id=<school_id>)` — get subjects for the determined school.
 2. Find the matching subject by name.
-3. If the subject is not found — ask the user, clarify the name and school.
+3. If the subject is not found — ask the user, clarify the name. \
+Also reconsider whether the correct school was determined in step 2.1.
 
 ---
 
@@ -173,6 +185,7 @@ The message should include:
 
 ## Tools used
 
+- `{TOOL_LIST_SCHOOLS}` — get active schools to determine the school
 - `{TOOL_LIST_SUBJECTS}` — find the subject
 - `{TOOL_LIST_TOPICS}` — find the subject topic
 - `{TOOL_CREATE_TOPIC}` — create a new topic

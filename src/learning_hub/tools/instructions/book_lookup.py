@@ -2,6 +2,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_BOOK,
     TOOL_LIST_BOOKS,
     TOOL_LIST_HOMEWORKS,
+    TOOL_LIST_SCHOOLS,
     TOOL_LIST_SUBJECTS,
 )
 
@@ -40,8 +41,13 @@ If the request only makes it clear that some textbook is needed, but not which o
 
 ### 2.1 Search by subject (if the subject is known)
 
-1. Call `{TOOL_LIST_SUBJECTS}` — find the `subject_id` for the subject.
-2. Call `{TOOL_LIST_BOOKS}(subject_id=<id>)` — get the list of books for that subject.
+1. Call `{TOOL_LIST_SCHOOLS}(is_active=true)` — get the list of active schools. \
+If there is only one school — use it to narrow down subjects. \
+If there are multiple — try to infer from context (subject name, language). \
+If still unclear — omit the `school_id` filter in the next step and search all subjects.
+2. Call `{TOOL_LIST_SUBJECTS}(school_id=<id>)` — find the `subject_id` for the subject \
+(use `school_id` filter if the school was determined, omit if not).
+3. Call `{TOOL_LIST_BOOKS}(subject_id=<id>)` — get the list of books for that subject.
 
 ### 2.2 Search across the entire library (if the subject is unclear)
 
@@ -154,6 +160,7 @@ Example: homework "Complete task 2 from lesson 5" → check `book_id` first; if 
 
 - `{TOOL_LIST_BOOKS}` — search books (filter by `subject_id`, `has_summary`)
 - `{TOOL_GET_BOOK}` — get a book by ID (contains `original_path`, `summary_path`, `contents_path`, `original_filename`)
+- `{TOOL_LIST_SCHOOLS}` — get active schools to narrow down subjects
 - `{TOOL_LIST_SUBJECTS}` — list of subjects for determining `subject_id`
 - `{TOOL_LIST_HOMEWORKS}` — list of homework (for request context)
 """

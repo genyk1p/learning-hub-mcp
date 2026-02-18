@@ -4,6 +4,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_BOOK,
     TOOL_GET_CONFIG,
     TOOL_LIST_BOOKS,
+    TOOL_LIST_SCHOOLS,
     TOOL_LIST_SUBJECTS,
     TOOL_UPDATE_BOOK,
 )
@@ -77,7 +78,9 @@ For each book, determine the subject:
 - by keywords/table of contents.
 
 ### 3.2 Checking against the subject database
-- Check existing subjects via `{TOOL_LIST_SUBJECTS}`.
+- Call `{TOOL_LIST_SCHOOLS}(is_active=true)` — get active schools to narrow down subjects.
+- Check existing subjects via `{TOOL_LIST_SUBJECTS}(school_id=<id>)` \
+(filter by school if only one is active, or if the school is clear from the book content).
 - If the subject is found — use its `subject_id`.
 
 ### 3.3 If the subject is undetermined or missing
@@ -198,6 +201,7 @@ If a user writes that they want to add books:
 - `{TOOL_GET_CONFIG}` — read config values (paths)
 - `{TOOL_ADD_BOOK}` — register a new book
 - `{TOOL_LIST_BOOKS}` — check existing books
+- `{TOOL_LIST_SCHOOLS}` — get active schools to narrow down subjects
 - `{TOOL_LIST_SUBJECTS}` — check existing subjects
 - `{TOOL_GET_BOOK}` — get book details
 - `{TOOL_UPDATE_BOOK}` — update book fields (e.g. set `contents_path` after markdown conversion)
