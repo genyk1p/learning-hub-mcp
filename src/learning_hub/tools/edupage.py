@@ -153,11 +153,13 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 if isinstance(raw, (int, float)):
                     grade_int = int(raw)
                 elif isinstance(raw, str):
+                    # Strip +/- suffix (e.g. "1+" → "1", "2-" → "2")
+                    cleaned = raw.strip().rstrip("+-")
                     # Try plain int first, then "3/4" pattern (take first number)
                     try:
-                        grade_int = int(raw)
+                        grade_int = int(cleaned)
                     except ValueError:
-                        match = re.match(r"^(\d)/(\d)$", raw)
+                        match = re.match(r"^(\d)/(\d)$", cleaned)
                         if match:
                             try:
                                 grade_int = int(match.group(1))
