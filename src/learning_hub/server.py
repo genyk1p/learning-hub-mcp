@@ -18,6 +18,7 @@ from learning_hub.tools.escalation import register_escalation_tools
 from learning_hub.tools.family_members import register_family_member_tools
 from learning_hub.tools.gateways import register_gateway_tools
 from learning_hub.tools.configs import register_config_tools
+from learning_hub.tools.readiness import register_readiness_tools
 from learning_hub.tools.instructions import register_instruction_tools
 
 # Create MCP server
@@ -40,6 +41,7 @@ register_escalation_tools(mcp)
 register_family_member_tools(mcp)
 register_gateway_tools(mcp)
 register_config_tools(mcp)
+register_readiness_tools(mcp)
 register_instruction_tools(mcp)
 
 

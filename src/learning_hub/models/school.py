@@ -33,7 +33,7 @@ class School(Base, TimestampMixin):
     grading_system: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Whether this school is currently active
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships
     subjects: Mapped[list["Subject"]] = relationship("Subject", back_populates="school")

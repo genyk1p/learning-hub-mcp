@@ -95,7 +95,9 @@ TOOL_LOOKUP_GATEWAY = "lookup_gateway"
 TOOL_GET_CONFIG = "get_config"
 TOOL_SET_CONFIG = "set_config"
 TOOL_LIST_CONFIGS = "list_configs"
-TOOL_LIST_REQUIRED_UNSET_CONFIGS = "list_required_unset_configs"
+
+# --- Readiness ---
+TOOL_CHECK_SYSTEM_READINESS = "check_system_readiness"
 
 # --- Escalation ---
 TOOL_GET_GRADES_PENDING_ESCALATION = "get_grades_pending_escalation"

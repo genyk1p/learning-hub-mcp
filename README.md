@@ -46,7 +46,7 @@ EDUPAGE_SCHOOL=CZ
 
 ## Config System (SQLite)
 
-Runtime configuration stored in the `configs` table. Managed via MCP tools (`get_config`, `set_config`, `list_configs`, `list_required_unset_configs`).
+Runtime configuration stored in the `configs` table. Managed via MCP tools (`get_config`, `set_config`, `list_configs`). Use `check_system_readiness` to verify all required configs are set.
 
 ### Entries with defaults (seeded by migration)
 
@@ -178,7 +178,9 @@ Add to your MCP client config:
 - `get_config` - get a config value by key
 - `set_config` - set a config value (existing keys only)
 - `list_configs` - list all config entries
-- `list_required_unset_configs` - list required configs not yet filled
+
+### Readiness
+- `check_system_readiness` - check if the system is properly configured (active schools, required configs)
 
 ### Escalation
 - `get_grades_pending_escalation` - get grades needing parent notification

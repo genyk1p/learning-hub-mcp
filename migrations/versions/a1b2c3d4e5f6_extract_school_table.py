@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column('code', sa.String(length=2), nullable=False),
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('grading_system', sa.Text(), nullable=True),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='1'),
+        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='0'),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('id'),
@@ -91,7 +91,7 @@ def upgrade() -> None:
         conn.execute(sa.text(
             "INSERT INTO schools (code, name, grading_system, is_active, "
             "created_at, updated_at) "
-            "VALUES (:code, :name, :gs, 1, datetime('now'), datetime('now'))"
+            "VALUES (:code, :name, :gs, 0, datetime('now'), datetime('now'))"
         ), {"code": code, "name": name, "gs": gs})
 
     # 3. Add school_id column (nullable for now)

@@ -19,7 +19,7 @@ class SchoolRepository:
         code: str,
         name: str,
         grading_system: str | None = None,
-        is_active: bool = True,
+        is_active: bool = False,
     ) -> School:
         """Create a new school."""
         school = School(

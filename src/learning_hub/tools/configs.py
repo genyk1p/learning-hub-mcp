@@ -9,7 +9,6 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_CONFIG,
     TOOL_SET_CONFIG,
     TOOL_LIST_CONFIGS,
-    TOOL_LIST_REQUIRED_UNSET_CONFIGS,
 )
 from learning_hub.utils import dt_to_str
 
@@ -99,26 +98,3 @@ def register_config_tools(mcp: FastMCP) -> None:
                 for e in entries
             ]
 
-    @mcp.tool(name=TOOL_LIST_REQUIRED_UNSET_CONFIGS, description="""List required configs that are not yet set.
-
-    Use this as a preflight check before running workflows.
-    If any required configs are missing, the agent should ask
-    the user to provide values and set them via set_config().
-
-    Returns:
-        List of required config entries with null values
-    """)
-    async def list_required_unset_configs() -> list[ConfigEntryResponse]:
-        async with AsyncSessionLocal() as session:
-            repo = ConfigEntryRepository(session)
-            entries = await repo.list_required_unset()
-            return [
-                ConfigEntryResponse(
-                    key=e.key,
-                    value=e.value,
-                    description=e.description,
-                    is_required=e.is_required,
-                    updated_at=dt_to_str(e.updated_at),
-                )
-                for e in entries
-            ]
