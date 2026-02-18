@@ -1,0 +1,12 @@
+{
+  "name": "learning-hub-bridge",
+  "version": "1.0.0",
+  "description": "OpenClaw bridge plugin for Learning Hub MCP server",
+  "private": true,
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

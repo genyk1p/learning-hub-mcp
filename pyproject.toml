@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "learning-hub-mcp"
+version = "0.1.0"
+description = "MCP server for student learning workflow with SQLite"
+authors = ["Yevhen Kukoba <geny.k1p@gmail.com>"]
+license = "PolyForm-Noncommercial-1.0.0"
+readme = "README.md"
+packages = [{include = "learning_hub", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastmcp = "^2.14.5"
+pydantic = "^2.12.5"
+pydantic-settings = "^2.12.0"
+sqlalchemy = "^2.0.46"
+alembic = "^1.18.3"
+aiosqlite = "^0.22.1"
+edupage-api = "^0.12.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.0.2"
+pytest-asyncio = "^1.3.0"
+pytest-cov = "^7.0.0"
+ruff = "^0.14.14"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+learning-hub-mcp = "learning_hub.server:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
