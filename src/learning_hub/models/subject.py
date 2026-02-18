@@ -5,9 +5,9 @@ from sqlalchemy import String, Boolean, Integer, ForeignKey, CheckConstraint, Un
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
-from learning_hub.models.enums import SchoolType
 
 if TYPE_CHECKING:
+    from learning_hub.models.school import School
     from learning_hub.models.subject_topic import SubjectTopic
     from learning_hub.models.grade import Grade
     from learning_hub.models.homework import Homework
@@ -29,7 +29,10 @@ class Subject(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # School this subject belongs to
-    school: Mapped[SchoolType] = mapped_column(nullable=False)
+    school_id: Mapped[int] = mapped_column(
+        ForeignKey("schools.id"),
+        nullable=False,
+    )
 
     # Subject name in school's language
     # CZ: "Matematika", "Dějepis", "Zeměpis"
@@ -58,19 +61,27 @@ class Subject(Base, TimestampMixin):
     )
 
     # Relationships
+    school: Mapped["School"] = relationship("School", back_populates="subjects")
     topics: Mapped[list["SubjectTopic"]] = relationship("SubjectTopic", back_populates="subject")
     grades: Mapped[list["Grade"]] = relationship("Grade", back_populates="subject")
     homeworks: Mapped[list["Homework"]] = relationship("Homework", back_populates="subject")
-    books: Mapped[list["Book"]] = relationship("Book", back_populates="subject", foreign_keys="Book.subject_id")
+    books: Mapped[list["Book"]] = relationship(
+        "Book", back_populates="subject", foreign_keys="Book.subject_id"
+    )
     current_book: Mapped["Book | None"] = relationship("Book", foreign_keys=[current_book_id])
     tutor: Mapped["FamilyMember | None"] = relationship("FamilyMember", foreign_keys=[tutor_id])
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint("school", "name", "grade_level", name="uq_subject_school_name_grade"),
-        CheckConstraint("grade_level IS NULL OR (grade_level >= 1 AND grade_level <= 20)", name="check_grade_level_range"),
+        UniqueConstraint(
+            "school_id", "name", "grade_level", name="uq_subject_school_name_grade"
+        ),
+        CheckConstraint(
+            "grade_level IS NULL OR (grade_level >= 1 AND grade_level <= 20)",
+            name="check_grade_level_range",
+        ),
     )
 
     def __repr__(self) -> str:
         grade_str = f" grade {self.grade_level}" if self.grade_level else ""
-        return f"<Subject(id={self.id}, school={self.school.value}, name={self.name!r}{grade_str})>"
+        return f"<Subject(id={self.id}, school_id={self.school_id}, name={self.name!r}{grade_str})>"

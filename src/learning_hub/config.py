@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     edupage_username: str = ""
     edupage_password: str = ""
     edupage_subdomain: str = ""
-    edupage_school: str = "CZ"  # SchoolType to bind EduPage grades to
+    edupage_school: str = "CZ"  # School code to bind EduPage grades to
 
     model_config = SettingsConfigDict(
         env_file=".env",

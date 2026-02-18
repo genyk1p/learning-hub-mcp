@@ -6,7 +6,7 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import GradeValue, SchoolType
+from learning_hub.models.enums import GradeValue
 from learning_hub.repositories.grade import GradeRepository
 from learning_hub.tools.tool_names import (
     TOOL_ADD_GRADE,
@@ -32,7 +32,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
     """Register grade-related tools."""
 
     grade_value_options = ", ".join(str(g.value) for g in GradeValue)
-    school_options = ", ".join(f'"{s.value}"' for s in SchoolType)
 
     @mcp.tool(name=TOOL_ADD_GRADE, description=f"""Add a new grade.
 
@@ -89,11 +88,11 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 rewarded=grade.rewarded,
             )
 
-    @mcp.tool(name=TOOL_LIST_GRADES, description=f"""List grades with filters.
+    @mcp.tool(name=TOOL_LIST_GRADES, description="""List grades with filters.
 
     Args:
         subject_id: Filter by subject ID (optional)
-        school: Filter by school type - one of: {school_options} (optional)
+        school_id: Filter by school ID (optional)
         date_from: Filter grades from this date, ISO format (optional)
         date_to: Filter grades until this date, ISO format (optional)
         rewarded: Filter by rewarded status (optional)
@@ -103,12 +102,11 @@ def register_grade_tools(mcp: FastMCP) -> None:
     """)
     async def list_grades(
         subject_id: int | None = None,
-        school: str | None = None,
+        school_id: int | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
         rewarded: bool | None = None,
     ) -> list[GradeResponse]:
-        school_enum = SchoolType(school) if school else None
         date_from_parsed = datetime.fromisoformat(date_from) if date_from else None
         date_to_parsed = datetime.fromisoformat(date_to) if date_to else None
 
@@ -116,7 +114,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
             repo = GradeRepository(session)
             grades = await repo.list(
                 subject_id=subject_id,
-                school=school_enum,
+                school_id=school_id,
                 date_from=date_from_parsed,
                 date_to=date_to_parsed,
                 rewarded=rewarded,

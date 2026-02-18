@@ -39,7 +39,7 @@ Extract as much information as possible from the user's message:
 | What to determine | Examples |
 |---|---|
 | **Subject** | math, nature studies, history, Czech language… |
-| **School** | CZ, UA (if known from context) |
+| **School** | school ID or name (if known from context) |
 | **Task description** | "exercise 5 on p. 42", "learn paragraph 3" |
 | **Topic** | "fractions", "verbs of motion", "paleozoic" |
 | **Deadline** | "by Friday", "for tomorrow", "before Feb 15" |
@@ -49,7 +49,7 @@ Extract as much information as possible from the user's message:
 
 ## Step 2 — Determine the subject (`subject_id`)
 
-1. Call `{TOOL_LIST_SUBJECTS}` (with `school` filter if the school is known from context).
+1. Call `{TOOL_LIST_SUBJECTS}` (with `school_id` filter if the school is known from context).
 2. Find the matching subject by name.
 3. If the subject is not found — ask the user, clarify the name and school.
 

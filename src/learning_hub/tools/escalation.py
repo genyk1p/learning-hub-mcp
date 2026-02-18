@@ -62,7 +62,7 @@ def register_escalation_tools(mcp: FastMCP) -> None:
                     subject_id=g.subject_id,
                     subject_name=g.subject.name,
                     subject_name_ru=g.subject.name_ru,
-                    school=g.subject.school.value,
+                    school=g.subject.school.code,
                     subject_topic_id=g.subject_topic_id,
                     subject_topic_description=(
                         g.subject_topic.description if g.subject_topic else None

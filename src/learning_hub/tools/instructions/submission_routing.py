@@ -54,8 +54,7 @@ Signs that the student is submitting homework:
 - The subject from the message matches the homework's subject.
 - The homework deadline is approaching (the student is hurrying to submit).
 
-If the match is unambiguous → **this is homework**. Determine the school from the `school` field \
-of the related subject and proceed to step 4.
+If the match is unambiguous → **this is homework**. Proceed to step 4.
 
 ---
 
@@ -71,9 +70,9 @@ which one the student is submitting. For example:
 
 ```
 You currently have open:
-1. Bonus task #42 — Fractions (Mathematics CZ)
+1. Bonus task #42 — Fractions (Mathematics)
 2. Homework: Czech language — exercise 5, p. 38 (deadline: tomorrow)
-3. Homework: Mathematics UA — problem 12 (deadline: Friday)
+3. Homework: Mathematics — problem 12 (deadline: Friday)
 
 Which one are you submitting?
 ```
@@ -90,7 +89,7 @@ Which one are you submitting?
 Pass to the next tool's context:
 - Work type (bonus / homework)
 - Assignment ID (`task_id` or `homework_id`)
-- School (if homework)
+- School ID (if homework)
 - The student's answer itself
 
 ---

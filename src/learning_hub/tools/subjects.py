@@ -4,7 +4,6 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import SchoolType
 from learning_hub.repositories.subject import SubjectRepository
 from learning_hub.tools.tool_names import (
     TOOL_CREATE_SUBJECT,
@@ -16,7 +15,7 @@ from learning_hub.tools.tool_names import (
 class SubjectResponse(BaseModel):
     """Subject response schema."""
     id: int
-    school: str
+    school_id: int
     name: str
     name_ru: str | None
     grade_level: int | None
@@ -28,12 +27,10 @@ class SubjectResponse(BaseModel):
 def register_subject_tools(mcp: FastMCP) -> None:
     """Register subject-related tools."""
 
-    school_options = ", ".join(f'"{s.value}"' for s in SchoolType)
-
-    @mcp.tool(name=TOOL_CREATE_SUBJECT, description=f"""Create a new school subject.
+    @mcp.tool(name=TOOL_CREATE_SUBJECT, description="""Create a new school subject.
 
     Args:
-        school: School type - one of: {school_options}
+        school_id: ID of the school this subject belongs to (from list_schools)
         name: Subject name in school's language
         name_ru: Subject name in Russian (optional)
         grade_level: Grade level 1-20 (optional)
@@ -42,24 +39,22 @@ def register_subject_tools(mcp: FastMCP) -> None:
         Created subject
     """)
     async def create_subject(
-        school: str,
+        school_id: int,
         name: str,
         name_ru: str | None = None,
         grade_level: int | None = None,
     ) -> SubjectResponse:
-        school_enum = SchoolType(school)
-
         async with AsyncSessionLocal() as session:
             repo = SubjectRepository(session)
             subject = await repo.create(
-                school=school_enum,
+                school_id=school_id,
                 name=name,
                 name_ru=name_ru,
                 grade_level=grade_level,
             )
             return SubjectResponse(
                 id=subject.id,
-                school=subject.school.value,
+                school_id=subject.school_id,
                 name=subject.name,
                 name_ru=subject.name_ru,
                 grade_level=subject.grade_level,
@@ -68,28 +63,26 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 tutor_id=subject.tutor_id,
             )
 
-    @mcp.tool(name=TOOL_LIST_SUBJECTS, description=f"""List school subjects.
+    @mcp.tool(name=TOOL_LIST_SUBJECTS, description="""List school subjects.
 
     Args:
-        school: Filter by school type - one of: {school_options} (optional)
+        school_id: Filter by school ID (optional)
         is_active: Filter by active status (optional)
 
     Returns:
         List of subjects
     """)
     async def list_subjects(
-        school: str | None = None,
+        school_id: int | None = None,
         is_active: bool | None = None,
     ) -> list[SubjectResponse]:
-        school_enum = SchoolType(school) if school else None
-
         async with AsyncSessionLocal() as session:
             repo = SubjectRepository(session)
-            subjects = await repo.list(school=school_enum, is_active=is_active)
+            subjects = await repo.list(school_id=school_id, is_active=is_active)
             return [
                 SubjectResponse(
                     id=s.id,
-                    school=s.school.value,
+                    school_id=s.school_id,
                     name=s.name,
                     name_ru=s.name_ru,
                     grade_level=s.grade_level,
@@ -144,7 +137,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 return None
             return SubjectResponse(
                 id=subject.id,
-                school=subject.school.value,
+                school_id=subject.school_id,
                 name=subject.name,
                 name_ru=subject.name_ru,
                 grade_level=subject.grade_level,

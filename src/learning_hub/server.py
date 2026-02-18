@@ -2,6 +2,7 @@
 
 from mcp.server.fastmcp import FastMCP
 
+from learning_hub.tools.schools import register_school_tools
 from learning_hub.tools.subjects import register_subject_tools
 from learning_hub.tools.subject_topics import register_subject_topic_tools
 from learning_hub.tools.grades import register_grade_tools
@@ -23,6 +24,7 @@ from learning_hub.tools.instructions import register_instruction_tools
 mcp = FastMCP("learning-hub")
 
 # Register all tools
+register_school_tools(mcp)
 register_subject_tools(mcp)
 register_subject_topic_tools(mcp)
 register_grade_tools(mcp)

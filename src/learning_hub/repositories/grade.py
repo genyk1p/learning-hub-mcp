@@ -12,7 +12,7 @@ from sqlalchemy.orm import joinedload
 
 from learning_hub.models.grade import Grade
 from learning_hub.models.subject import Subject
-from learning_hub.models.enums import SchoolType, GradeValue
+from learning_hub.models.enums import GradeValue
 
 
 class GradeRepository:
@@ -59,7 +59,7 @@ class GradeRepository:
     async def list(
         self,
         subject_id: int | None = None,
-        school: SchoolType | None = None,
+        school_id: int | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
         rewarded: bool | None = None,
@@ -70,8 +70,8 @@ class GradeRepository:
         if subject_id is not None:
             query = query.where(Grade.subject_id == subject_id)
 
-        if school is not None:
-            query = query.join(Subject).where(Subject.school == school)
+        if school_id is not None:
+            query = query.join(Subject).where(Subject.school_id == school_id)
 
         if date_from is not None:
             query = query.where(Grade.date >= date_from)
@@ -112,7 +112,10 @@ class GradeRepository:
         bad_grades = [g for g in GradeValue if g.value >= threshold]
         query = (
             select(Grade)
-            .options(joinedload(Grade.subject), joinedload(Grade.subject_topic))
+            .options(
+                joinedload(Grade.subject).joinedload(Subject.school),
+                joinedload(Grade.subject_topic),
+            )
             .where(Grade.escalated_at.is_(None))
             .where(Grade.grade_value.in_(bad_grades))
             .order_by(Grade.date.desc())

@@ -17,6 +17,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from learning_hub.models.base import Base
+from learning_hub.models.school import School
 from learning_hub.models.subject import Subject
 from learning_hub.models.grade import Grade
 from learning_hub.models.subject_topic import SubjectTopic

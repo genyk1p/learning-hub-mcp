@@ -17,14 +17,15 @@ TOPIC_REVIEW_CURATION_INSTRUCTIONS = f"""\
 Close TopicReviews for **non-academic subjects** — those where
 reinforcement/review through bonus tasks doesn't make sense.
 
-Examples of such subjects:
-- Tělesná výchova (PE) — substrings: `"TV"`, `"Těles"`
-- Pracovní činnosti (crafts/workshop) — substring: `"Prac"`
-- Hudební výchova (music) — substring: `"Hudeb"`
-- Výtvarná výchova (art) — substring: `"Výtvar"`
+Examples of such subjects (any language):
+- PE / physical education
+- Crafts / workshop
+- Music
+- Art / drawing
 
 This is not an exhaustive list. If you encounter another clearly non-academic \
-subject — close it using the same principle.
+subject — close it using the same principle. \
+Judge by the subject name regardless of language.
 
 ---
 

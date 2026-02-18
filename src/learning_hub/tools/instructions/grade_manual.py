@@ -4,7 +4,9 @@ from learning_hub.tools.tool_names import (
     TOOL_CREATE_TOPIC,
     TOOL_GET_CONFIG,
     TOOL_GET_GRADE_TO_MINUTES_MAP,
+    TOOL_GET_SCHOOL,
     TOOL_LIST_GRADES,
+    TOOL_LIST_SCHOOLS,
     TOOL_LIST_SUBJECTS,
     TOOL_LIST_TOPICS,
 )
@@ -40,7 +42,7 @@ Extract from the message:
 | What to determine | Examples |
 |---|---|
 | **Subject** | math, science, history, Czech… |
-| **School** | CZ, UA (if clear from context) |
+| **School** | school ID or code (if clear from context) |
 | **Grade** | number on the school's scale |
 | **Date** | "today", "yesterday", "on Friday", specific date |
 | **Topic** | "fractions", "verbs of motion" — optional |
@@ -52,7 +54,8 @@ Extract from the message:
 
 Learning Hub uses the **European 5-point scale** (1 = best, 5 = worst).
 
-Current school scales are described in `USER.md` (section "Grade scales"). \
+Each school has a `grading_system` field describing its scale and conversion rules. \
+Call `{TOOL_LIST_SCHOOLS}()` or `{TOOL_GET_SCHOOL}(school_id=...)` to check. \
 If the school's scale matches MCP — no conversion needed. \
 If it doesn't — **convert** to European 1–5 before recording.
 
@@ -63,7 +66,7 @@ If in doubt — **ask** the user: \
 
 ## Step 3 — Determine the subject (`subject_id`)
 
-1. Call `{TOOL_LIST_SUBJECTS}` (with `school` filter if the school is known).
+1. Call `{TOOL_LIST_SUBJECTS}` (with `school_id` filter if the school is known).
 2. Find the matching subject by name.
 3. If the subject is not found — ask the user.
 
@@ -113,7 +116,7 @@ Show the user before recording:
 Grade
 
 Subject: <name>
-School: <CZ/UA>
+School: <school name>
 Grade: <value> (<verbal>)
 Date: <date>
 Topic: <topic or "not specified">
@@ -160,6 +163,7 @@ Log the issue (date, context, error, status: open).
 ## Tools used
 
 - `{TOOL_GET_CONFIG}` — get issue log path
+- `{TOOL_LIST_SCHOOLS}` / `{TOOL_GET_SCHOOL}` — get school grading system
 - `{TOOL_LIST_SUBJECTS}` — find the subject
 - `{TOOL_LIST_TOPICS}` — find the topic
 - `{TOOL_CREATE_TOPIC}` — create a topic

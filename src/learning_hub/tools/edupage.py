@@ -8,9 +8,10 @@ from pydantic import BaseModel
 
 from learning_hub.config import settings
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import SchoolType, GradeValue
+from learning_hub.models.enums import GradeValue
 
 # Import all models for SQLAlchemy relationship resolution
+from learning_hub.models.school import School  # noqa: F401
 from learning_hub.models.subject import Subject  # noqa: F401
 from learning_hub.models.subject_topic import SubjectTopic  # noqa: F401
 from learning_hub.models.grade import Grade  # noqa: F401
@@ -18,6 +19,7 @@ from learning_hub.models.bonus_task import BonusTask  # noqa: F401
 from learning_hub.models.homework import Homework  # noqa: F401
 from learning_hub.models.week import Week  # noqa: F401
 
+from learning_hub.repositories.school import SchoolRepository
 from learning_hub.repositories.subject import SubjectRepository
 from learning_hub.repositories.subject_topic import SubjectTopicRepository
 from learning_hub.repositories.grade import GradeRepository
@@ -132,9 +134,25 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 errors=[f"Failed to fetch grades: {e}"],
             )
 
-        school = SchoolType(settings.edupage_school)
-
+        # Look up school by code from config
         async with AsyncSessionLocal() as session:
+            school_repo = SchoolRepository(session)
+            school = await school_repo.get_by_code(settings.edupage_school)
+            if school is None:
+                return GradesSyncResult(
+                    grades_fetched=len(edupage_grades),
+                    grades_created=0,
+                    grades_skipped=0,
+                    subjects_created=0,
+                    topics_created=0,
+                    reviews_created=0,
+                    errors=[
+                        f"School with code '{settings.edupage_school}' not found. "
+                        "Create it first with create_school tool."
+                    ],
+                )
+            school_id = school.id
+
             subject_repo = SubjectRepository(session)
             topic_repo = SubjectTopicRepository(session)
             grade_repo = GradeRepository(session)
@@ -180,7 +198,7 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 # Find or create subject (use full name from subjects map)
                 full_name = subject_names.get(eg.subject_id, eg.subject_name)
                 subject, created = await subject_repo.get_or_create(
-                    school=school,
+                    school_id=school_id,
                     name=full_name,
                 )
                 if created:
@@ -310,9 +328,23 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                 errors=[f"Failed to fetch notifications: {e}"],
             )
 
-        school = SchoolType(settings.edupage_school)
-
+        # Look up school by code from config
         async with AsyncSessionLocal() as session:
+            school_repo = SchoolRepository(session)
+            school = await school_repo.get_by_code(settings.edupage_school)
+            if school is None:
+                return HomeworksSyncResult(
+                    homeworks_fetched=len(homework_events),
+                    homeworks_created=0,
+                    homeworks_skipped=0,
+                    subjects_created=0,
+                    errors=[
+                        f"School with code '{settings.edupage_school}' not found. "
+                        "Create it first with create_school tool."
+                    ],
+                )
+            school_id = school.id
+
             subject_repo = SubjectRepository(session)
             homework_repo = HomeworkRepository(session)
 
@@ -340,12 +372,14 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                     continue
                 full_name = subject_names.get(predmet_id)
                 if not full_name:
-                    errors.append(f"Unknown subject {predmet_id} for homework {edupage_id}")
+                    errors.append(
+                        f"Unknown subject {predmet_id} for homework {edupage_id}"
+                    )
                     homeworks_skipped += 1
                     continue
 
                 subject, created = await subject_repo.get_or_create(
-                    school=school,
+                    school_id=school_id,
                     name=full_name,
                 )
                 if created:

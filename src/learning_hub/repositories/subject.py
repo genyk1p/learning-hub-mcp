@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from learning_hub.models.subject import Subject
-from learning_hub.models.enums import SchoolType
 
 
 class SubjectRepository:
@@ -17,7 +16,7 @@ class SubjectRepository:
 
     async def create(
         self,
-        school: SchoolType,
+        school_id: int,
         name: str,
         name_ru: str | None = None,
         grade_level: int | None = None,
@@ -25,7 +24,7 @@ class SubjectRepository:
     ) -> Subject:
         """Create a new subject."""
         subject = Subject(
-            school=school,
+            school_id=school_id,
             name=name,
             name_ru=name_ru,
             grade_level=grade_level,
@@ -40,43 +39,43 @@ class SubjectRepository:
         """Get subject by ID."""
         return await self.session.get(Subject, subject_id)
 
-    async def get_by_name(self, school: SchoolType, name: str) -> Subject | None:
-        """Get subject by school and name."""
+    async def get_by_name(self, school_id: int, name: str) -> Subject | None:
+        """Get subject by school_id and name."""
         query = select(Subject).where(
-            Subject.school == school,
+            Subject.school_id == school_id,
             Subject.name == name,
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_or_create(self, school: SchoolType, name: str) -> tuple[Subject, bool]:
+    async def get_or_create(self, school_id: int, name: str) -> tuple[Subject, bool]:
         """Get subject by name or create if not exists.
 
         Returns:
             Tuple of (subject, created) where created is True if new subject was created.
         """
-        subject = await self.get_by_name(school, name)
+        subject = await self.get_by_name(school_id, name)
         if subject is not None:
             return subject, False
 
-        subject = await self.create(school=school, name=name)
+        subject = await self.create(school_id=school_id, name=name)
         return subject, True
 
     async def list(
         self,
-        school: SchoolType | None = None,
+        school_id: int | None = None,
         is_active: bool | None = None,
     ) -> list[Subject]:
         """List subjects with optional filters."""
         query = select(Subject)
 
-        if school is not None:
-            query = query.where(Subject.school == school)
+        if school_id is not None:
+            query = query.where(Subject.school_id == school_id)
 
         if is_active is not None:
             query = query.where(Subject.is_active == is_active)
 
-        query = query.order_by(Subject.school, Subject.name)
+        query = query.order_by(Subject.school_id, Subject.name)
 
         result = await self.session.execute(query)
         return list(result.scalars().all())

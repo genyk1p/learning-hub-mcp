@@ -3,30 +3,6 @@
 import enum
 
 
-class SchoolType(str, enum.Enum):
-    """School type by country (ISO 3166-1 alpha-2 codes)."""
-    # Current
-    UA = "UA"  # Ukraine
-    CZ = "CZ"  # Czech Republic
-    # Europe
-    DE = "DE"  # Germany
-    FR = "FR"  # France
-    GB = "GB"  # United Kingdom
-    ES = "ES"  # Spain
-    IT = "IT"  # Italy
-    PL = "PL"  # Poland
-    NL = "NL"  # Netherlands
-    # Americas
-    US = "US"  # United States
-    CA = "CA"  # Canada
-    AR = "AR"  # Argentina
-    BR = "BR"  # Brazil
-    # Asia-Pacific
-    AU = "AU"  # Australia
-    CN = "CN"  # China
-    IN = "IN"  # India
-
-
 class GradeValue(int, enum.Enum):
     """Grade values: 1 (best) to 5 (worst)."""
     EXCELLENT = 1

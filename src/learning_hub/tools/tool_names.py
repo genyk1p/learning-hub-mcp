@@ -5,6 +5,12 @@ If a tool is renamed here, all instruction texts using the constant
 will update automatically via f-strings.
 """
 
+# --- Schools ---
+TOOL_CREATE_SCHOOL = "create_school"
+TOOL_LIST_SCHOOLS = "list_schools"
+TOOL_GET_SCHOOL = "get_school"
+TOOL_UPDATE_SCHOOL = "update_school"
+
 # --- Subjects ---
 TOOL_CREATE_SUBJECT = "create_subject"
 TOOL_LIST_SUBJECTS = "list_subjects"

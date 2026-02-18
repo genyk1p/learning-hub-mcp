@@ -26,6 +26,7 @@ async def session():
     # Import all models so Base.metadata knows about them
     from learning_hub.models.family_member import FamilyMember  # noqa: F401
     from learning_hub.models.gateway import Gateway  # noqa: F401
+    from learning_hub.models.school import School  # noqa: F401
     from learning_hub.models.subject import Subject  # noqa: F401
     from learning_hub.models.subject_topic import SubjectTopic  # noqa: F401
     from learning_hub.models.grade import Grade  # noqa: F401

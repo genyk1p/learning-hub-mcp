@@ -80,7 +80,7 @@ This is needed so that when submitting there is no ambiguity about which task th
 ```
 Bonus task #42
 
-Subject: Mathematics (CZ)
+Subject: Mathematics
 Topic: Fractions — addition and subtraction
 
 Task: Explain in your own words why you need a common denominator \
