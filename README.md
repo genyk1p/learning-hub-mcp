@@ -54,8 +54,8 @@ Runtime configuration stored in the `configs` table. Managed via MCP tools (`get
 |-----|---------|-------------|
 | `GRADE_MINUTES_MAP` | `{"1":15,"2":10,"3":0,"4":-20,"5":-25}` | Grade → game minutes conversion |
 | `TOPIC_REVIEW_THRESHOLDS` | `{"2":1,"3":2,"4":3,"5":3}` | Repetitions needed per grade before TopicReview is closed |
-| `HOMEWORK_BONUS_MINUTES_ONTIME` | `5` | Bonus minutes for on-time homework |
-| `HOMEWORK_BONUS_MINUTES_OVERDUE` | `-5` | Penalty minutes for overdue homework |
+| `HOMEWORK_BONUS_MINUTES_ONTIME` | `10` | Bonus minutes for on-time homework |
+| `HOMEWORK_BONUS_MINUTES_OVERDUE` | `-10` | Penalty minutes for overdue homework |
 | `BONUS_FUND_WEEKLY_TOPUP` | `15` | Bonus task slots added each week |
 | `DEFAULT_DEADLINE_TIME` | `20:00` | Default time when deadline has only a date |
 
