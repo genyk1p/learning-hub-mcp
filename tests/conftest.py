@@ -1,6 +1,5 @@
 """Shared fixtures for tests."""
 
-import pytest
 import pytest_asyncio
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker

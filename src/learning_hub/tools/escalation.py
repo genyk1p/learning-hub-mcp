@@ -72,7 +72,7 @@ def register_escalation_tools(mcp: FastMCP) -> None:
                 for g in grades
             ]
 
-    @mcp.tool(description="""Mark grades as escalated (adult was notified).
+    @mcp.tool(name=TOOL_MARK_GRADES_ESCALATED, description="""Mark grades as escalated (adult was notified).
 
     Sets escalated_at to current timestamp for the given grade IDs.
     Use this after notifying the adult about bad grades.

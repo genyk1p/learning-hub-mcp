@@ -11,6 +11,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_BOOKS_WORKFLOW_INSTRUCTIONS,
     TOOL_GET_GRADE_MANUAL_INSTRUCTIONS,
     TOOL_GET_HOMEWORK_MANUAL_INSTRUCTIONS,
+    TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS,
     TOOL_GET_STUDENT_REQUEST_ROUTER_INSTRUCTIONS,
     TOOL_GET_BONUS_TASK_ASSIGNMENT_INSTRUCTIONS,
     TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS,
@@ -37,6 +38,7 @@ from learning_hub.tools.instructions.homework_evaluation import (
     HOMEWORK_EVALUATION_INSTRUCTIONS,
 )
 from learning_hub.tools.instructions.grade_manual import GRADE_MANUAL_INSTRUCTIONS
+from learning_hub.tools.instructions.learning_system import LEARNING_SYSTEM_INSTRUCTIONS
 from learning_hub.tools.instructions.topic_review_curation import (
     TOPIC_REVIEW_CURATION_INSTRUCTIONS,
 )
@@ -159,3 +161,17 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       Returns a curation algorithm with examples of irrelevant subjects.""")
     async def get_topic_review_curation_instructions() -> str:
         return TOPIC_REVIEW_CURATION_INSTRUCTIONS
+
+    @mcp.tool(name=TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS, description="""\
+      Get the master instruction for the entire Learning Hub system.
+
+      Call this tool when any user (student, parent, tutor, admin) sends
+      a message related to learning: homework, grades, game minutes,
+      bonus tasks, textbooks, deadlines, weekly calculations, or any
+      question about the learning process rules.
+
+      Returns the complete behavioral framework: user identification,
+      access control, communication rules, game time calculation,
+      homework/grade workflows, and bonus fund mechanics.""")
+    async def get_learning_system_instructions() -> str:
+        return LEARNING_SYSTEM_INSTRUCTIONS
