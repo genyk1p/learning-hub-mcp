@@ -32,7 +32,18 @@ class GradeRepository:
         edupage_id: int | None = None,
         source: GradeSource = GradeSource.MANUAL,
     ) -> Grade:
-        """Create a new grade."""
+        """Create a new grade.
+
+        Raises ValueError if a grade for the same bonus_task_id already exists.
+        """
+        if bonus_task_id is not None:
+            existing = await self._get_by_bonus_task_id(bonus_task_id)
+            if existing is not None:
+                raise ValueError(
+                    f"Grade already exists for bonus_task_id={bonus_task_id} "
+                    f"(grade id={existing.id})"
+                )
+
         grade = Grade(
             subject_id=subject_id,
             grade_value=grade_value,
@@ -47,6 +58,12 @@ class GradeRepository:
         await self.session.commit()
         await self.session.refresh(grade)
         return grade
+
+    async def _get_by_bonus_task_id(self, bonus_task_id: int) -> Grade | None:
+        """Get grade by bonus_task_id (for uniqueness check)."""
+        query = select(Grade).where(Grade.bonus_task_id == bonus_task_id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
 
     async def get_by_id(self, grade_id: int) -> Grade | None:
         """Get grade by ID."""

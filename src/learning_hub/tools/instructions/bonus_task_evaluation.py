@@ -1,12 +1,9 @@
-from learning_hub.tools.config_vars import CFG_ISSUES_LOG, CFG_TOPIC_REVIEW_THRESHOLDS
+from learning_hub.tools.config_vars import CFG_ISSUES_LOG
 from learning_hub.tools.tool_names import (
     TOOL_ADD_GRADE,
     TOOL_APPLY_BONUS_TASK_RESULT,
     TOOL_GET_BONUS_TASK,
     TOOL_GET_CONFIG,
-    TOOL_GET_PENDING_REVIEWS_FOR_TOPIC,
-    TOOL_INCREMENT_TOPIC_REPEAT_COUNT,
-    TOOL_MARK_TOPIC_REINFORCED,
 )
 
 BONUS_TASK_EVALUATION_INSTRUCTIONS = f"""\
@@ -68,7 +65,12 @@ Call `{TOOL_APPLY_BONUS_TASK_RESULT}(task_id=<id>)`.
 This tool:
 - Marks the BonusTask as `completed`
 - Deducts a slot from the bonus fund
-- Automatically increments `repeat_count` on pending TopicReview for the same topic
+- Automatically increments `repeat_count` on pending TopicReviews for the same topic
+- **Automatically closes** TopicReviews that reached the repetition threshold \
+(from `TOPIC_REVIEW_THRESHOLDS` config) — no manual check needed
+
+Check the response field `topic_reviews_reinforced` — it lists any reviews \
+that were auto-closed in this call.
 
 ### 3.2 Record the grade
 
@@ -79,18 +81,6 @@ Call `{TOOL_ADD_GRADE}(subject_id=<id>, grade_value=<1-3>, date=<ISO>, bonus_tas
 - `date` — current date.
 - `bonus_task_id` — task id.
 
-### 3.3 Check TopicReview closure
-
-Call `{TOOL_GET_PENDING_REVIEWS_FOR_TOPIC}(subject_topic_id=<id>)`.
-
-For each pending review, check whether the repetition threshold has been reached.
-
-Get the threshold map: call `{TOOL_GET_CONFIG}(key="{CFG_TOPIC_REVIEW_THRESHOLDS}")`.
-The value is a JSON map: grade_value → required_repetitions (e.g. {{"2":1,"3":2,"4":3,"5":3}}).
-
-If `repeat_count >= required repetitions for that grade` — \
-call `{TOOL_MARK_TOPIC_REINFORCED}(review_id=<id>)`.
-
 ---
 
 ## Step 4 — Confirm the result to the student
@@ -98,7 +88,7 @@ call `{TOOL_MARK_TOPIC_REINFORCED}(review_id=<id>)`.
 **Only after** successful completion of step 3 — inform the student:
 - Task accepted
 - Grade (which one)
-- If TopicReview was closed — "topic has been reinforced"
+- If `topic_reviews_reinforced` is not empty — "topic has been reinforced"
 
 ---
 
@@ -122,11 +112,8 @@ Log the issue there (date, context, error, status: open).
 
 ## Tools used
 
-- `{TOOL_GET_CONFIG}` — read config values (thresholds, issue log path)
+- `{TOOL_GET_CONFIG}` — read config values (issue log path)
 - `{TOOL_GET_BONUS_TASK}` — load the task
-- `{TOOL_APPLY_BONUS_TASK_RESULT}` — close the task + update TopicReview
+- `{TOOL_APPLY_BONUS_TASK_RESULT}` — close the task + update & auto-close TopicReview
 - `{TOOL_ADD_GRADE}` — record the grade
-- `{TOOL_GET_PENDING_REVIEWS_FOR_TOPIC}` — check TopicReview status
-- `{TOOL_INCREMENT_TOPIC_REPEAT_COUNT}` — increment repetition counter (if needed manually)
-- `{TOOL_MARK_TOPIC_REINFORCED}` — close TopicReview
 """

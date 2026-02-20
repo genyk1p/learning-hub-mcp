@@ -64,20 +64,23 @@ def register_grade_tools(mcp: FastMCP) -> None:
         subject_topic_id: int | None = None,
         bonus_task_id: int | None = None,
         homework_id: int | None = None,
-    ) -> GradeResponse:
+    ) -> GradeResponse | dict:
         grade_enum = GradeValue(grade_value)
         date_parsed = datetime.fromisoformat(date)
 
         async with AsyncSessionLocal() as session:
             repo = GradeRepository(session)
-            grade = await repo.create(
-                subject_id=subject_id,
-                grade_value=grade_enum,
-                date=date_parsed,
-                subject_topic_id=subject_topic_id,
-                bonus_task_id=bonus_task_id,
-                homework_id=homework_id,
-            )
+            try:
+                grade = await repo.create(
+                    subject_id=subject_id,
+                    grade_value=grade_enum,
+                    date=date_parsed,
+                    subject_topic_id=subject_topic_id,
+                    bonus_task_id=bonus_task_id,
+                    homework_id=homework_id,
+                )
+            except ValueError as e:
+                return {"error": str(e)}
             return GradeResponse(
                 id=grade.id,
                 subject_id=grade.subject_id,

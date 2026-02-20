@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import BonusTaskStatus, TopicReviewStatus
 from learning_hub.repositories.bonus_task import BonusTaskRepository
+from learning_hub.repositories.config_entry import ConfigEntryRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
 from learning_hub.tools.tool_names import (
     TOOL_CREATE_BONUS_TASK,
@@ -295,8 +296,9 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
     @mcp.tool(name=TOOL_APPLY_BONUS_TASK_RESULT, description="""Complete a bonus task and optionally update related topic reviews.
 
     1. Marks the bonus task as completed (deducts one slot from fund)
-    2. If count_repeat is true: finds all pending TopicReviews for the same subject topic
-       and increments repeat_count on each
+    2. If count_repeat is true: finds all pending TopicReviews for the same subject topic,
+       increments repeat_count on each, and auto-closes reviews that reached
+       the repetition threshold (from TOPIC_REVIEW_THRESHOLDS config)
 
     Args:
         task_id: ID of the bonus task to complete
@@ -304,7 +306,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
         quality_notes: Optional notes about quality of work done
 
     Returns:
-        Completed task info + list of updated topic reviews
+        Completed task info + list of updated topic reviews + list of auto-reinforced reviews
     """)
     async def apply_bonus_task_result(
         task_id: int,
@@ -324,20 +326,44 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             assert task is not None
             assert fund is not None
 
-            # Find and increment pending reviews for the same topic
             updated_reviews = []
+            auto_reinforced = []
+
             if count_repeat:
+                # Read thresholds config for auto-close
+                config_repo = ConfigEntryRepository(session)
+                thresholds = await config_repo.get_json_value(
+                    "TOPIC_REVIEW_THRESHOLDS",
+                ) or {}
+
                 pending_reviews = await review_repo.list(
                     subject_topic_id=task.subject_topic_id,
                     status=TopicReviewStatus.PENDING,
                 )
                 for review in pending_reviews:
                     updated = await review_repo.increment_repeat_count(review.id)
-                    if updated is not None:
-                        updated_reviews.append({
+                    if updated is None:
+                        continue
+
+                    updated_reviews.append({
+                        "review_id": updated.id,
+                        "repeat_count": updated.repeat_count,
+                        "topic_description": updated.subject_topic.description,
+                    })
+
+                    # Auto-close if threshold reached
+                    grade_val = str(updated.grade.grade_value.value)
+                    required = thresholds.get(grade_val)
+                    if required is not None and updated.repeat_count >= required:
+                        reinforced = await review_repo.mark_reinforced(updated.id)
+                        if reinforced is None:
+                            continue
+                        auto_reinforced.append({
                             "review_id": updated.id,
-                            "repeat_count": updated.repeat_count,
                             "topic_description": updated.subject_topic.description,
+                            "grade_value": updated.grade.grade_value.value,
+                            "repeat_count": updated.repeat_count,
+                            "threshold": required,
                         })
 
             return {
@@ -353,4 +379,5 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 "fund_name": fund.name,
                 "fund_available_tasks": fund.available_tasks,
                 "topic_reviews_updated": updated_reviews,
+                "topic_reviews_reinforced": auto_reinforced,
             }
