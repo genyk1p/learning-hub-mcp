@@ -2,11 +2,11 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, DateTime, Boolean, ForeignKey
+from sqlalchemy import Integer, DateTime, Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
-from learning_hub.models.enums import GradeValue
+from learning_hub.models.enums import GradeSource, GradeValue
 
 if TYPE_CHECKING:
     from learning_hub.models.subject import Subject
@@ -66,6 +66,11 @@ class Grade(Base, TimestampMixin):
 
     # Date when escalation was performed (notifying adult about bad grade)
     escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # How this grade was entered: auto (EduPage sync, etc.) or manual (human/agent)
+    source: Mapped[GradeSource] = mapped_column(
+        String(10), default=GradeSource.MANUAL, nullable=False
+    )
 
     # External ID from EduPage (for sync deduplication)
     edupage_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)

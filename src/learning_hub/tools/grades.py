@@ -26,6 +26,7 @@ class GradeResponse(BaseModel):
     bonus_task_id: int | None
     homework_id: int | None
     rewarded: bool
+    source: str
 
 
 def register_grade_tools(mcp: FastMCP) -> None:
@@ -86,6 +87,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
                 rewarded=grade.rewarded,
+                source=grade.source.value,
             )
 
     @mcp.tool(name=TOOL_LIST_GRADES, description="""List grades with filters.
@@ -129,6 +131,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     bonus_task_id=g.bonus_task_id,
                     homework_id=g.homework_id,
                     rewarded=g.rewarded,
+                    source=g.source.value,
                 )
                 for g in grades
             ]
@@ -163,4 +166,5 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
                 rewarded=grade.rewarded,
+                source=grade.source.value,
             )

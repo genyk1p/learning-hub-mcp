@@ -12,7 +12,7 @@ from sqlalchemy.orm import joinedload
 
 from learning_hub.models.grade import Grade
 from learning_hub.models.subject import Subject
-from learning_hub.models.enums import GradeValue
+from learning_hub.models.enums import GradeSource, GradeValue
 
 
 class GradeRepository:
@@ -30,6 +30,7 @@ class GradeRepository:
         bonus_task_id: int | None = None,
         homework_id: int | None = None,
         edupage_id: int | None = None,
+        source: GradeSource = GradeSource.MANUAL,
     ) -> Grade:
         """Create a new grade."""
         grade = Grade(
@@ -40,6 +41,7 @@ class GradeRepository:
             bonus_task_id=bonus_task_id,
             homework_id=homework_id,
             edupage_id=edupage_id,
+            source=source,
         )
         self.session.add(grade)
         await self.session.commit()
@@ -105,8 +107,10 @@ class GradeRepository:
         return grade
 
     async def list_pending_escalation(self, threshold: int) -> list[Grade]:
-        """List grades that need escalation (grade_value >= threshold, not yet escalated).
+        """List auto-synced grades that need escalation.
 
+        Returns grades where source=AUTO, grade_value >= threshold,
+        and escalated_at is NULL. Manual grades are excluded.
         Eager-loads subject and subject_topic for full context.
         """
         bad_grades = [g for g in GradeValue if g.value >= threshold]
@@ -118,6 +122,7 @@ class GradeRepository:
             )
             .where(Grade.escalated_at.is_(None))
             .where(Grade.grade_value.in_(bad_grades))
+            .where(Grade.source == GradeSource.AUTO)
             .order_by(Grade.date.desc())
         )
         result = await self.session.execute(query)

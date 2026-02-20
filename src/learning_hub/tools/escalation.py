@@ -37,7 +37,8 @@ def register_escalation_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(name=TOOL_GET_GRADES_PENDING_ESCALATION, description="""Get grades that need escalation (notifying adult about bad grades).
 
-    Returns grades where escalated_at is NULL and grade_value >= threshold.
+    Returns auto-synced grades (e.g. from EduPage) where escalated_at is NULL
+    and grade_value >= threshold. Manual grades are excluded.
     Each grade includes full context: subject name, school, topic description.
 
     Args:

@@ -9,6 +9,7 @@ from mcp.server.fastmcp import FastMCP
 from learning_hub.tools.tool_names import (
     TOOL_GET_BOOK_LOOKUP_INSTRUCTIONS,
     TOOL_GET_BOOKS_WORKFLOW_INSTRUCTIONS,
+    TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS,
     TOOL_GET_GRADE_MANUAL_INSTRUCTIONS,
     TOOL_GET_HOMEWORK_MANUAL_INSTRUCTIONS,
     TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS,
@@ -37,6 +38,7 @@ from learning_hub.tools.instructions.bonus_task_evaluation import (
 from learning_hub.tools.instructions.homework_evaluation import (
     HOMEWORK_EVALUATION_INSTRUCTIONS,
 )
+from learning_hub.tools.instructions.grade_escalation import GRADE_ESCALATION_INSTRUCTIONS
 from learning_hub.tools.instructions.grade_manual import GRADE_MANUAL_INSTRUCTIONS
 from learning_hub.tools.instructions.learning_system import LEARNING_SYSTEM_INSTRUCTIONS
 from learning_hub.tools.instructions.topic_review_curation import (
@@ -58,6 +60,20 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       verify the grading scale, check for duplicates, and record the grade.""")
     async def get_grade_manual_instructions() -> str:
         return GRADE_MANUAL_INSTRUCTIONS
+
+    @mcp.tool(name=TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS, description="""\
+      Get step-by-step instructions for grade escalation — notifying responsible
+      adults about bad grades.
+
+      Call this tool after automatic grade sync (e.g. EduPage), typically from
+      a daily cron job. Do NOT use after manual grade entry.
+      Covers: fetching pending grades, determining recipients
+      (subject tutor or admin), composing messages, sending,
+      and marking as escalated.
+
+      Returns a detailed escalation algorithm.""")
+    async def get_grade_escalation_instructions() -> str:
+        return GRADE_ESCALATION_INSTRUCTIONS
 
     @mcp.tool(name=TOOL_GET_BOOK_LOOKUP_INSTRUCTIONS, description="""\
       Get step-by-step instructions for finding and delivering educational materials (textbooks).

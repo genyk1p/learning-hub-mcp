@@ -26,6 +26,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_BOOK_LOOKUP_INSTRUCTIONS,
     TOOL_GET_BOOKS_WORKFLOW_INSTRUCTIONS,
     TOOL_GET_CONFIG,
+    TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS,
     TOOL_GET_GRADE_MANUAL_INSTRUCTIONS,
     TOOL_GET_GRADE_TO_MINUTES_MAP,
     TOOL_GET_HOMEWORK_EVALUATION_INSTRUCTIONS,
@@ -237,10 +238,10 @@ and act on the returned algorithm.
 
 ### Grade 3/4/5 escalation
 
-Escalation is handled by a separate daily cron job.
-
-<!-- TODO: replace cron with a dedicated escalation instruction tool \
-(escalate to subject tutor or admin). Agent: ignore this comment. -->
+Escalation notifies the responsible adult about bad grades from automatic sync. \
+The algorithm is implemented in an MCP instruction tool:
+- **first call** `{TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS}()` \
+and act on the returned algorithm.
 
 ---
 

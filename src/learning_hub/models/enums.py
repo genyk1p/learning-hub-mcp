@@ -39,6 +39,12 @@ class TopicReviewStatus(str, enum.Enum):
     REINFORCED = "reinforced"  # Topic was reinforced through bonus tasks
 
 
+class GradeSource(str, enum.Enum):
+    """How the grade was entered into the system."""
+    AUTO = "auto"  # Automatic sync (EduPage, etc.)
+    MANUAL = "manual"  # Manual entry by human or agent
+
+
 class ChannelType(str, enum.Enum):
     """Communication channel type (matches OpenClaw channel names)."""
     TELEGRAM = "telegram"

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from learning_hub.config import settings
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import GradeValue
+from learning_hub.models.enums import GradeSource, GradeValue
 
 # Import all models for SQLAlchemy relationship resolution
 from learning_hub.models.school import School  # noqa: F401
@@ -224,6 +224,7 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                         date=eg.date,
                         subject_topic_id=subject_topic_id,
                         edupage_id=eg.event_id,
+                        source=GradeSource.AUTO,
                     )
                     grades_created += 1
 

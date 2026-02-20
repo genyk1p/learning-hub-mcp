@@ -92,7 +92,7 @@ Add to your MCP client config:
 }
 ```
 
-## MCP Tools (75 total)
+## MCP Tools (76 total)
 
 ### Subjects
 - `create_subject` - create a new school subject
@@ -191,6 +191,7 @@ Add to your MCP client config:
 - `sync_edupage_homeworks` - sync homework from EduPage
 
 ### Instruction Tools
+- `get_grade_escalation_instructions` - escalate bad grades to tutor/admin
 - `get_learning_system_instructions` - master instruction: full system rules
 - `get_student_request_router_instructions` - classify student request (A/B/C scenarios)
 - `get_bonus_task_assignment_instructions` - assign a new bonus task
