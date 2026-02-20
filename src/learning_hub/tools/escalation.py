@@ -16,6 +16,7 @@ class EscalationGradeResponse(BaseModel):
     """Grade with full context for escalation."""
     grade_id: int
     grade_value: int
+    original_value: str | None
     date: str | None
     subject_id: int
     subject_name: str
@@ -59,6 +60,7 @@ def register_escalation_tools(mcp: FastMCP) -> None:
                 EscalationGradeResponse(
                     grade_id=g.id,
                     grade_value=g.grade_value.value,
+                    original_value=g.original_value,
                     date=dt_to_str(g.date),
                     subject_id=g.subject_id,
                     subject_name=g.subject.name,

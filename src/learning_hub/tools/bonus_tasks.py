@@ -374,6 +374,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             grade_result = {
                 "grade_id": grade.id,
                 "grade_value": grade.grade_value.value,
+                "original_value": grade.original_value,
                 "subject_id": grade.subject_id,
             }
 

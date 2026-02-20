@@ -109,4 +109,13 @@ Log the issue there (date, context, error, status: open).
 - `{TOOL_GET_CONFIG}` — read config values (issue log path)
 - `{TOOL_GET_BONUS_TASK}` — load the task
 - `{TOOL_APPLY_BONUS_TASK_RESULT}` — close task + record grade + update & auto-close TopicReview
+
+---
+
+## TODO (ignore for now)
+
+Bonus task grades are always recorded in the European 1-5 scale.
+If the student's school uses a different grading system (US letters, 10-point, etc.),
+the student may be confused seeing unfamiliar grade numbers from the agent.
+Consider converting the displayed grade to the student's school grading system in the future.
 """

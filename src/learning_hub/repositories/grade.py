@@ -31,6 +31,7 @@ class GradeRepository:
         homework_id: int | None = None,
         edupage_id: int | None = None,
         source: GradeSource = GradeSource.MANUAL,
+        original_value: str | None = None,
     ) -> Grade:
         """Create a new grade.
 
@@ -53,6 +54,7 @@ class GradeRepository:
             homework_id=homework_id,
             edupage_id=edupage_id,
             source=source,
+            original_value=original_value,
         )
         self.session.add(grade)
         await self.session.commit()

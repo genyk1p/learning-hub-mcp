@@ -230,6 +230,7 @@ def register_edupage_tools(mcp: FastMCP) -> None:
                         subject_topic_id=subject_topic_id,
                         edupage_id=eg.event_id,
                         source=GradeSource.AUTO,
+                        original_value=str(eg.grade_n),
                     )
                     grades_created += 1
 

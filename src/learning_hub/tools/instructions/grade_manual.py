@@ -136,8 +136,12 @@ Wait for confirmation.
     grade_value=<1-5>,
     date=<ISO>,
     subject_topic_id=<id>,  # if determined
+    original_value=<what the user said>,  # e.g. "2+", "1-", "A"
 )
 ```
+
+Pass `original_value` — the exact grade string as the user stated it \
+(before conversion to the 1-5 scale). This is stored for display purposes.
 
 Do not pass `bonus_task_id` or `homework_id` — this is a manual grade.
 

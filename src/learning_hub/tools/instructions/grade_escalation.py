@@ -25,7 +25,7 @@ already knows about the grade.
 Call `{TOOL_GET_GRADES_PENDING_ESCALATION}(threshold=3)`.
 
 Returns grades with value 3, 4, or 5 where `escalated_at IS NULL`. \
-Each grade includes: grade_id, grade_value, date, subject_id, \
+Each grade includes: grade_id, grade_value, original_value, date, subject_id, \
 subject_name, subject_name_ru, school, subject_topic_description.
 
 **If the list is empty** — nothing to escalate. This is normal \
@@ -60,7 +60,8 @@ For each recipient, compose a message in the family language:
 - Greeting by name.
 - For each grade:
   - Subject name (prefer `subject_name_ru` if available, otherwise `subject_name`).
-  - Grade value.
+  - Grade: display `original_value` if available (e.g. "2+", "1-"), \
+otherwise fall back to `grade_value`.
   - Date.
   - Topic description (if available; otherwise omit).
 - Keep it brief and factual. No drama, no judgment.

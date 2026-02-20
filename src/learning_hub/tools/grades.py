@@ -21,6 +21,7 @@ class GradeResponse(BaseModel):
     id: int
     subject_id: int
     grade_value: int
+    original_value: str | None
     date: str | None
     subject_topic_id: int | None
     bonus_task_id: int | None
@@ -50,6 +51,8 @@ def register_grade_tools(mcp: FastMCP) -> None:
         subject_id: ID of the subject
         grade_value: Grade value - one of: {grade_value_options} (1=best, 5=worst)
         date: Grade date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)
+        original_value: Original grade as entered by user or received from API
+            (e.g. "1-", "2+", "A", "N"). Stored for display purposes. (optional)
         subject_topic_id: ID of the related topic (optional)
         bonus_task_id: ID of the related bonus task (optional)
         homework_id: ID of the related homework (optional)
@@ -61,6 +64,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
         subject_id: int,
         grade_value: int,
         date: str,
+        original_value: str | None = None,
         subject_topic_id: int | None = None,
         bonus_task_id: int | None = None,
         homework_id: int | None = None,
@@ -78,6 +82,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     subject_topic_id=subject_topic_id,
                     bonus_task_id=bonus_task_id,
                     homework_id=homework_id,
+                    original_value=original_value,
                 )
             except ValueError as e:
                 return {"error": str(e)}
@@ -85,6 +90,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 id=grade.id,
                 subject_id=grade.subject_id,
                 grade_value=grade.grade_value.value,
+                original_value=grade.original_value,
                 date=dt_to_str(grade.date),
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
@@ -129,6 +135,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     id=g.id,
                     subject_id=g.subject_id,
                     grade_value=g.grade_value.value,
+                    original_value=g.original_value,
                     date=dt_to_str(g.date),
                     subject_topic_id=g.subject_topic_id,
                     bonus_task_id=g.bonus_task_id,
@@ -164,6 +171,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 id=grade.id,
                 subject_id=grade.subject_id,
                 grade_value=grade.grade_value.value,
+                original_value=grade.original_value,
                 date=dt_to_str(grade.date),
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,

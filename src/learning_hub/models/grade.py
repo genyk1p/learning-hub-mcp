@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, DateTime, Boolean, ForeignKey, String
+from sqlalchemy import Integer, DateTime, Boolean, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -71,6 +71,10 @@ class Grade(Base, TimestampMixin):
     source: Mapped[GradeSource] = mapped_column(
         String(10), default=GradeSource.MANUAL, nullable=False
     )
+
+    # Original grade value as received from source (e.g. "1-", "2+", "A", "N")
+    # Stored for display purposes; grade_value holds the normalized 1-5 int
+    original_value: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # External ID from EduPage (for sync deduplication)
     edupage_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
