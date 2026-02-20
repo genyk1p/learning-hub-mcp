@@ -28,7 +28,9 @@ Returns grades with value 3, 4, or 5 where `escalated_at IS NULL`. \
 Each grade includes: grade_id, grade_value, date, subject_id, \
 subject_name, subject_name_ru, school, subject_topic_description.
 
-**If the list is empty** — nothing to escalate. Stop here.
+**If the list is empty** — nothing to escalate. This is normal \
+(e.g. no new bad grades since last sync, or all were already escalated). \
+Stop here — do not send any messages.
 
 ---
 

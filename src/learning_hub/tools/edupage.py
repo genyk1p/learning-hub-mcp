@@ -26,6 +26,7 @@ from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.homework import HomeworkRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
 from learning_hub.tools.tool_names import (
+    TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS,
     TOOL_SYNC_EDUPAGE_GRADES,
     TOOL_SYNC_EDUPAGE_HOMEWORKS,
 )
@@ -54,11 +55,15 @@ class HomeworksSyncResult(BaseModel):
 def register_edupage_tools(mcp: FastMCP) -> None:
     """Register EduPage-related tools."""
 
-    @mcp.tool(name=TOOL_SYNC_EDUPAGE_GRADES, description="""Sync grades from EduPage to local database.
+    @mcp.tool(name=TOOL_SYNC_EDUPAGE_GRADES, description=f"""Sync grades from EduPage to local database.
 
     Fetches all grades from EduPage and saves them to the database.
     Creates subjects automatically if they don't exist.
     Skips grades that are already synced (by edupage_id).
+
+    IMPORTANT: After this tool completes, always call
+    `{TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS}()` and follow the returned
+    algorithm to escalate bad grades to responsible adults.
 
     Returns:
         Sync statistics: grades fetched/created/skipped, subjects created, errors

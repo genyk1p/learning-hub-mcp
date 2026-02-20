@@ -40,6 +40,7 @@ from learning_hub.tools.tool_names import (
     TOOL_LIST_TOPIC_REVIEWS,
     TOOL_LOOKUP_GATEWAY,
     TOOL_MARK_HOMEWORK_REMINDERS_SENT,
+    TOOL_SYNC_EDUPAGE_GRADES,
     TOOL_UPDATE_GATEWAY,
 )
 
@@ -239,9 +240,9 @@ and act on the returned algorithm.
 ### Grade 3/4/5 escalation
 
 Escalation notifies the responsible adult about bad grades from automatic sync. \
-The algorithm is implemented in an MCP instruction tool:
-- **first call** `{TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS}()` \
-and act on the returned algorithm.
+It runs automatically after each `{TOOL_SYNC_EDUPAGE_GRADES}` call — \
+the tool description instructs the agent to call \
+`{TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS}()` and follow the returned algorithm.
 
 ---
 
