@@ -1,6 +1,5 @@
 from learning_hub.tools.config_vars import CFG_ISSUES_LOG
 from learning_hub.tools.tool_names import (
-    TOOL_ADD_GRADE,
     TOOL_APPLY_BONUS_TASK_RESULT,
     TOOL_GET_BONUS_TASK,
     TOOL_GET_CONFIG,
@@ -58,28 +57,23 @@ Evaluate in **Socratic learning** style:
 **It is forbidden** to tell the student "task accepted", "grade recorded", \
 "task closed" until the steps below are successfully completed.
 
-### 3.1 Close the bonus task and update TopicReview
+### 3.1 Close the bonus task, record the grade, and update TopicReview
 
-Call `{TOOL_APPLY_BONUS_TASK_RESULT}(task_id=<id>)`.
+Call `{TOOL_APPLY_BONUS_TASK_RESULT}(task_id=<id>, grade_value=<1-3>)`.
 
-This tool:
+- `grade_value` — your recommended grade (1, 2, or 3).
+
+This single call does everything:
 - Marks the BonusTask as `completed`
 - Deducts a slot from the bonus fund
+- **Records the grade** (subject and topic are resolved automatically from the task)
 - Automatically increments `repeat_count` on pending TopicReviews for the same topic
 - **Automatically closes** TopicReviews that reached the repetition threshold \
-(from `TOPIC_REVIEW_THRESHOLDS` config) — no manual check needed
+(from `TOPIC_REVIEW_THRESHOLDS` config)
 
-Check the response field `topic_reviews_reinforced` — it lists any reviews \
-that were auto-closed in this call.
-
-### 3.2 Record the grade
-
-Call `{TOOL_ADD_GRADE}(subject_id=<id>, grade_value=<1-3>, date=<ISO>, bonus_task_id=<id>)`.
-
-- `subject_id` — from the BonusTask (via topic -> subject).
-- `grade_value` — your recommended grade (1, 2, or 3).
-- `date` — current date.
-- `bonus_task_id` — task id.
+Check the response:
+- `grade` — the created grade (grade_id, grade_value, subject_id)
+- `topic_reviews_reinforced` — reviews that were auto-closed in this call
 
 ---
 
@@ -94,7 +88,7 @@ Call `{TOOL_ADD_GRADE}(subject_id=<id>, grade_value=<1-3>, date=<ISO>, bonus_tas
 
 ## Error handling
 
-If the call to `{TOOL_APPLY_BONUS_TASK_RESULT}` or `{TOOL_ADD_GRADE}` **failed**:
+If the call to `{TOOL_APPLY_BONUS_TASK_RESULT}` **failed**:
 
 1. Write to the student in a neutral tone: \
 "I've checked everything, the content is fine, but **could not record it in the system**."
@@ -114,6 +108,5 @@ Log the issue there (date, context, error, status: open).
 
 - `{TOOL_GET_CONFIG}` — read config values (issue log path)
 - `{TOOL_GET_BONUS_TASK}` — load the task
-- `{TOOL_APPLY_BONUS_TASK_RESULT}` — close the task + update & auto-close TopicReview
-- `{TOOL_ADD_GRADE}` — record the grade
+- `{TOOL_APPLY_BONUS_TASK_RESULT}` — close task + record grade + update & auto-close TopicReview
 """

@@ -1,15 +1,17 @@
 """BonusTask tools for MCP server."""
 
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import BonusTaskStatus, TopicReviewStatus
+from learning_hub.models.enums import BonusTaskStatus, GradeValue, TopicReviewStatus
+from learning_hub.models.subject_topic import SubjectTopic
 from learning_hub.repositories.bonus_task import BonusTaskRepository
 from learning_hub.repositories.config_entry import ConfigEntryRepository
+from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
 from learning_hub.tools.tool_names import (
     TOOL_CREATE_BONUS_TASK,
@@ -293,30 +295,53 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 quality_notes=task.quality_notes,
             )
 
-    @mcp.tool(name=TOOL_APPLY_BONUS_TASK_RESULT, description="""Complete a bonus task and optionally update related topic reviews.
+    @mcp.tool(name=TOOL_APPLY_BONUS_TASK_RESULT, description="""Complete a bonus task, record the grade, and update topic reviews.
 
+    This is a compound tool that does everything needed to finalize a bonus task:
     1. Marks the bonus task as completed (deducts one slot from fund)
-    2. If count_repeat is true: finds all pending TopicReviews for the same subject topic,
+    2. Creates a grade linked to this bonus task
+       (subject_id is resolved automatically from the task's topic)
+    3. If count_repeat is true: finds all pending TopicReviews for the same subject topic,
        increments repeat_count on each, and auto-closes reviews that reached
        the repetition threshold (from TOPIC_REVIEW_THRESHOLDS config)
 
     Args:
         task_id: ID of the bonus task to complete
+        grade_value: Grade for the bonus task (1-5, European scale: 1=best, 5=worst)
         count_repeat: Whether to increment repeat_count on pending topic reviews (default true)
         quality_notes: Optional notes about quality of work done
 
     Returns:
-        Completed task info + list of updated topic reviews + list of auto-reinforced reviews
+        Completed task info + grade info + list of updated/auto-reinforced topic reviews
     """)
     async def apply_bonus_task_result(
         task_id: int,
+        grade_value: int,
         count_repeat: bool = True,
         quality_notes: str | None = None,
     ) -> dict:
         async with AsyncSessionLocal() as session:
             bonus_repo = BonusTaskRepository(session)
             review_repo = TopicReviewRepository(session)
+            grade_repo = GradeRepository(session)
 
+            # --- Pre-validate everything BEFORE any mutations ---
+            try:
+                grade_enum = GradeValue(grade_value)
+            except ValueError:
+                return {"error": f"Invalid grade_value={grade_value}. Must be 1-5."}
+
+            pre_task = await bonus_repo.get_by_id(task_id)
+            if pre_task is None:
+                return {"error": f"Task {task_id} not found"}
+
+            topic = await session.get(SubjectTopic, pre_task.subject_topic_id)
+            if topic is None:
+                return {
+                    "error": f"SubjectTopic {pre_task.subject_topic_id} not found",
+                }
+
+            # --- All validated, now mutate ---
             task, fund, error = await bonus_repo.complete(
                 task_id=task_id,
                 quality_notes=quality_notes,
@@ -325,6 +350,24 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 return {"error": error}
             assert task is not None
             assert fund is not None
+
+            # Create grade linked to this bonus task
+            try:
+                grade = await grade_repo.create(
+                    subject_id=topic.subject_id,
+                    grade_value=grade_enum,
+                    date=datetime.now(timezone.utc),
+                    subject_topic_id=task.subject_topic_id,
+                    bonus_task_id=task.id,
+                )
+            except ValueError as e:
+                return {"error": str(e)}
+
+            grade_result = {
+                "grade_id": grade.id,
+                "grade_value": grade.grade_value.value,
+                "subject_id": grade.subject_id,
+            }
 
             updated_reviews = []
             auto_reinforced = []
@@ -378,6 +421,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 ).model_dump(),
                 "fund_name": fund.name,
                 "fund_available_tasks": fund.available_tasks,
+                "grade": grade_result,
                 "topic_reviews_updated": updated_reviews,
                 "topic_reviews_reinforced": auto_reinforced,
             }
