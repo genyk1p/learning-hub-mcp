@@ -146,6 +146,9 @@ class BonusTaskRepository:
         if task is None:
             return None, None, "Task not found"
 
+        if task.status != BonusTaskStatus.PENDING:
+            return task, None, f"Task is already {task.status.value}"
+
         fund = await self._get_fund()
         if fund is None:
             return None, None, "Bonus fund not found"

@@ -197,7 +197,15 @@ def register_homework_tools(mcp: FastMCP) -> None:
     async def complete_homework(
         homework_id: int,
         recommended_grade: int | None = None,
-    ) -> HomeworkResponse | None:
+    ) -> HomeworkResponse | dict | None:
+        if recommended_grade is not None and recommended_grade >= 4:
+            return {
+                "error": (
+                    f"Cannot complete homework with grade {recommended_grade}. "
+                    "Grades 4-5 mean the student should redo the work."
+                ),
+            }
+
         grade_enum = GradeValue(recommended_grade) if recommended_grade else None
 
         async with AsyncSessionLocal() as session:

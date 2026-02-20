@@ -86,6 +86,9 @@ class WeekRepository:
         if week is None:
             return None
 
+        if week.is_finalized:
+            return week
+
         week.actual_played_minutes = actual_played_minutes
         week.carryover_out_minutes = week.total_minutes - actual_played_minutes
         week.is_finalized = True

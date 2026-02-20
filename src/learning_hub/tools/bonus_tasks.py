@@ -331,6 +331,14 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             except ValueError:
                 return {"error": f"Invalid grade_value={grade_value}. Must be 1-5."}
 
+            if grade_enum.value >= 4:
+                return {
+                    "error": (
+                        f"Cannot close bonus task with grade {grade_value}. "
+                        "Grades 4-5 mean the student should retry."
+                    ),
+                }
+
             pre_task = await bonus_repo.get_by_id(task_id)
             if pre_task is None:
                 return {"error": f"Task {task_id} not found"}

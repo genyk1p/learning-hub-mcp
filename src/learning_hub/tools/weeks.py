@@ -263,14 +263,22 @@ def register_week_tools(mcp: FastMCP) -> None:
 
             # Step 2: get or create new week
             new_week = await week_repo.get_by_key(new_week_key)
-            if new_week is None:
-                start_at = prev_week.end_at
-                end_at = start_at + timedelta(days=7)
-                new_week = await week_repo.create(
-                    week_key=new_week_key,
-                    start_at=start_at,
-                    end_at=end_at,
+            if new_week is not None:
+                return WeeklyCalcResult(
+                    status="already_calculated",
+                    new_week_key=new_week_key,
+                    prev_week_key=prev_week_key,
+                    week=_week_response(new_week),
+                    message=f"Week {new_week_key} already calculated.",
                 )
+
+            start_at = prev_week.end_at
+            end_at = start_at + timedelta(days=7)
+            new_week = await week_repo.create(
+                week_key=new_week_key,
+                start_at=start_at,
+                end_at=end_at,
+            )
 
             penalty_minutes = new_week.penalty_minutes
 
