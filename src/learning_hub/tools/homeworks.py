@@ -182,15 +182,24 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 for hw in closed
             ]
 
-    @mcp.tool(name=TOOL_COMPLETE_HOMEWORK, description="""Mark homework as completed.
+    @mcp.tool(name=TOOL_COMPLETE_HOMEWORK, description=f"""Mark homework as completed.
+
+    Optionally sets recommended_grade in the same call (so you don't need
+    a separate update_homework call before completing).
 
     Args:
         homework_id: ID of the homework to complete
+        recommended_grade: Expected grade - one of: {grade_options} (1=best, 5=worst) (optional)
 
     Returns:
         Completed homework or null if not found
     """)
-    async def complete_homework(homework_id: int) -> HomeworkResponse | None:
+    async def complete_homework(
+        homework_id: int,
+        recommended_grade: int | None = None,
+    ) -> HomeworkResponse | None:
+        grade_enum = GradeValue(recommended_grade) if recommended_grade else None
+
         async with AsyncSessionLocal() as session:
             config_repo = ConfigEntryRepository(session)
             ontime = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_ONTIME) or 5
@@ -201,6 +210,7 @@ def register_homework_tools(mcp: FastMCP) -> None:
                 homework_id=homework_id,
                 ontime_bonus=ontime,
                 overdue_penalty=overdue_pen,
+                recommended_grade=grade_enum,
             )
             if hw is None:
                 return None

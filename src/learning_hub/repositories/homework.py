@@ -133,6 +133,7 @@ class HomeworkRepository:
         homework_id: int,
         ontime_bonus: int = 5,
         overdue_penalty: int = -5,
+        recommended_grade: GradeValue | None = None,
     ) -> Homework | None:
         """Mark homework as completed with bonus minutes.
 
@@ -146,6 +147,9 @@ class HomeworkRepository:
 
         if homework.status in (HomeworkStatus.DONE, HomeworkStatus.OVERDUE):
             return homework
+
+        if recommended_grade is not None:
+            homework.recommended_grade = recommended_grade
 
         now = datetime.utcnow()
         homework.completed_at = now

@@ -6,7 +6,6 @@ from learning_hub.tools.tool_names import (
     TOOL_LIST_FAMILY_MEMBERS,
     TOOL_LIST_HOMEWORKS,
     TOOL_LIST_SUBJECTS,
-    TOOL_UPDATE_HOMEWORK,
 )
 
 HOMEWORK_EVALUATION_INSTRUCTIONS = f"""\
@@ -19,7 +18,7 @@ HOMEWORK_EVALUATION_INSTRUCTIONS = f"""\
 
 The agent **does not assign the actual grade** for homework (does not call `add_grade`). \
 The final grade is given by the teacher. The agent can only record \
-a **recommended grade** via `{TOOL_UPDATE_HOMEWORK}(recommended_grade=...)`.
+a **recommended grade** via `{TOOL_COMPLETE_HOMEWORK}(recommended_grade=...)`.
 
 This differs from bonus tasks, where the agent assigns the grade directly.
 
@@ -98,8 +97,9 @@ Record the result **only if** all conditions are met:
 
 ### 4.2 Write the result
 
-1. `{TOOL_UPDATE_HOMEWORK}(homework_id=<id>, recommended_grade=<1-3>)`
-2. `{TOOL_COMPLETE_HOMEWORK}(homework_id=<id>)`
+Call `{TOOL_COMPLETE_HOMEWORK}(homework_id=<id>, recommended_grade=<1-3>)`.
+
+This single call sets the recommended grade and marks the homework as completed.
 
 ### 4.3 If conditions are not met
 
@@ -137,7 +137,7 @@ Use `{TOOL_LIST_FAMILY_MEMBERS}()` to get their name and default gateway.
 
 ## Error handling
 
-If the call to `{TOOL_UPDATE_HOMEWORK}` or `{TOOL_COMPLETE_HOMEWORK}` **failed**:
+If the call to `{TOOL_COMPLETE_HOMEWORK}` **failed**:
 
 1. Write to the student in a neutral tone: \
 "The content looks good, but could not record it in the system."
@@ -155,8 +155,7 @@ If the call to `{TOOL_UPDATE_HOMEWORK}` or `{TOOL_COMPLETE_HOMEWORK}` **failed**
 - `{TOOL_GET_CONFIG}` — read config values (issue log path)
 - `{TOOL_LIST_HOMEWORKS}` — find the homework
 - `{TOOL_GET_BOOK}` — load book data for assignment context
-- `{TOOL_UPDATE_HOMEWORK}` — record the recommended grade
-- `{TOOL_COMPLETE_HOMEWORK}` — mark the homework as completed
+- `{TOOL_COMPLETE_HOMEWORK}` — set recommended grade and mark as completed
 - `{TOOL_LIST_SUBJECTS}` — get subject with tutor_id
 - `{TOOL_LIST_FAMILY_MEMBERS}` — get tutor/admin contact info
 """
