@@ -39,6 +39,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_STUDENT_REQUEST_ROUTER_INSTRUCTIONS,
     TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS,
     TOOL_LIST_FAMILY_MEMBERS,
+    TOOL_LIST_GATEWAYS,
     TOOL_LIST_TOPIC_REVIEWS,
     TOOL_LOOKUP_GATEWAY,
     TOOL_MARK_HOMEWORK_REMINDERS_SENT,
@@ -179,6 +180,42 @@ Algorithm details — in the tool description.
 The fact of "how much the student played" is recorded in Weekly state \
 in the database (field `actual_played_minutes`); \
 this data is entered by the administrator during the week.
+
+### Student weekly report (after calculation)
+
+After `{TOOL_CALCULATE_WEEKLY_MINUTES}` returns `status="ok"`, \
+the agent **must send a breakdown report to the student** \
+via their gateway.
+
+Steps:
+1. Get the student's profile: `{TOOL_GET_STUDENT}()` → note the `age`.
+2. Get the student's gateway: \
+`{TOOL_LIST_GATEWAYS}(family_member_id=<student id from step 1>)` → \
+use the default gateway (or the first available).
+3. Get the family language: \
+`{TOOL_GET_CONFIG}(key="{CFG_FAMILY_LANGUAGE}")`.
+4. Get the grade-to-minutes table: `{TOOL_GET_GRADE_TO_MINUTES_MAP}()`.
+5. Compose a child-friendly message in the family language. \
+Include:
+   - Each grade category with count and minutes earned/lost \
+(e.g. "1 (excellent) x2 → +30 min"). \
+Use the grade-to-minutes table for the values.
+   - Bonus minutes (homework on-time/overdue bonuses plus any ad-hoc bonuses).
+   - Penalties (if any).
+   - Carryover from the previous week.
+   - **Total minutes** — highlight prominently.
+6. Send the message to the student's gateway.
+
+Message rules:
+- **Adapt tone and complexity to the student's age**: \
+simple words and short sentences for younger students, \
+more detailed breakdown for older ones.
+- Friendly and encouraging. Highlight positive results, \
+be gentle about negative ones.
+- **Do not reveal** internal calculation algorithms or rules.
+- **Do not** add study advice or pressure — this is just a factual report.
+- If `total_minutes` is negative — still report honestly, \
+but frame it gently (e.g. "this week the balance went below zero").
 
 ### Mid-week preview
 
