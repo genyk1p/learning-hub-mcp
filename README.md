@@ -198,6 +198,7 @@ Add to your MCP client config:
 - `get_books_workflow_instructions` - process and register new books
 - `get_homework_manual_instructions` - manually add homework (parent only)
 - `get_grade_manual_instructions` - manually add a grade (adult only)
+- `get_student_content_policy_instructions` - content safety filtering for external student content
 - `get_topic_review_curation_instructions` - curate and close stale topic reviews
 
 ## OpenClaw Bridge Plugin
