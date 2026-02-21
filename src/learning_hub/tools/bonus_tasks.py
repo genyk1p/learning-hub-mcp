@@ -243,14 +243,27 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
         task_id: ID of the bonus task to cancel
 
     Returns:
-        Cancelled task or null if not found
+        Cancelled task data, or error dict if not found or not in pending status
     """)
-    async def cancel_bonus_task(task_id: int) -> BonusTaskResponse | None:
+    async def cancel_bonus_task(task_id: int) -> dict:
         async with AsyncSessionLocal() as session:
             repo = BonusTaskRepository(session)
-            task = await repo.cancel(task_id=task_id)
+            task, error = await repo.cancel(task_id=task_id)
             if task is None:
-                return None
+                return {"error": error or "Task not found"}
+            if error is not None:
+                return {
+                    "error": error,
+                    "task": BonusTaskResponse(
+                        id=task.id,
+                        subject_topic_id=task.subject_topic_id,
+                        task_description=task.task_description,
+                        status=task.status.value,
+                        created_at=dt_to_str(task.created_at),
+                        completed_at=dt_to_str(task.completed_at),
+                        quality_notes=task.quality_notes,
+                    ).model_dump(),
+                }
             return BonusTaskResponse(
                 id=task.id,
                 subject_topic_id=task.subject_topic_id,
@@ -259,7 +272,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 created_at=dt_to_str(task.created_at),
                 completed_at=dt_to_str(task.completed_at),
                 quality_notes=task.quality_notes,
-            )
+            ).model_dump()
 
     @mcp.tool(name=TOOL_CHECK_PENDING_BONUS_TASK, description="""Check if there's a pending bonus task to reuse.
 

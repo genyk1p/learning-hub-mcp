@@ -57,11 +57,18 @@ class WeekRepository:
         carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
         total_minutes: int | None = None,
-    ) -> Week | None:
-        """Update week fields. Returns None if not found."""
+    ) -> tuple[Week | None, str | None]:
+        """Update week fields.
+
+        Returns:
+            Tuple of (week, error). If error is not None, update was rejected.
+        """
         week = await self.get_by_key(week_key)
         if week is None:
-            return None
+            return None, "Week not found"
+
+        if week.is_finalized:
+            return week, "Week is already finalized. Use create_bonus for ad-hoc adjustments."
 
         if grade_minutes is not None:
             week.grade_minutes = grade_minutes
@@ -78,7 +85,7 @@ class WeekRepository:
 
         await self.session.commit()
         await self.session.refresh(week)
-        return week
+        return week, None
 
     async def finalize(self, week_key: str, actual_played_minutes: int) -> Week | None:
         """Finalize week: save played minutes, calculate total, mark as finalized."""

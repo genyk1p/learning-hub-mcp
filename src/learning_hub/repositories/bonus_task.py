@@ -167,14 +167,21 @@ class BonusTaskRepository:
         await self.session.refresh(fund)
         return task, fund, None
 
-    async def cancel(self, task_id: int) -> BonusTask | None:
-        """Cancel a task. Returns None if not found."""
+    async def cancel(self, task_id: int) -> tuple[BonusTask | None, str | None]:
+        """Cancel a task. Only PENDING tasks can be cancelled.
+
+        Returns:
+            Tuple of (task, error). If error is not None, operation failed.
+        """
         task = await self.get_by_id(task_id)
         if task is None:
-            return None
+            return None, "Task not found"
+
+        if task.status != BonusTaskStatus.PENDING:
+            return task, f"Task is already {task.status.value}"
 
         task.status = BonusTaskStatus.CANCELLED
 
         await self.session.commit()
         await self.session.refresh(task)
-        return task
+        return task, None

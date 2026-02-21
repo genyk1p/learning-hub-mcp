@@ -154,7 +154,7 @@ def register_week_tools(mcp: FastMCP) -> None:
         total_minutes: Calculated total available minutes (optional)
 
     Returns:
-        Updated week or null if not found
+        Updated week data, or error dict if not found or already finalized
     """)
     async def update_week(
         week_key: str,
@@ -163,10 +163,10 @@ def register_week_tools(mcp: FastMCP) -> None:
         carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
         total_minutes: int | None = None,
-    ) -> WeekResponse | None:
+    ) -> dict:
         async with AsyncSessionLocal() as session:
             repo = WeekRepository(session)
-            week = await repo.update(
+            week, error = await repo.update(
                 week_key=week_key,
                 grade_minutes=grade_minutes,
                 penalty_minutes=penalty_minutes,
@@ -175,9 +175,13 @@ def register_week_tools(mcp: FastMCP) -> None:
                 total_minutes=total_minutes,
             )
             if week is None:
-                return None
-
-            return _week_response(week)
+                return {"error": error or "Week not found"}
+            if error is not None:
+                return {
+                    "error": error,
+                    "week": _week_response(week).model_dump(),
+                }
+            return _week_response(week).model_dump()
 
     @mcp.tool(name=TOOL_FINALIZE_WEEK, description="""Finalize a week.
 
@@ -305,8 +309,8 @@ def register_week_tools(mcp: FastMCP) -> None:
             # Step 6: calculate total
             total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
 
-            # Step 7: update new week record
-            new_week = await week_repo.update(
+            # Step 7: update new week record (just created, never finalized)
+            new_week, _ = await week_repo.update(
                 week_key=new_week_key,
                 grade_minutes=grade_minutes,
                 homework_bonus_minutes=homework_bonus_minutes,
