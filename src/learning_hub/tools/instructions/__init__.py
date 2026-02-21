@@ -18,6 +18,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS,
     TOOL_GET_BONUS_TASK_EVALUATION_INSTRUCTIONS,
     TOOL_GET_HOMEWORK_EVALUATION_INSTRUCTIONS,
+    TOOL_GET_STUDENT_CONTENT_POLICY_INSTRUCTIONS,
     TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS,
 )
 from learning_hub.tools.instructions.book_lookup import BOOK_LOOKUP_INSTRUCTIONS
@@ -41,6 +42,9 @@ from learning_hub.tools.instructions.homework_evaluation import (
 from learning_hub.tools.instructions.grade_escalation import GRADE_ESCALATION_INSTRUCTIONS
 from learning_hub.tools.instructions.grade_manual import GRADE_MANUAL_INSTRUCTIONS
 from learning_hub.tools.instructions.learning_system import LEARNING_SYSTEM_INSTRUCTIONS
+from learning_hub.tools.instructions.student_content_policy import (
+    STUDENT_CONTENT_POLICY_INSTRUCTIONS,
+)
 from learning_hub.tools.instructions.topic_review_curation import (
     TOPIC_REVIEW_CURATION_INSTRUCTIONS,
 )
@@ -177,6 +181,19 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       Returns a curation algorithm with examples of irrelevant subjects.""")
     async def get_topic_review_curation_instructions() -> str:
         return TOPIC_REVIEW_CURATION_INSTRUCTIONS
+
+    @mcp.tool(name=TOOL_GET_STUDENT_CONTENT_POLICY_INSTRUCTIONS, description="""\
+      Get the content policy for providing external content to a student.
+
+      Call this tool before providing any external content to the student:
+      links, videos, files, or resources not from the Learning Hub book library.
+      Covers: prohibited content, file format safety, external link rules,
+      content quality evaluation (brainrot / misinformation detection),
+      age-appropriate adaptation, and the step-by-step filtering algorithm.
+
+      Returns a detailed content filtering instruction.""")
+    async def get_student_content_policy_instructions() -> str:
+        return STUDENT_CONTENT_POLICY_INSTRUCTIONS
 
     @mcp.tool(name=TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS, description="""\
       Get the master instruction for the entire Learning Hub system.

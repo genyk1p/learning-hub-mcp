@@ -119,4 +119,5 @@ TOOL_GET_BONUS_TASK_EVALUATION_INSTRUCTIONS = "get_bonus_task_evaluation_instruc
 TOOL_GET_HOMEWORK_EVALUATION_INSTRUCTIONS = "get_homework_evaluation_instructions"
 TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS = "get_topic_review_curation_instructions"
 TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS = "get_grade_escalation_instructions"
+TOOL_GET_STUDENT_CONTENT_POLICY_INSTRUCTIONS = "get_student_content_policy_instructions"
 TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS = "get_learning_system_instructions"
