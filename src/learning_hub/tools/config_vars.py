@@ -32,3 +32,6 @@ CFG_BONUS_FUND_WEEKLY_TOPUP = "BONUS_FUND_WEEKLY_TOPUP"
 
 # Default time for deadline when only date is specified (HH:MM)
 CFG_DEFAULT_DEADLINE_TIME = "DEFAULT_DEADLINE_TIME"
+
+# Whether initial setup has been completed (true/false)
+CFG_SETUP_COMPLETED = "SETUP_COMPLETED"
