@@ -13,6 +13,7 @@ from learning_hub.tools.tool_names import (
     TOOL_LIST_FAMILY_MEMBERS,
     TOOL_LIST_SCHOOLS,
     TOOL_SET_CONFIG,
+    TOOL_UPDATE_FAMILY_MEMBER,
     TOOL_UPDATE_SCHOOL,
 )
 
@@ -84,6 +85,17 @@ def register_readiness_tools(mcp: FastMCP) -> None:
                             f"Exactly one student is allowed.",
                     fix_hint=f"Call {TOOL_LIST_FAMILY_MEMBERS}() to review, "
                              f"then fix by updating extra students with is_student=false.",
+                ))
+
+            # Check 2b: Student must have birth_date
+            if len(students) == 1 and students[0].birth_date is None:
+                issues.append(ReadinessIssue(
+                    check="student_birth_date",
+                    message=f"Student '{students[0].name}' (id={students[0].id}) "
+                            f"has no birth_date. Required for age-appropriate content.",
+                    fix_hint=f"Call {TOOL_UPDATE_FAMILY_MEMBER}"
+                             f"(member_id={students[0].id}, "
+                             f"birth_date='YYYY-MM-DD')",
                 ))
 
             # Check 3: At least one active school

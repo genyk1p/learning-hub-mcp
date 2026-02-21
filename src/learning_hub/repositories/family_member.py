@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,8 +25,16 @@ class FamilyMemberRepository:
         is_admin: bool = False,
         is_student: bool = False,
         notes: str | None = None,
+        birth_date: date | None = None,
     ) -> FamilyMember:
         """Create a new family member."""
+        if birth_date is not None and birth_date > date.today():
+            raise ValueError(
+                f"birth_date {birth_date.isoformat()} is in the future."
+            )
+        if is_student and birth_date is None:
+            raise ValueError("birth_date is required for student.")
+
         member = FamilyMember(
             name=name,
             role=role,
@@ -32,6 +42,7 @@ class FamilyMemberRepository:
             is_admin=is_admin,
             is_student=is_student,
             notes=notes,
+            birth_date=birth_date,
         )
         self.session.add(member)
         await self.session.commit()
@@ -72,6 +83,8 @@ class FamilyMemberRepository:
         is_admin: bool | None = None,
         notes: str | None = None,
         clear_notes: bool = False,
+        birth_date: date | None = None,
+        clear_birth_date: bool = False,
     ) -> FamilyMember | None:
         """Update family member fields. Returns None if not found."""
         member = await self.get_by_id(member_id)
@@ -90,6 +103,26 @@ class FamilyMemberRepository:
             member.notes = None
         elif notes is not None:
             member.notes = notes
+        if birth_date is not None and birth_date > date.today():
+            raise ValueError(
+                f"birth_date {birth_date.isoformat()} is in the future."
+            )
+
+        # Validate before mutating to avoid dirty ORM state
+        effective_birth_date = member.birth_date
+        if clear_birth_date:
+            effective_birth_date = None
+        elif birth_date is not None:
+            effective_birth_date = birth_date
+
+        if member.is_student and effective_birth_date is None:
+            raise ValueError("birth_date is required for student.")
+
+        # Safe to mutate now
+        if clear_birth_date:
+            member.birth_date = None
+        elif birth_date is not None:
+            member.birth_date = birth_date
 
         await self.session.commit()
         await self.session.refresh(member)

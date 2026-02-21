@@ -1,5 +1,6 @@
 from learning_hub.tools.tool_names import (
     TOOL_GET_BOOK,
+    TOOL_GET_STUDENT,
     TOOL_LIST_BOOKS,
     TOOL_LIST_HOMEWORKS,
     TOOL_LIST_SCHOOLS,
@@ -118,6 +119,10 @@ Which subject do you need the textbook for? If you have a specific topic or less
 
 When the book is identified and the needed topic/section is known, deliver **both text and PDF**. \
 The PDF may contain images, diagrams, and illustrations that are not present in markdown.
+
+When explaining or summarizing material for the student, **adapt to their age** \
+(from `{TOOL_GET_STUDENT}()` → `age`): \
+use simpler language for younger students, more academic phrasing for older ones.
 
 ### 4.1 Text from markdown chunks (if `contents_path` exists)
 

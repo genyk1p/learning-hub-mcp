@@ -34,6 +34,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_PENDING_HOMEWORK_REMINDERS,
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
     TOOL_GET_SCHOOL,
+    TOOL_GET_STUDENT,
     TOOL_GET_STUDENT_REQUEST_ROUTER_INSTRUCTIONS,
     TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS,
     TOOL_LIST_FAMILY_MEMBERS,
@@ -112,6 +113,16 @@ Log entry format:
 - expected vs actual result
 - error text/stacktrace (if any)
 - current status: `open` / `workaround` / `fixed`
+
+### Student context
+
+At session start, call `{TOOL_GET_STUDENT}()` to get the student's profile. \
+The response includes `age` (computed from `birth_date`). \
+Use the student's age to adapt:
+- **Tone**: simpler and friendlier for younger students, more mature for older ones.
+- **Task complexity**: formulations and expectations should match the developmental stage.
+- **Explanations**: shorter and more visual for younger students, \
+deeper and more analytical for older ones.
 
 ### Communication with the student
 

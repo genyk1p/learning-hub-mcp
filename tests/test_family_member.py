@@ -1,10 +1,13 @@
 """Tests for FamilyMember model and repository."""
 
+from datetime import date
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
 from learning_hub.models.enums import FamilyRole
 from learning_hub.repositories.family_member import FamilyMemberRepository
+from learning_hub.tools.family_members import _calc_age
 
 
 pytestmark = pytest.mark.asyncio
@@ -29,11 +32,13 @@ async def test_create_with_all_fields(session):
         full_name="Stanislav Kukoba",
         is_student=True,
         notes="Student, born 2014",
+        birth_date=date(2014, 5, 15),
     )
 
     assert member.full_name == "Stanislav Kukoba"
     assert member.is_student is True
     assert member.notes == "Student, born 2014"
+    assert member.birth_date == date(2014, 5, 15)
 
 
 async def test_get_by_id(session):
@@ -54,7 +59,10 @@ async def test_get_by_id_not_found(session):
 async def test_get_student(session):
     repo = FamilyMemberRepository(session)
     await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
-    await repo.create(name="Stas", role=FamilyRole.STUDENT, is_student=True)
+    await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        birth_date=date(2014, 5, 15),
+    )
 
     student = await repo.get_student()
     assert student is not None
@@ -74,7 +82,10 @@ async def test_list_all(session):
     repo = FamilyMemberRepository(session)
     await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
     await repo.create(name="Natasha", role=FamilyRole.TUTOR)
-    await repo.create(name="Stas", role=FamilyRole.STUDENT, is_student=True)
+    await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        birth_date=date(2014, 5, 15),
+    )
 
     members = await repo.list()
     assert len(members) == 3
@@ -139,17 +150,25 @@ async def test_constraint_student_not_admin(session):
     repo = FamilyMemberRepository(session)
     with pytest.raises(IntegrityError):
         await repo.create(
-            name="Bad", role=FamilyRole.STUDENT, is_student=True, is_admin=True
+            name="Bad", role=FamilyRole.STUDENT,
+            is_student=True, is_admin=True,
+            birth_date=date(2014, 5, 15),
         )
 
 
 async def test_constraint_single_student(session):
     """Only one member with is_student=True is allowed."""
     repo = FamilyMemberRepository(session)
-    await repo.create(name="Stas", role=FamilyRole.STUDENT, is_student=True)
+    await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        birth_date=date(2014, 5, 15),
+    )
 
     with pytest.raises(IntegrityError):
-        await repo.create(name="Other", role=FamilyRole.STUDENT, is_student=True)
+        await repo.create(
+            name="Other", role=FamilyRole.STUDENT, is_student=True,
+            birth_date=date(2015, 1, 1),
+        )
 
 
 async def test_multiple_non_students_allowed(session):
@@ -163,3 +182,108 @@ async def test_multiple_non_students_allowed(session):
 
     members = await repo.list()
     assert len(members) == 5
+
+
+# --- birth_date tests ---
+
+
+async def test_create_student_with_birth_date(session):
+    """Student creation with birth_date succeeds."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        birth_date=date(2014, 5, 15),
+    )
+    assert member.birth_date == date(2014, 5, 15)
+
+
+async def test_create_student_without_birth_date_fails(session):
+    """Student creation without birth_date raises ValueError."""
+    repo = FamilyMemberRepository(session)
+    with pytest.raises(ValueError, match="birth_date is required"):
+        await repo.create(
+            name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        )
+
+
+async def test_create_non_student_without_birth_date(session):
+    """Non-student can be created without birth_date."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
+    assert member.birth_date is None
+
+
+async def test_create_non_student_with_birth_date(session):
+    """Non-student can optionally have birth_date."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(
+        name="Tanya", role=FamilyRole.PARENT,
+        birth_date=date(1985, 3, 20),
+    )
+    assert member.birth_date == date(1985, 3, 20)
+
+
+async def test_update_birth_date(session):
+    """Update birth_date on existing member."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        birth_date=date(2014, 5, 15),
+    )
+    updated = await repo.update(member.id, birth_date=date(2014, 6, 20))
+    assert updated.birth_date == date(2014, 6, 20)
+
+
+async def test_clear_birth_date_on_student_fails(session):
+    """Clearing birth_date on student raises ValueError."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        birth_date=date(2014, 5, 15),
+    )
+    with pytest.raises(ValueError, match="birth_date is required"):
+        await repo.update(member.id, clear_birth_date=True)
+
+
+async def test_clear_birth_date_on_non_student(session):
+    """Clearing birth_date on non-student works."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(
+        name="Tanya", role=FamilyRole.PARENT,
+        birth_date=date(1985, 3, 20),
+    )
+    updated = await repo.update(member.id, clear_birth_date=True)
+    assert updated.birth_date is None
+
+
+# --- _calc_age tests ---
+
+
+def test_calc_age_none():
+    """None birth_date returns None age."""
+    assert _calc_age(None) is None
+
+
+def test_calc_age_basic():
+    """Age calculation from a past date."""
+    today = date.today()
+    # Someone born exactly 10 years ago (adjusted for birthday not yet passed)
+    birth = date(today.year - 10, today.month, today.day)
+    assert _calc_age(birth) == 10
+
+
+def test_calc_age_birthday_not_yet():
+    """Age should be one less if birthday hasn't occurred yet this year."""
+    today = date.today()
+    # Birthday is tomorrow (or next month) — age should be year diff - 1
+    if today.month == 12 and today.day == 31:
+        # Edge case: use a date in January next year logic
+        future_birth = date(today.year - 10, 1, 1)
+        assert _calc_age(future_birth) == 10
+    else:
+        # Pick a date later this year
+        if today.month < 12:
+            future_birth = date(today.year - 10, 12, 31)
+        else:
+            future_birth = date(today.year - 10, today.month, min(today.day + 1, 28))
+        assert _calc_age(future_birth) == 9

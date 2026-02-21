@@ -3,6 +3,7 @@ from learning_hub.tools.tool_names import (
     TOOL_APPLY_BONUS_TASK_RESULT,
     TOOL_GET_BONUS_TASK,
     TOOL_GET_CONFIG,
+    TOOL_GET_STUDENT,
 )
 
 BONUS_TASK_EVALUATION_INSTRUCTIONS = f"""\
@@ -30,6 +31,10 @@ Evaluate in **Socratic learning** style:
 - **Topic understanding**: the student demonstrates understanding, not mechanical copying.
 - **Completeness**: the answer covers what was assigned.
 - **Correctness**: factual errors, logical errors.
+- **Age-appropriate expectations**: consider the student's age \
+(from `{TOOL_GET_STUDENT}()` → `age`). \
+For younger students — accept simpler formulations and shorter answers; \
+for older students — expect deeper analysis and more structured reasoning.
 
 ### Grading scale (1–5, European):
 - **1** — excellent, full understanding

@@ -3,6 +3,7 @@ from learning_hub.tools.tool_names import (
     TOOL_COMPLETE_HOMEWORK,
     TOOL_GET_BOOK,
     TOOL_GET_CONFIG,
+    TOOL_GET_STUDENT,
     TOOL_LIST_FAMILY_MEMBERS,
     TOOL_LIST_HOMEWORKS,
     TOOL_LIST_SUBJECTS,
@@ -63,6 +64,9 @@ Context from the book helps to:
 Evaluate in **Socratic learning** style:
 - Give feedback: what is correct, what is not, what to pay attention to.
 - If there are errors — suggest corrections, explain why.
+- **Adapt feedback to the student's age** (from `{TOOL_GET_STUDENT}()` → `age`): \
+for younger students — shorter, simpler explanations with concrete examples; \
+for older students — more detailed analysis and encouragement to think deeper.
 - Assign a **recommended grade** (1–5, European scale: 1 is best).
 
 ### 3.2 Assignment cannot be verified

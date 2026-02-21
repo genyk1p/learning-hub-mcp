@@ -3,6 +3,7 @@ from learning_hub.tools.tool_names import (
     TOOL_CREATE_BONUS_TASK,
     TOOL_GET_BONUS_FUND,
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
+    TOOL_GET_STUDENT,
 )
 
 BONUS_TASK_ASSIGNMENT_INSTRUCTIONS = f"""\
@@ -51,6 +52,9 @@ Based on the selected TopicReview, formulate 1–2 tasks:
 find an error, compare two approaches.
 - Bad formats: "copy the definition", "memorize by heart".
 - Task difficulty should match the student's level and subject.
+- **Adapt to the student's age** (from `{TOOL_GET_STUDENT}()` → `age`): \
+simpler language and shorter tasks for younger students, \
+more analytical and open-ended for older ones.
 - The task should be completable in 10–20 minutes.
 
 ---

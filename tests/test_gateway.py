@@ -1,5 +1,7 @@
 """Tests for Gateway model and repository."""
 
+from datetime import date
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
@@ -68,7 +70,10 @@ async def test_second_gateway_not_auto_default(session):
 
 async def test_lookup(session):
     """Lookup should return gateway with eagerly loaded family member."""
-    member = await _create_member(session, name="Stas", role=FamilyRole.STUDENT, is_student=True)
+    member = await _create_member(
+        session, name="Stas", role=FamilyRole.STUDENT,
+        is_student=True, birth_date=date(2014, 5, 15),
+    )
     repo = GatewayRepository(session)
     await repo.create(
         family_member_id=member.id,

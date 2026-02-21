@@ -1,7 +1,8 @@
 """FamilyMember model - family members participating in the learning system."""
 
+from datetime import date
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean, Text, CheckConstraint, Index, text
+from sqlalchemy import String, Boolean, Text, Date, CheckConstraint, Index, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -42,6 +43,9 @@ class FamilyMember(Base, TimestampMixin):
 
     # Free text notes for the agent
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Date of birth (required for student, optional for others)
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # Relationships
     gateways: Mapped[list["Gateway"]] = relationship(

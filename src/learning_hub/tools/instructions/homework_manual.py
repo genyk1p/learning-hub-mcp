@@ -2,6 +2,7 @@ from learning_hub.tools.tool_names import (
     TOOL_CREATE_HOMEWORK,
     TOOL_CREATE_TOPIC,
     TOOL_GET_BOOK,
+    TOOL_GET_STUDENT,
     TOOL_LIST_BOOKS,
     TOOL_LIST_HOMEWORKS,
     TOOL_LIST_SCHOOLS,
@@ -174,6 +175,10 @@ After user confirmation, call:
 
 After successful registration, send the assignment to the child \
 via the standard communication method.
+
+The message should be **adapted to the student's age** \
+(from `{TOOL_GET_STUDENT}()` → `age`): \
+clear, concise, and easy to understand for their developmental stage.
 
 The message should include:
 - subject
