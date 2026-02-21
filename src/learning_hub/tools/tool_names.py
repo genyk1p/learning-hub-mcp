@@ -67,6 +67,7 @@ TOOL_GET_WEEK = "get_week"
 TOOL_UPDATE_WEEK = "update_week"
 TOOL_FINALIZE_WEEK = "finalize_week"
 TOOL_CALCULATE_WEEKLY_MINUTES = "calculate_weekly_minutes"
+TOOL_PREVIEW_WEEKLY_MINUTES = "preview_weekly_minutes"
 TOOL_GET_GRADE_TO_MINUTES_MAP = "get_grade_to_minutes_map"
 
 # --- Topic Reviews ---

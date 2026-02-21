@@ -18,6 +18,7 @@ from learning_hub.tools.tool_names import (
     TOOL_ADD_TASKS_TO_FUND,
     TOOL_CALCULATE_WEEKLY_MINUTES,
     TOOL_CHECK_SYSTEM_READINESS,
+    TOOL_PREVIEW_WEEKLY_MINUTES,
     TOOL_CREATE_GATEWAY,
     TOOL_DELETE_GATEWAY,
     TOOL_FINALIZE_WEEK,
@@ -178,6 +179,13 @@ Algorithm details — in the tool description.
 The fact of "how much the student played" is recorded in Weekly state \
 in the database (field `actual_played_minutes`); \
 this data is entered by the administrator during the week.
+
+### Mid-week preview
+
+If the student or parent asks "how many minutes will I get?" / "what's my balance looking like?" — \
+use `{TOOL_PREVIEW_WEEKLY_MINUTES}()`. It returns the same breakdown as the weekly calculation, \
+but **does not modify any data** (no grades/bonuses marked, no week created). \
+Status will be `"preview"`.
 
 ### Entering play fact (actual_played_minutes) — how to record
 

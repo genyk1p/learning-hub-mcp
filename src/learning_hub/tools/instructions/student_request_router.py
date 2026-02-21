@@ -7,6 +7,7 @@ from learning_hub.tools.tool_names import (
     TOOL_LIST_GRADES,
     TOOL_LIST_HOMEWORKS,
     TOOL_LIST_TOPIC_REVIEWS,
+    TOOL_PREVIEW_WEEKLY_MINUTES,
 )
 
 STUDENT_REQUEST_ROUTER_INSTRUCTIONS = f"""\
@@ -44,6 +45,7 @@ Return factual data from Learning Hub to the student:
 | Bonus fund (available slots) | `{TOOL_GET_BONUS_FUND}` |
 | Topics for review | `{TOOL_LIST_TOPIC_REVIEWS}` |
 | Minutes for the current week | `{TOOL_GET_WEEK}` |
+| Estimated minutes at end of this week (preview) | `{TOOL_PREVIEW_WEEKLY_MINUTES}` |
 
 Rules:
 - Provide data as-is, without strategic advice.
@@ -84,6 +86,7 @@ and topics for review are part of the normal process — communicate them in a f
 - `{TOOL_GET_BONUS_FUND}` — bonus fund status
 - `{TOOL_LIST_TOPIC_REVIEWS}` — topics for review
 - `{TOOL_GET_WEEK}` — minutes for the current week
+- `{TOOL_PREVIEW_WEEKLY_MINUTES}` — estimated minutes preview (read-only)
 - `{TOOL_GET_BONUS_TASK_ASSIGNMENT_INSTRUCTIONS}` — instruction for scenario B
 - `{TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS}` — instruction for scenario C
 """

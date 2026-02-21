@@ -17,6 +17,7 @@ from learning_hub.tools.tool_names import (
     TOOL_UPDATE_WEEK,
     TOOL_FINALIZE_WEEK,
     TOOL_CALCULATE_WEEKLY_MINUTES,
+    TOOL_PREVIEW_WEEKLY_MINUTES,
     TOOL_GET_GRADE_TO_MINUTES_MAP,
 )
 from learning_hub.repositories.config_entry import ConfigEntryRepository
@@ -356,6 +357,113 @@ def register_week_tools(mcp: FastMCP) -> None:
                     f"Week {new_week_key}: "
                     f"grades={grade_minutes}, homework={homework_bonus_minutes}, "
                     f"carry={carry}, penalty={penalty_minutes}, "
+                    f"total={total_minutes} min."
+                ),
+            )
+
+    @mcp.tool(name=TOOL_PREVIEW_WEEKLY_MINUTES, description=f"""Preview weekly game minutes (read-only).
+
+    Shows what the weekly calculation would look like for the current active week
+    without modifying any data. No grades/bonuses are marked as rewarded,
+    no week is created, no bonus fund is topped up.
+
+    Use this when the student or parent asks "how many minutes will I get?"
+    mid-week.
+
+    Grade-to-minutes conversion uses {CFG_GRADE_MINUTES_MAP} config.
+
+    Returns:
+        Breakdown with status="preview", or status="no_active_week" if no current week exists
+    """)
+    async def preview_weekly_minutes() -> WeeklyCalcResult:
+        now = datetime.now()
+
+        async with AsyncSessionLocal() as session:
+            week_repo = WeekRepository(session)
+            grade_repo = GradeRepository(session)
+            bonus_repo = BonusRepository(session)
+            config_repo = ConfigEntryRepository(session)
+
+            current_week = await week_repo.get_current(now)
+            if current_week is None:
+                return WeeklyCalcResult(
+                    status="no_active_week",
+                    new_week_key="",
+                    prev_week_key="",
+                    message="No active week found for the current date.",
+                )
+
+            # Carryover from previous finalized week
+            prev_date = (
+                datetime.fromisoformat(current_week.week_key).date()
+                - timedelta(days=7)
+            )
+            prev_week_key = prev_date.isoformat()
+            prev_week = await week_repo.get_by_key(prev_week_key)
+            prev_finalized = prev_week is not None and prev_week.is_finalized
+            carry = prev_week.carryover_out_minutes if prev_week and prev_finalized else 0
+            carry_note = (
+                " (prev week not finalized — carryover estimated as 0)"
+                if not prev_finalized
+                else ""
+            )
+
+            # Grade minutes map from config
+            grade_map_raw = await config_repo.get_json_value(CFG_GRADE_MINUTES_MAP)
+            grade_minutes_map = (
+                {int(k): v for k, v in grade_map_raw.items()}
+                if isinstance(grade_map_raw, dict)
+                else _DEFAULT_GRADE_MINUTES_MAP
+            )
+
+            # Unrewarded grades in current week's period
+            grades = await grade_repo.list(
+                date_from=current_week.start_at,
+                date_to=current_week.end_at,
+                rewarded=False,
+            )
+
+            grade_minutes = 0
+            grade_counter: Counter[int] = Counter()
+            for grade in grades:
+                gv = grade.grade_value.value
+                minutes = grade_minutes_map.get(gv, 0)
+                grade_minutes += minutes
+                grade_counter[gv] += 1
+
+            # Unrewarded bonuses
+            bonuses = await bonus_repo.list_unrewarded()
+            homework_bonus_minutes = sum(b.minutes for b in bonuses)
+
+            penalty_minutes = current_week.penalty_minutes
+            total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
+
+            grades_breakdown = [
+                GradeBreakdown(
+                    grade_value=gv,
+                    count=count,
+                    minutes=grade_minutes_map.get(gv, 0) * count,
+                )
+                for gv, count in sorted(grade_counter.items())
+            ]
+
+            return WeeklyCalcResult(
+                status="preview",
+                new_week_key=current_week.week_key,
+                prev_week_key=prev_week_key,
+                carry_from_prev=carry,
+                grade_minutes=grade_minutes,
+                homework_bonus_minutes=homework_bonus_minutes,
+                penalty_minutes=penalty_minutes,
+                total_minutes=total_minutes,
+                grades_processed=len(grades),
+                bonuses_processed=len(bonuses),
+                grades_breakdown=grades_breakdown,
+                week=_week_response(current_week),
+                message=(
+                    f"Preview for {current_week.week_key}: "
+                    f"grades={grade_minutes}, homework={homework_bonus_minutes}, "
+                    f"carry={carry}{carry_note}, penalty={penalty_minutes}, "
                     f"total={total_minutes} min."
                 ),
             )
