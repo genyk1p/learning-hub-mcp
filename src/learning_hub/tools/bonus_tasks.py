@@ -1,7 +1,7 @@
 """BonusTask tools for MCP server."""
 
 import random
-from datetime import datetime, timezone
+from datetime import datetime
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
@@ -364,7 +364,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 grade = await grade_repo.create(
                     subject_id=topic.subject_id,
                     grade_value=grade_enum,
-                    date=datetime.now(timezone.utc),
+                    date=datetime.now(),
                     subject_topic_id=task.subject_topic_id,
                     bonus_task_id=task.id,
                 )

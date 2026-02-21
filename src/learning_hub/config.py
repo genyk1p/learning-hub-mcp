@@ -9,9 +9,6 @@ class Settings(BaseSettings):
     # Database URL (SQLite by default)
     database_url: str = "sqlite+aiosqlite:///./data/learning_hub.db"
 
-    # Timezone for date conversions
-    timezone: str = "Europe/Vienna"
-
     # EduPage credentials
     edupage_username: str = ""
     edupage_password: str = ""

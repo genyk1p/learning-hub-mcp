@@ -106,7 +106,7 @@ then the agent **must log the problem** to the file at \
 `{TOOL_GET_CONFIG}(key="{CFG_ISSUES_LOG}")`.
 
 Log entry format:
-- date/time (Europe/Vienna)
+- date/time (server local time)
 - where it occurred (which cron/jobId or which tool/command)
 - input data (briefly, no secrets)
 - expected vs actual result
@@ -213,7 +213,7 @@ and act on the returned algorithm.
 ### Deadlines
 
 - If the deadline is specified as a date only ("by Feb 5") → \
-treat as **by `{CFG_DEFAULT_DEADLINE_TIME}` (Europe/Vienna)** of that day \
+treat as **by `{CFG_DEFAULT_DEADLINE_TIME}` (server local time)** of that day \
 (value via `{TOOL_GET_CONFIG}(key="{CFG_DEFAULT_DEADLINE_TIME}")`).
 
 ### Reminders (cron)

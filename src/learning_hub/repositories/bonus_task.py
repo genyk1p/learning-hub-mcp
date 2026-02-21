@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -158,7 +158,7 @@ class BonusTaskRepository:
 
         # Mark task as completed
         task.status = BonusTaskStatus.COMPLETED
-        task.completed_at = datetime.now(timezone.utc)
+        task.completed_at = datetime.now()
         if quality_notes is not None:
             task.quality_notes = quality_notes
 

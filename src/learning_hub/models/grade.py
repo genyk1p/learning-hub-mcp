@@ -58,7 +58,7 @@ class Grade(Base, TimestampMixin):
     # Grade value: 1-5 (1 is best, 5 is worst) (auto-validated by Enum)
     grade_value: Mapped[GradeValue] = mapped_column(nullable=False)
 
-    # Date when grade was received (stored in UTC, displayed in Europe/Vienna)
+    # Date when grade was received (stored in server local time)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Whether bonuses/penalties for this grade were counted in weekly calculation

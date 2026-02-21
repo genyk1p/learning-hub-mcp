@@ -1,7 +1,6 @@
 """Homework tools for MCP server."""
 
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
@@ -294,21 +293,11 @@ def register_homework_tools(mcp: FastMCP) -> None:
 
     Dedup is built-in: each homework appears at most once per kind.
 
-    Args:
-        tz: Timezone for "today" calculation (default "Europe/Vienna")
-
     Returns:
         List of reminders with subject context, or empty list
     """)
-    async def get_pending_homework_reminders(
-        tz: str = "Europe/Vienna",
-    ) -> list[HomeworkReminderResponse]:
-        try:
-            zone = ZoneInfo(tz)
-        except KeyError:
-            return []
-
-        today = datetime.now(zone).date()
+    async def get_pending_homework_reminders() -> list[HomeworkReminderResponse]:
+        today = datetime.now().date()
 
         async with AsyncSessionLocal() as session:
             repo = HomeworkRepository(session)
@@ -316,11 +305,11 @@ def register_homework_tools(mcp: FastMCP) -> None:
 
             reminders: list[HomeworkReminderResponse] = []
             for hw in homeworks:
-                # Convert deadline to the target timezone and get date part
                 dl = hw.deadline_at
-                if dl.tzinfo is None:
-                    dl = dl.replace(tzinfo=ZoneInfo("UTC"))
-                deadline_date = dl.astimezone(zone).date()
+                # Handle legacy timezone-aware datetimes (convert to local)
+                if dl.tzinfo is not None:
+                    dl = dl.astimezone()
+                deadline_date = dl.date()
                 days_until = (deadline_date - today).days
 
                 if days_until == 2 and hw.reminded_d2_at is None:

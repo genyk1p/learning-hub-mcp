@@ -95,7 +95,7 @@ Finding/creating a topic:
 
 - If the user specified a date — use it.
 - If not — **ask**: "What date is the grade for?"
-- Format: ISO (YYYY-MM-DD). Timezone: Europe/Vienna.
+- Format: ISO (YYYY-MM-DD).
 
 ---
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -97,7 +97,7 @@ class SubjectTopicRepository:
         if topic is None:
             return None
 
-        topic.closed_at = datetime.now(timezone.utc)
+        topic.closed_at = datetime.now()
         topic.close_reason = reason
 
         await self.session.commit()

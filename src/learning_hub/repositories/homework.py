@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -82,7 +82,7 @@ class HomeworkRepository:
         delta: timedelta,
     ) -> list[Homework]:
         """List pending homeworks with deadline within given delta from now."""
-        now = datetime.utcnow()
+        now = datetime.now()
         deadline_threshold = now + delta
 
         query = select(Homework).where(
@@ -105,7 +105,7 @@ class HomeworkRepository:
         Each overdue homework gets status=OVERDUE and bonus via complete().
         Returns the list of closed homeworks.
         """
-        now = datetime.utcnow()
+        now = datetime.now()
 
         query = select(Homework).where(
             Homework.status == HomeworkStatus.PENDING,
@@ -151,7 +151,7 @@ class HomeworkRepository:
         if recommended_grade is not None:
             homework.recommended_grade = recommended_grade
 
-        now = datetime.utcnow()
+        now = datetime.now()
         homework.completed_at = now
 
         is_overdue = (
@@ -237,7 +237,7 @@ class HomeworkRepository:
         d2_homework_ids: list[int],
     ) -> int:
         """Set reminded_d1_at / reminded_d2_at to now for given homework IDs."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
         count = 0
 
         if d1_homework_ids:

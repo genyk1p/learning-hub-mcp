@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from datetime import timezone
-
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -165,7 +163,7 @@ class GradeRepository:
 
         Returns count of updated rows.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
         stmt = (
             update(Grade)
             .where(Grade.id.in_(grade_ids))

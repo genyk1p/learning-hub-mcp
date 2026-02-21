@@ -64,7 +64,7 @@ Recommended template:
 
 ## Source
 - Original file: ./original.pdf
-- Added at: <YYYY-MM-DD HH:mm Europe/Vienna>
+- Added at: <YYYY-MM-DD HH:mm>
 ```
 
 ---

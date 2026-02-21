@@ -34,9 +34,6 @@ Create `.env` file (see `.env.example`):
 # Database
 DATABASE_URL=sqlite+aiosqlite:///./data/learning_hub.db
 
-# Timezone
-TIMEZONE=Europe/Vienna
-
 # EduPage credentials (optional)
 EDUPAGE_USERNAME=your_email@example.com
 EDUPAGE_PASSWORD=your_password
