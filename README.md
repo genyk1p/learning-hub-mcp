@@ -89,7 +89,7 @@ Add to your MCP client config:
 }
 ```
 
-## MCP Tools (76 total)
+## MCP Tools (75 total)
 
 ### Subjects
 - `create_subject` - create a new school subject
@@ -117,10 +117,9 @@ Add to your MCP client config:
 - `check_pending_bonus_task` - check if there's a pending task to reuse
 
 ### Bonuses
-- `create_bonus` - create a homework bonus record (+/- minutes)
-- `delete_bonus` - delete a bonus record
+- `create_bonus` - create a bonus record (+/- minutes): homework-linked or ad-hoc with reason
+- `delete_bonus` - delete an unrewarded bonus record
 - `list_unrewarded_bonuses` - list bonuses not yet included in weekly calc
-- `mark_bonuses_rewarded` - mark bonuses as included in weekly calc
 
 ### Bonus Funds
 - `get_bonus_fund` - get the bonus fund

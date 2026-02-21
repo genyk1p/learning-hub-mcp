@@ -9,7 +9,6 @@ from learning_hub.tools.tool_names import (
     TOOL_CREATE_BONUS,
     TOOL_DELETE_BONUS,
     TOOL_LIST_UNREWARDED_BONUSES,
-    TOOL_MARK_BONUSES_REWARDED,
 )
 from learning_hub.utils import dt_to_str
 
@@ -17,8 +16,9 @@ from learning_hub.utils import dt_to_str
 class BonusResponse(BaseModel):
     """Bonus response schema."""
     id: int
-    homework_id: int
+    homework_id: int | None
     minutes: int
+    reason: str | None
     rewarded: bool
     created_at: str | None
 
@@ -29,45 +29,60 @@ def register_bonus_tools(mcp: FastMCP) -> None:
     @mcp.tool(name=TOOL_CREATE_BONUS, description="""Create a new bonus minutes record.
 
     Bonus minutes can be positive (reward) or negative (penalty).
-    Linked to a homework (one bonus per homework).
+    Two modes:
+    - Homework-linked: provide homework_id (one bonus per homework).
+    - Ad-hoc: no homework_id, provide reason (e.g. "good behavior", "penalty for lying").
 
     Args:
-        homework_id: ID of the related homework
         minutes: Number of bonus minutes (positive=reward, negative=penalty)
+        homework_id: ID of the related homework (optional, for homework bonuses)
+        reason: Why this bonus was given (optional, for ad-hoc bonuses)
 
     Returns:
-        Created bonus
+        Created bonus, or error dict if validation fails
     """)
     async def create_bonus(
-        homework_id: int,
         minutes: int,
-    ) -> BonusResponse:
+        homework_id: int | None = None,
+        reason: str | None = None,
+    ) -> BonusResponse | dict:
         async with AsyncSessionLocal() as session:
             repo = BonusRepository(session)
-            bonus = await repo.create(
-                homework_id=homework_id,
-                minutes=minutes,
-            )
+            try:
+                bonus = await repo.create(
+                    minutes=minutes,
+                    homework_id=homework_id,
+                    reason=reason,
+                )
+            except ValueError as e:
+                return {"error": str(e)}
             return BonusResponse(
                 id=bonus.id,
                 homework_id=bonus.homework_id,
                 minutes=bonus.minutes,
+                reason=bonus.reason,
                 rewarded=bonus.rewarded,
                 created_at=dt_to_str(bonus.created_at),
             )
 
     @mcp.tool(name=TOOL_DELETE_BONUS, description="""Delete a bonus record.
 
+    Only unrewarded bonuses can be deleted. Rewarded bonuses (already counted
+    in weekly calculation) are protected from deletion.
+
     Args:
         bonus_id: ID of the bonus to delete
 
     Returns:
-        True if deleted, False if not found
+        Success status, or error dict if not found or already rewarded
     """)
-    async def delete_bonus(bonus_id: int) -> bool:
+    async def delete_bonus(bonus_id: int) -> dict:
         async with AsyncSessionLocal() as session:
             repo = BonusRepository(session)
-            return await repo.delete(bonus_id)
+            success, error = await repo.delete(bonus_id)
+            if error is not None:
+                return {"error": error}
+            return {"deleted": success}
 
     @mcp.tool(name=TOOL_LIST_UNREWARDED_BONUSES, description="""List bonus records not yet counted in weekly calculation.
 
@@ -85,21 +100,9 @@ def register_bonus_tools(mcp: FastMCP) -> None:
                     id=b.id,
                     homework_id=b.homework_id,
                     minutes=b.minutes,
+                    reason=b.reason,
                     rewarded=b.rewarded,
                     created_at=dt_to_str(b.created_at),
                 )
                 for b in bonuses
             ]
-
-    @mcp.tool(name=TOOL_MARK_BONUSES_REWARDED, description="""Mark all unrewarded bonuses as rewarded.
-
-    Sets rewarded=True for all bonuses where rewarded=False.
-    Use this during weekly game minutes calculation.
-
-    Returns:
-        Count of bonuses marked as rewarded
-    """)
-    async def mark_bonuses_rewarded() -> int:
-        async with AsyncSessionLocal() as session:
-            repo = BonusRepository(session)
-            return await repo.mark_all_rewarded()

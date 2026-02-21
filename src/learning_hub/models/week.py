@@ -32,7 +32,8 @@ class Week(Base, TimestampMixin):
     # Minutes from grades (1→+15, 2→+10, 3→0, 4→-20, 5→-25)
     grade_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    # Sum of homework bonuses for this week (+5 on time / -5 overdue per homework)
+    # Sum of all bonuses for this week: homework bonuses (+/- per homework)
+    # AND ad-hoc bonuses (parent rewards/penalties without homework link)
     homework_bonus_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Penalty minutes (for late topics, missed deadlines, etc.)

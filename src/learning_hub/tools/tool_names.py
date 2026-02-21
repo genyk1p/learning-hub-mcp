@@ -40,7 +40,6 @@ TOOL_CHECK_PENDING_BONUS_TASK = "check_pending_bonus_task"
 TOOL_CREATE_BONUS = "create_bonus"
 TOOL_DELETE_BONUS = "delete_bonus"
 TOOL_LIST_UNREWARDED_BONUSES = "list_unrewarded_bonuses"
-TOOL_MARK_BONUSES_REWARDED = "mark_bonuses_rewarded"
 
 # --- Bonus Funds ---
 TOOL_GET_BONUS_FUND = "get_bonus_fund"
