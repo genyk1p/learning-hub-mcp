@@ -36,6 +36,7 @@ async def session():
     from learning_hub.models.book import Book  # noqa: F401
     from learning_hub.models.topic_review import TopicReview  # noqa: F401
     from learning_hub.models.bonus import Bonus  # noqa: F401
+    from learning_hub.models.config_entry import ConfigEntry  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -46,6 +47,8 @@ async def session():
         yield session
 
     async with engine.begin() as conn:
+        # Disable FK enforcement before dropping (avoids FK constraint errors)
+        await conn.exec_driver_sql("PRAGMA foreign_keys=OFF")
         await conn.run_sync(Base.metadata.drop_all)
 
     await engine.dispose()
