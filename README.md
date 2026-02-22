@@ -14,7 +14,7 @@ MCP server for student learning workflow with SQLite database.
 - **Topic Reviews** - reinforcement tracking for weak topics
 - **Escalation** - bad grade notifications for parents
 - **Instruction Tools** - markdown algorithms that guide AI agents through workflows
-- **Sync Providers** - pluggable sync framework (EduPage, future: Bakalari, etc.)
+- **Sync Providers** - pluggable sync framework (EduPage, PRONOTE)
 - **Secrets** - secure credential storage for sync providers
 
 ## Installation
@@ -36,7 +36,7 @@ Create `.env` file (optional):
 DATABASE_URL=sqlite+aiosqlite:///./data/learning_hub.db
 ```
 
-Sync provider credentials (EduPage, etc.) are stored in the `secrets` table and managed via MCP tools (`set_secret`, `list_secrets`).
+Sync provider credentials (EduPage, PRONOTE, etc.) are stored in the `secrets` table and managed via MCP tools (`set_secret`, `list_secrets`).
 
 ## Config System (SQLite)
 
