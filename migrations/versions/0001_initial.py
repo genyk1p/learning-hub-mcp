@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 8a42871ab398
+Revision ID: 51c734ca7bb5
 Revises: 
-Create Date: 2026-02-16 19:30:56.799637
+Create Date: 2026-02-22 18:05:56.997435
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8a42871ab398'
+revision: str = '51c734ca7bb5'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,20 +44,72 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('configs',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('key', sa.String(length=100), nullable=False),
+    sa.Column('value', sa.Text(), nullable=True),
+    sa.Column('description', sa.String(length=500), nullable=False),
+    sa.Column('is_required', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('key')
+    )
+    op.create_table('family_members',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('full_name', sa.String(length=200), nullable=True),
+    sa.Column('role', sa.Enum('ADMIN', 'PARENT', 'STUDENT', 'TUTOR', 'RELATIVE', name='familyrole'), nullable=False),
+    sa.Column('is_admin', sa.Boolean(), nullable=False),
+    sa.Column('is_student', sa.Boolean(), nullable=False),
+    sa.Column('notes', sa.Text(), nullable=True),
+    sa.Column('birth_date', sa.Date(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint('NOT (is_student = 1 AND is_admin = 1)', name='check_student_not_admin'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('family_members', schema=None) as batch_op:
+        batch_op.create_index('uq_single_student', ['is_student'], unique=True, sqlite_where=sa.text('is_student = 1'))
+
+    op.create_table('schools',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('code', sa.String(length=2), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('grading_system', sa.Text(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('code')
+    )
+    op.create_table('secrets',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('key', sa.String(length=100), nullable=False),
+    sa.Column('value', sa.Text(), nullable=True),
+    sa.Column('description', sa.String(length=500), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('key')
+    )
     op.create_table('subjects',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('school', sa.Enum('UA', 'CZ', 'DE', 'FR', 'GB', 'ES', 'IT', 'PL', 'NL', 'US', 'CA', 'AR', 'BR', 'AU', 'CN', 'IN', name='schooltype'), nullable=False),
+    sa.Column('school_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('name_ru', sa.String(length=100), nullable=True),
     sa.Column('grade_level', sa.Integer(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('current_book_id', sa.Integer(), nullable=True),
+    sa.Column('tutor_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.CheckConstraint('grade_level IS NULL OR (grade_level >= 1 AND grade_level <= 20)', name='check_grade_level_range'),
     sa.ForeignKeyConstraint(['current_book_id'], ['books.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['tutor_id'], ['family_members.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('school', 'name', 'grade_level', name='uq_subject_school_name_grade')
+    sa.UniqueConstraint('school_id', 'name', 'grade_level', name='uq_subject_school_name_grade')
     )
     op.create_table('weeks',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -76,6 +128,22 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('week_key')
     )
+    op.create_table('gateways',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('family_member_id', sa.Integer(), nullable=False),
+    sa.Column('channel', sa.Enum('TELEGRAM', 'WHATSAPP', 'DISCORD', 'SLACK', 'SIGNAL', 'IMESSAGE', 'MSTEAMS', 'MATRIX', name='channeltype'), nullable=False),
+    sa.Column('channel_uid', sa.String(length=100), nullable=False),
+    sa.Column('label', sa.String(length=100), nullable=True),
+    sa.Column('is_default', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['family_member_id'], ['family_members.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('channel', 'channel_uid', name='uq_channel_uid')
+    )
+    with op.batch_alter_table('gateways', schema=None) as batch_op:
+        batch_op.create_index('uq_default_per_member', ['family_member_id'], unique=True, sqlite_where=sa.text('is_default = 1'))
+
     op.create_table('subject_topics',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('subject_id', sa.Integer(), nullable=False),
@@ -87,6 +155,20 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('subject_id', 'description', name='uq_subject_topic_subject_description')
+    )
+    op.create_table('sync_providers',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('code', sa.String(length=50), nullable=False),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('school_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint('is_active = 0 OR school_id IS NOT NULL', name='ck_active_requires_school'),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ondelete='SET NULL'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('code'),
+    sa.UniqueConstraint('school_id')
     )
     op.create_table('bonus_tasks',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -113,7 +195,9 @@ def upgrade() -> None:
     sa.Column('deadline_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('recommended_grade', sa.Enum('EXCELLENT', 'GOOD', 'SATISFACTORY', 'POOR', 'FAIL', name='gradevalue'), nullable=True),
     sa.Column('book_id', sa.Integer(), nullable=True),
-    sa.Column('edupage_id', sa.String(length=50), nullable=True),
+    sa.Column('external_id', sa.String(length=100), nullable=True),
+    sa.Column('external_source', sa.String(length=20), nullable=True),
+    sa.Column('attachment_url', sa.String(length=1000), nullable=True),
     sa.Column('reminded_d2_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('reminded_d1_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
@@ -122,12 +206,13 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
     sa.ForeignKeyConstraint(['subject_topic_id'], ['subject_topics.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('edupage_id')
+    sa.UniqueConstraint('external_id', 'external_source', name='uq_homeworks_external')
     )
     op.create_table('bonuses',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('homework_id', sa.Integer(), nullable=False),
+    sa.Column('homework_id', sa.Integer(), nullable=True),
     sa.Column('minutes', sa.Integer(), nullable=False),
+    sa.Column('reason', sa.Text(), nullable=True),
     sa.Column('rewarded', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
@@ -145,7 +230,10 @@ def upgrade() -> None:
     sa.Column('date', sa.DateTime(timezone=True), nullable=False),
     sa.Column('rewarded', sa.Boolean(), nullable=False),
     sa.Column('escalated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('edupage_id', sa.Integer(), nullable=True),
+    sa.Column('source', sa.String(length=10), nullable=False),
+    sa.Column('original_value', sa.Text(), nullable=True),
+    sa.Column('external_id', sa.String(length=100), nullable=True),
+    sa.Column('external_source', sa.String(length=20), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['bonus_task_id'], ['bonus_tasks.id'], ),
@@ -153,7 +241,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
     sa.ForeignKeyConstraint(['subject_topic_id'], ['subject_topics.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('edupage_id')
+    sa.UniqueConstraint('external_id', 'external_source', name='uq_grades_external')
     )
     op.create_table('topic_reviews',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -181,9 +269,21 @@ def downgrade() -> None:
     op.drop_table('bonuses')
     op.drop_table('homeworks')
     op.drop_table('bonus_tasks')
+    op.drop_table('sync_providers')
     op.drop_table('subject_topics')
+    with op.batch_alter_table('gateways', schema=None) as batch_op:
+        batch_op.drop_index('uq_default_per_member', sqlite_where=sa.text('is_default = 1'))
+
+    op.drop_table('gateways')
     op.drop_table('weeks')
     op.drop_table('subjects')
+    op.drop_table('secrets')
+    op.drop_table('schools')
+    with op.batch_alter_table('family_members', schema=None) as batch_op:
+        batch_op.drop_index('uq_single_student', sqlite_where=sa.text('is_student = 1'))
+
+    op.drop_table('family_members')
+    op.drop_table('configs')
     op.drop_table('books')
     op.drop_table('bonus_funds')
     # ### end Alembic commands ###
