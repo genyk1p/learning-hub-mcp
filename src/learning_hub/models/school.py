@@ -8,6 +8,7 @@ from learning_hub.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from learning_hub.models.subject import Subject
+    from learning_hub.models.sync_provider import SyncProvider
 
 
 class School(Base, TimestampMixin):
@@ -37,6 +38,9 @@ class School(Base, TimestampMixin):
 
     # Relationships
     subjects: Mapped[list["Subject"]] = relationship("Subject", back_populates="school")
+    sync_provider: Mapped["SyncProvider | None"] = relationship(
+        "SyncProvider", back_populates="school", uselist=False
+    )
 
     def __repr__(self) -> str:
         return f"<School(id={self.id}, code={self.code!r}, name={self.name!r})>"

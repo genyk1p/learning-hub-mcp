@@ -62,6 +62,9 @@ htmlcov/
 .env.local
 *.env
 
+# Backups
+backups/
+
 # Database
 *.db
 *.sqlite

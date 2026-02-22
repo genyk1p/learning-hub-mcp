@@ -31,6 +31,8 @@ from learning_hub.models.bonus import Bonus
 from learning_hub.models.family_member import FamilyMember
 from learning_hub.models.gateway import Gateway
 from learning_hub.models.config_entry import ConfigEntry
+from learning_hub.models.secret import Secret
+from learning_hub.models.sync_provider import SyncProvider
 
 target_metadata = Base.metadata
 

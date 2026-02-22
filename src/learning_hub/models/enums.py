@@ -64,3 +64,8 @@ class FamilyRole(str, enum.Enum):
     STUDENT = "student"  # The child being tracked
     TUTOR = "tutor"  # Teaches specific subjects (e.g. grandma, aunt)
     RELATIVE = "relative"  # Other family members
+
+
+class SyncProviderType(str, enum.Enum):
+    """Type of external sync service for grades/homeworks."""
+    EDUPAGE = "edupage"  # EduPage (Czech Republic, Slovakia, etc.)

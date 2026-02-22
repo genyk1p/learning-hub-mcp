@@ -14,7 +14,8 @@ MCP server for student learning workflow with SQLite database.
 - **Topic Reviews** - reinforcement tracking for weak topics
 - **Escalation** - bad grade notifications for parents
 - **Instruction Tools** - markdown algorithms that guide AI agents through workflows
-- **EduPage Sync** - automatic sync of grades and homework from EduPage
+- **Sync Providers** - pluggable sync framework (EduPage, future: Bakalari, etc.)
+- **Secrets** - secure credential storage for sync providers
 
 ## Installation
 
@@ -28,18 +29,14 @@ poetry run alembic upgrade head
 
 ## Configuration
 
-Create `.env` file (see `.env.example`):
+Create `.env` file (optional):
 
 ```bash
-# Database
+# Database (defaults to ./data/learning_hub.db)
 DATABASE_URL=sqlite+aiosqlite:///./data/learning_hub.db
-
-# EduPage credentials (optional)
-EDUPAGE_USERNAME=your_email@example.com
-EDUPAGE_PASSWORD=your_password
-EDUPAGE_SUBDOMAIN=your_school_subdomain
-EDUPAGE_SCHOOL=CZ
 ```
+
+Sync provider credentials (EduPage, etc.) are stored in the `secrets` table and managed via MCP tools (`set_secret`, `list_secrets`).
 
 ## Config System (SQLite)
 
@@ -89,7 +86,7 @@ Add to your MCP client config:
 }
 ```
 
-## MCP Tools (75 total)
+## MCP Tools (84 total)
 
 ### Subjects
 - `create_subject` - create a new school subject
@@ -147,6 +144,7 @@ Add to your MCP client config:
 - `update_week` - update week minutes
 - `finalize_week` - finalize week and calculate carryover
 - `calculate_weekly_minutes` - calculate grade/bonus minutes for the week
+- `preview_weekly_minutes` - preview minutes without saving
 - `get_grade_to_minutes_map` - get grade-to-minutes conversion table
 
 ### Topic Reviews
@@ -175,16 +173,21 @@ Add to your MCP client config:
 - `set_config` - set a config value (existing keys only)
 - `list_configs` - list all config entries
 
+### Secrets
+- `set_secret` - set a secret value (credentials, API keys)
+- `list_secrets` - list secrets (keys only, values never exposed)
+
+### Sync Providers
+- `list_sync_providers` - list all sync providers with status
+- `update_sync_provider` - activate/deactivate, link to school
+- `run_sync` - run sync for all active providers (or a specific one)
+
 ### Readiness
 - `check_system_readiness` - check if the system is properly configured (active schools, required configs)
 
 ### Escalation
 - `get_grades_pending_escalation` - get grades needing parent notification
 - `mark_grades_escalated` - mark grades as escalated (parent was notified)
-
-### EduPage Sync
-- `sync_edupage_grades` - sync grades from EduPage
-- `sync_edupage_homeworks` - sync homework from EduPage
 
 ### Instruction Tools
 - `get_grade_escalation_instructions` - escalate bad grades to tutor/admin

@@ -96,16 +96,21 @@ TOOL_GET_CONFIG = "get_config"
 TOOL_SET_CONFIG = "set_config"
 TOOL_LIST_CONFIGS = "list_configs"
 
+# --- Secrets ---
+TOOL_SET_SECRET = "set_secret"
+TOOL_LIST_SECRETS = "list_secrets"
+
+# --- Sync Providers ---
+TOOL_LIST_SYNC_PROVIDERS = "list_sync_providers"
+TOOL_UPDATE_SYNC_PROVIDER = "update_sync_provider"
+TOOL_RUN_SYNC = "run_sync"
+
 # --- Readiness ---
 TOOL_CHECK_SYSTEM_READINESS = "check_system_readiness"
 
 # --- Escalation ---
 TOOL_GET_GRADES_PENDING_ESCALATION = "get_grades_pending_escalation"
 TOOL_MARK_GRADES_ESCALATED = "mark_grades_escalated"
-
-# --- EduPage Sync ---
-TOOL_SYNC_EDUPAGE_GRADES = "sync_edupage_grades"
-TOOL_SYNC_EDUPAGE_HOMEWORKS = "sync_edupage_homeworks"
 
 # --- Instruction Tools ---
 TOOL_GET_GRADE_MANUAL_INSTRUCTIONS = "get_grade_manual_instructions"

@@ -2,12 +2,13 @@ from learning_hub.tools.tool_names import (
     TOOL_LIST_SUBJECTS,
     TOOL_LIST_TOPIC_REVIEWS,
     TOOL_MARK_TOPIC_REINFORCED,
+    TOOL_RUN_SYNC,
 )
 
 TOPIC_REVIEW_CURATION_INSTRUCTIONS = f"""\
-# TopicReview curation after EduPage sync
+# TopicReview curation after sync
 
-> Call this tool after `sync_edupage_grades`.
+> Call this tool after `{TOOL_RUN_SYNC}`.
 > The sync may create TopicReview records for subjects that don't require
 > academic reinforcement (PE, crafts, music, art, etc.).
 > This instruction describes how to clean them up.

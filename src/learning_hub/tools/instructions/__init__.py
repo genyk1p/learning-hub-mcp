@@ -20,6 +20,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_HOMEWORK_EVALUATION_INSTRUCTIONS,
     TOOL_GET_STUDENT_CONTENT_POLICY_INSTRUCTIONS,
     TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS,
+    TOOL_RUN_SYNC,
 )
 from learning_hub.tools.instructions.book_lookup import BOOK_LOOKUP_INSTRUCTIONS
 from learning_hub.tools.instructions.books_workflow import BOOKS_WORKFLOW_INSTRUCTIONS
@@ -170,10 +171,10 @@ def register_instruction_tools(mcp: FastMCP) -> None:
     async def get_homework_evaluation_instructions() -> str:
         return HOMEWORK_EVALUATION_INSTRUCTIONS
 
-    @mcp.tool(name=TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS, description="""\
-      Get step-by-step instructions for curating TopicReviews after EduPage sync.
+    @mcp.tool(name=TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS, description=f"""\
+      Get step-by-step instructions for curating TopicReviews after sync.
 
-      Call this tool after running sync_edupage_grades. The sync may create
+      Call this tool after running {TOOL_RUN_SYNC}. The sync may create
       TopicReview records for non-academic subjects (PE, crafts, music, art)
       that don't need reinforcement. This instruction tells how to identify
       and close them.

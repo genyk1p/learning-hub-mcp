@@ -37,6 +37,8 @@ async def session():
     from learning_hub.models.topic_review import TopicReview  # noqa: F401
     from learning_hub.models.bonus import Bonus  # noqa: F401
     from learning_hub.models.config_entry import ConfigEntry  # noqa: F401
+    from learning_hub.models.secret import Secret  # noqa: F401
+    from learning_hub.models.sync_provider import SyncProvider  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
