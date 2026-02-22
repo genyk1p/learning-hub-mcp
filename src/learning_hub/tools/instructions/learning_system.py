@@ -34,7 +34,6 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_HOMEWORK_MANUAL_INSTRUCTIONS,
     TOOL_GET_PENDING_HOMEWORK_REMINDERS,
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
-    TOOL_GET_SCHOOL,
     TOOL_GET_STUDENT,
     TOOL_GET_STUDENT_CONTENT_POLICY_INSTRUCTIONS,
     TOOL_GET_STUDENT_REQUEST_ROUTER_INSTRUCTIONS,
@@ -159,10 +158,9 @@ and directs to the appropriate workflow:
 
 ## 2) Game time: converting grades to minutes
 
-Scale 1–5 (1 = best, 5 = worst). If the school uses a different scale — \
-the agent **must convert** the grade to 1–5 before recording. \
-Scale description and conversion rules — via \
-`{TOOL_GET_SCHOOL}(school_id=...)` (field `grading_system`). \
+Scale 1–5 (1 = best, 5 = worst). \
+Auto-sync providers convert grades in code; for manual entry see \
+`{TOOL_GET_GRADE_MANUAL_INSTRUCTIONS}()`. \
 Grade to game minutes conversion table — via `{TOOL_GET_GRADE_TO_MINUTES_MAP}()`.
 
 ### Week period
