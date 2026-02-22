@@ -16,6 +16,7 @@ sqlalchemy = "^2.0.46"
 alembic = "^1.18.3"
 aiosqlite = "^0.22.1"
 edupage-api = "^0.12.3"
+pronotepy = "^2.14.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"

@@ -51,7 +51,7 @@ def register_sync_provider_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(name=TOOL_LIST_SYNC_PROVIDERS, description="""List all sync providers.
 
-    Shows all available sync services (e.g. EduPage) with their
+    Shows all available sync services (e.g. EduPage, PRONOTE) with their
     activation status and linked school.
 
     Returns:

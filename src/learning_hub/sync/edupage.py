@@ -15,6 +15,7 @@ from learning_hub.models.enums import (
     GradeSource,
     GradeValue,
     HomeworkStatus,
+    SyncProviderType,
 )
 from learning_hub.models.sync_provider import SyncProvider
 from learning_hub.repositories.grade import GradeRepository
@@ -42,6 +43,15 @@ async def run_edupage_sync(
     """
     school_id = provider.school_id
     school_name = provider.school.name if provider.school else None
+
+    if school_id is None:
+        return ProviderSyncResult(
+            provider_code=provider.code,
+            provider_name=provider.name,
+            school_name=school_name,
+            errors=["Provider has no school linked. Link a school first."],
+        )
+
     errors: list[str] = []
 
     # Read credentials
@@ -153,7 +163,9 @@ async def _sync_grades(
 
     for eg in edupage_grades:
         # Check if already synced
-        existing = await grade_repo.get_by_edupage_id(eg.event_id)
+        existing = await grade_repo.get_by_external_id(
+            str(eg.event_id), SyncProviderType.EDUPAGE
+        )
         if existing is not None:
             grades_skipped += 1
             continue
@@ -199,7 +211,8 @@ async def _sync_grades(
                 grade_value=grade_value,
                 date=eg.date,
                 subject_topic_id=subject_topic_id,
-                edupage_id=eg.event_id,
+                external_id=str(eg.event_id),
+                external_source=SyncProviderType.EDUPAGE,
                 source=GradeSource.AUTO,
                 original_value=str(eg.grade_n),
             )
@@ -271,7 +284,9 @@ async def _sync_homeworks(
             continue
 
         # Check if already synced
-        existing = await homework_repo.get_by_edupage_id(edupage_id)
+        existing = await homework_repo.get_by_external_id(
+            edupage_id, SyncProviderType.EDUPAGE
+        )
         if existing is not None:
             homeworks_skipped += 1
             continue
@@ -324,7 +339,8 @@ async def _sync_homeworks(
                 description=description,
                 deadline_at=deadline_at,
                 assigned_at=event.timestamp,
-                edupage_id=edupage_id,
+                external_id=edupage_id,
+                external_source=SyncProviderType.EDUPAGE,
                 status=status,
             )
             homeworks_created += 1

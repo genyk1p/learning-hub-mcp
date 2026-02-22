@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, DateTime, Boolean, ForeignKey, String, Text
+from sqlalchemy import Integer, DateTime, Boolean, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -30,6 +30,9 @@ class Grade(Base, TimestampMixin):
     """
 
     __tablename__ = "grades"
+    __table_args__ = (
+        UniqueConstraint("external_id", "external_source", name="uq_grades_external"),
+    )
 
     # Primary key
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -76,8 +79,9 @@ class Grade(Base, TimestampMixin):
     # Stored for display purposes; grade_value holds the normalized 1-5 int
     original_value: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # External ID from EduPage (for sync deduplication)
-    edupage_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    # External ID for sync deduplication (provider-agnostic)
+    external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    external_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     # Relationships
     subject: Mapped["Subject"] = relationship("Subject", back_populates="grades")

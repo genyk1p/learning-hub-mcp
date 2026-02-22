@@ -69,3 +69,4 @@ class FamilyRole(str, enum.Enum):
 class SyncProviderType(str, enum.Enum):
     """Type of external sync service for grades/homeworks."""
     EDUPAGE = "edupage"  # EduPage (Czech Republic, Slovakia, etc.)
+    PRONOTE = "pronote"  # PRONOTE (France)

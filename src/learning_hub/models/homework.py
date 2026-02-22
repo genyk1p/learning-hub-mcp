@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Integer, ForeignKey, DateTime
+from sqlalchemy import String, Integer, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -24,6 +24,9 @@ class Homework(Base, TimestampMixin):
     """
 
     __tablename__ = "homeworks"
+    __table_args__ = (
+        UniqueConstraint("external_id", "external_source", name="uq_homeworks_external"),
+    )
 
     # Primary key
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -73,8 +76,12 @@ class Homework(Base, TimestampMixin):
         nullable=True
     )
 
-    # External ID from EduPage (for sync deduplication)
-    edupage_id: Mapped[str | None] = mapped_column(String(50), nullable=True, unique=True)
+    # External ID for sync deduplication (provider-agnostic)
+    external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    external_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    # URL from homework attachment (link type only, not files)
+    attachment_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     # Reminder dedup: when D-2 / D-1 reminders were sent
     reminded_d2_at: Mapped[datetime | None] = mapped_column(

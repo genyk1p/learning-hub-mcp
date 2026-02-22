@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 
 from learning_hub.models.grade import Grade
 from learning_hub.models.subject import Subject
-from learning_hub.models.enums import GradeSource, GradeValue
+from learning_hub.models.enums import GradeSource, GradeValue, SyncProviderType
 
 
 class GradeRepository:
@@ -27,7 +27,8 @@ class GradeRepository:
         subject_topic_id: int | None = None,
         bonus_task_id: int | None = None,
         homework_id: int | None = None,
-        edupage_id: int | None = None,
+        external_id: str | None = None,
+        external_source: SyncProviderType | None = None,
         source: GradeSource = GradeSource.MANUAL,
         original_value: str | None = None,
     ) -> Grade:
@@ -50,7 +51,8 @@ class GradeRepository:
             subject_topic_id=subject_topic_id,
             bonus_task_id=bonus_task_id,
             homework_id=homework_id,
-            edupage_id=edupage_id,
+            external_id=external_id,
+            external_source=external_source.value if external_source else None,
             source=source,
             original_value=original_value,
         )
@@ -69,9 +71,14 @@ class GradeRepository:
         """Get grade by ID."""
         return await self.session.get(Grade, grade_id)
 
-    async def get_by_edupage_id(self, edupage_id: int) -> Grade | None:
-        """Get grade by EduPage event_id."""
-        query = select(Grade).where(Grade.edupage_id == edupage_id)
+    async def get_by_external_id(
+        self, external_id: str, source: SyncProviderType
+    ) -> Grade | None:
+        """Get grade by external ID and source provider."""
+        query = select(Grade).where(
+            Grade.external_id == external_id,
+            Grade.external_source == source.value,
+        )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 

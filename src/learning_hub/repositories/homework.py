@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 
 from learning_hub.models.homework import Homework
 from learning_hub.models.bonus import Bonus
-from learning_hub.models.enums import HomeworkStatus, GradeValue
+from learning_hub.models.enums import HomeworkStatus, GradeValue, SyncProviderType
 
 
 class HomeworkRepository:
@@ -26,9 +26,11 @@ class HomeworkRepository:
         subject_topic_id: int | None = None,
         assigned_at: datetime | None = None,
         deadline_at: datetime | None = None,
-        edupage_id: str | None = None,
+        external_id: str | None = None,
+        external_source: SyncProviderType | None = None,
         status: HomeworkStatus = HomeworkStatus.PENDING,
         book_id: int | None = None,
+        attachment_url: str | None = None,
     ) -> Homework:
         """Create a new homework."""
         homework = Homework(
@@ -38,8 +40,10 @@ class HomeworkRepository:
             assigned_at=assigned_at,
             deadline_at=deadline_at,
             status=status,
-            edupage_id=edupage_id,
+            external_id=external_id,
+            external_source=external_source.value if external_source else None,
             book_id=book_id,
+            attachment_url=attachment_url,
         )
         self.session.add(homework)
         await self.session.commit()
@@ -50,9 +54,14 @@ class HomeworkRepository:
         """Get homework by ID."""
         return await self.session.get(Homework, homework_id)
 
-    async def get_by_edupage_id(self, edupage_id: str) -> Homework | None:
-        """Get homework by EduPage ID."""
-        query = select(Homework).where(Homework.edupage_id == edupage_id)
+    async def get_by_external_id(
+        self, external_id: str, source: SyncProviderType
+    ) -> Homework | None:
+        """Get homework by external ID and source provider."""
+        query = select(Homework).where(
+            Homework.external_id == external_id,
+            Homework.external_source == source.value,
+        )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
