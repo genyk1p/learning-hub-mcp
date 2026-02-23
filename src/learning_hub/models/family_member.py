@@ -59,6 +59,11 @@ class FamilyMember(Base, TimestampMixin):
             "NOT (is_student = 1 AND is_admin = 1)",
             name="check_student_not_admin",
         ),
+        # Student must have full_name (needed to match with sync providers)
+        CheckConstraint(
+            "NOT (is_student = 1 AND full_name IS NULL)",
+            name="check_student_has_full_name",
+        ),
         # Only one student allowed in the system (partial unique index)
         Index(
             "uq_single_student",

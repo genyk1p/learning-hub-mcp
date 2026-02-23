@@ -69,7 +69,7 @@ def register_family_member_tools(mcp: FastMCP) -> None:
     Args:
         name: Display name (how the agent should address them)
         role: Role - one of: {role_options}
-        full_name: Full legal name (optional)
+        full_name: Full legal name (required for student — used to match with sync providers like EduPage)
         is_admin: Has sudo/admin access (default false)
         is_student: Is the tracked student (default false). Only one student allowed.
         notes: Free text notes for the agent (optional)

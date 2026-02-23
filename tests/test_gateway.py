@@ -72,7 +72,8 @@ async def test_lookup(session):
     """Lookup should return gateway with eagerly loaded family member."""
     member = await _create_member(
         session, name="Stas", role=FamilyRole.STUDENT,
-        is_student=True, birth_date=date(2014, 5, 15),
+        is_student=True, full_name="Stanislav Kukoba",
+        birth_date=date(2014, 5, 15),
     )
     repo = GatewayRepository(session)
     await repo.create(

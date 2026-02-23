@@ -61,7 +61,7 @@ async def test_get_student(session):
     await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
     await repo.create(
         name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        birth_date=date(2014, 5, 15),
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
     )
 
     student = await repo.get_student()
@@ -84,7 +84,7 @@ async def test_list_all(session):
     await repo.create(name="Natasha", role=FamilyRole.TUTOR)
     await repo.create(
         name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        birth_date=date(2014, 5, 15),
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
     )
 
     members = await repo.list()
@@ -152,7 +152,7 @@ async def test_constraint_student_not_admin(session):
         await repo.create(
             name="Bad", role=FamilyRole.STUDENT,
             is_student=True, is_admin=True,
-            birth_date=date(2014, 5, 15),
+            full_name="Bad Person", birth_date=date(2014, 5, 15),
         )
 
 
@@ -161,13 +161,13 @@ async def test_constraint_single_student(session):
     repo = FamilyMemberRepository(session)
     await repo.create(
         name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        birth_date=date(2014, 5, 15),
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
     )
 
     with pytest.raises(IntegrityError):
         await repo.create(
             name="Other", role=FamilyRole.STUDENT, is_student=True,
-            birth_date=date(2015, 1, 1),
+            full_name="Other Person", birth_date=date(2015, 1, 1),
         )
 
 
@@ -188,11 +188,11 @@ async def test_multiple_non_students_allowed(session):
 
 
 async def test_create_student_with_birth_date(session):
-    """Student creation with birth_date succeeds."""
+    """Student creation with birth_date and full_name succeeds."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
         name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        birth_date=date(2014, 5, 15),
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
     )
     assert member.birth_date == date(2014, 5, 15)
 
@@ -203,7 +203,29 @@ async def test_create_student_without_birth_date_fails(session):
     with pytest.raises(ValueError, match="birth_date is required"):
         await repo.create(
             name="Stas", role=FamilyRole.STUDENT, is_student=True,
+            full_name="Stanislav Kukoba",
         )
+
+
+async def test_create_student_without_full_name_fails(session):
+    """Student creation without full_name raises ValueError."""
+    repo = FamilyMemberRepository(session)
+    with pytest.raises(ValueError, match="full_name is required"):
+        await repo.create(
+            name="Stas", role=FamilyRole.STUDENT, is_student=True,
+            birth_date=date(2014, 5, 15),
+        )
+
+
+async def test_update_student_full_name_to_empty_fails(session):
+    """Setting full_name to empty string on student raises ValueError."""
+    repo = FamilyMemberRepository(session)
+    member = await repo.create(
+        name="Stas", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+    )
+    with pytest.raises(ValueError, match="full_name is required"):
+        await repo.update(member.id, full_name="")
 
 
 async def test_create_non_student_without_birth_date(session):
@@ -228,7 +250,7 @@ async def test_update_birth_date(session):
     repo = FamilyMemberRepository(session)
     member = await repo.create(
         name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        birth_date=date(2014, 5, 15),
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
     )
     updated = await repo.update(member.id, birth_date=date(2014, 6, 20))
     assert updated.birth_date == date(2014, 6, 20)
@@ -239,7 +261,7 @@ async def test_clear_birth_date_on_student_fails(session):
     repo = FamilyMemberRepository(session)
     member = await repo.create(
         name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        birth_date=date(2014, 5, 15),
+        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
     )
     with pytest.raises(ValueError, match="birth_date is required"):
         await repo.update(member.id, clear_birth_date=True)

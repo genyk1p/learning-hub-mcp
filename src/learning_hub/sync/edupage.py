@@ -18,6 +18,7 @@ from learning_hub.models.enums import (
     SyncProviderType,
 )
 from learning_hub.models.sync_provider import SyncProvider
+from learning_hub.repositories.family_member import FamilyMemberRepository
 from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.homework import HomeworkRepository
 from learning_hub.repositories.secret import SecretRepository
@@ -25,6 +26,11 @@ from learning_hub.repositories.subject import SubjectRepository
 from learning_hub.repositories.subject_topic import SubjectTopicRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
 from learning_hub.sync.result import ProviderSyncResult
+from learning_hub.tools.tool_names import (
+    TOOL_CREATE_FAMILY_MEMBER,
+    TOOL_RUN_SYNC,
+    TOOL_SET_SECRET,
+)
 
 
 async def run_edupage_sync(
@@ -84,6 +90,42 @@ async def run_edupage_sync(
             provider_name=provider.name,
             school_name=school_name,
             errors=[f"EduPage login failed: {e}"],
+        )
+
+    # Switch to child if student_id is configured (parent account)
+    student_id = await secret_repo.get_value("EDUPAGE_STUDENT_ID")
+    if student_id:
+        try:
+            student_id_int = int(student_id)
+        except ValueError:
+            return ProviderSyncResult(
+                provider_code=provider.code,
+                provider_name=provider.name,
+                school_name=school_name,
+                errors=[
+                    f"EDUPAGE_STUDENT_ID value '{student_id}' is not a valid integer. "
+                    f"Update it via {TOOL_SET_SECRET} with a numeric person_id."
+                ],
+            )
+        try:
+            ep.switch_to_child(student_id_int)
+        except Exception as e:
+            return ProviderSyncResult(
+                provider_code=provider.code,
+                provider_name=provider.name,
+                school_name=school_name,
+                errors=[
+                    f"Failed to switch to child (EDUPAGE_STUDENT_ID={student_id}): {e}"
+                ],
+            )
+    else:
+        # No student_id configured — try to auto-match by full_name
+        match_result = await _match_student_id(session, ep)
+        return ProviderSyncResult(
+            provider_code=provider.code,
+            provider_name=provider.name,
+            school_name=school_name,
+            errors=[match_result],
         )
 
     # Fetch subjects for full names mapping
@@ -353,6 +395,82 @@ async def _sync_homeworks(
         "homeworks_skipped": homeworks_skipped,
         "subjects_created": subjects_created,
     }
+
+
+async def _match_student_id(
+    session: AsyncSession,
+    ep: Edupage,
+) -> str:
+    """Try to auto-match student by full_name, or return error with student list.
+
+    Always returns an error string — sync cannot proceed without EDUPAGE_STUDENT_ID.
+    The caller should wrap this in a ProviderSyncResult and abort.
+    """
+    fm_repo = FamilyMemberRepository(session)
+    student = await fm_repo.get_student()
+
+    if student is None:
+        return (
+            "EDUPAGE_STUDENT_ID is not set and no student is registered in the system. "
+            f"Create a student family member first via {TOOL_CREATE_FAMILY_MEMBER} "
+            f"(with full_name set), then retry {TOOL_RUN_SYNC}."
+        )
+
+    student_full_name = (
+        student.full_name.strip().lower()
+        if student.full_name else None
+    )
+
+    try:
+        edupage_students = ep.get_students()
+    except Exception as e:
+        return (
+            f"EDUPAGE_STUDENT_ID is not set and failed to fetch student list: {e}. "
+            f"Set it manually via {TOOL_SET_SECRET}."
+        )
+
+    if not edupage_students:
+        return (
+            "EDUPAGE_STUDENT_ID is not set and EduPage returned no students. "
+            f"Set it manually via {TOOL_SET_SECRET}."
+        )
+
+    # Try auto-match by full_name
+    if student_full_name:
+        for s in edupage_students:
+            if s.name.strip().lower() == student_full_name:
+                return (
+                    f"EDUPAGE_STUDENT_ID is not configured. "
+                    f"Auto-match found: \"{s.name}\" (person_id={s.person_id}) "
+                    f"matches student full_name in the database.\n\n"
+                    f"To fix this, run: {TOOL_SET_SECRET}("
+                    f"key=\"EDUPAGE_STUDENT_ID\", value=\"{s.person_id}\") "
+                    f"and then retry {TOOL_RUN_SYNC}(provider_code=\"edupage\")."
+                )
+
+    # No auto-match — return full list for agent to ask the parent
+    student_list = "\n".join(
+        f"  - {s.name} (person_id={s.person_id})"
+        for s in edupage_students
+    )
+    hint = (
+        f" (student full_name: \"{student.full_name}\")"
+        if student and student.full_name else ""
+    )
+    return (
+        f"EDUPAGE_STUDENT_ID is not configured and strict auto-match failed"
+        f"{hint}.\n\n"
+        f"Students visible in EduPage:\n{student_list}\n\n"
+        f"Your task:\n"
+        f"1. Try to match the student yourself — names may differ in spelling, "
+        f"diacritics, transliteration, or word order.\n"
+        f"2. If you found a match — tell the parent who you matched and why, "
+        f"then run: {TOOL_SET_SECRET}("
+        f"key=\"EDUPAGE_STUDENT_ID\", value=\"<person_id>\") "
+        f"and retry {TOOL_RUN_SYNC}(provider_code=\"edupage\").\n"
+        f"3. If you are not confident — show the list to the parent "
+        f"and ask them to pick their child."
+    )
 
 
 def _parse_grade_value(raw) -> int | None:

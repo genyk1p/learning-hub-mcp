@@ -34,6 +34,8 @@ class FamilyMemberRepository:
             )
         if is_student and birth_date is None:
             raise ValueError("birth_date is required for student.")
+        if is_student and not full_name:
+            raise ValueError("full_name is required for student (used to match with sync providers).")
 
         member = FamilyMember(
             name=name,
@@ -115,8 +117,12 @@ class FamilyMemberRepository:
         elif birth_date is not None:
             effective_birth_date = birth_date
 
+        effective_full_name = full_name if full_name is not None else member.full_name
+
         if member.is_student and effective_birth_date is None:
             raise ValueError("birth_date is required for student.")
+        if member.is_student and not effective_full_name:
+            raise ValueError("full_name is required for student (used to match with sync providers).")
 
         # Safe to mutate now
         if clear_birth_date:

@@ -13,6 +13,9 @@ CLAUDE.md
 .local/
 .openclaw/
 
+# Docker (local dev environments)
+docker/
+
 # Documentation (internal)
 docs/
 
