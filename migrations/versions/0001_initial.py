@@ -67,6 +67,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.CheckConstraint('NOT (is_student = 1 AND is_admin = 1)', name='check_student_not_admin'),
+    sa.CheckConstraint('NOT (is_student = 1 AND full_name IS NULL)', name='check_student_has_full_name'),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('family_members', schema=None) as batch_op:

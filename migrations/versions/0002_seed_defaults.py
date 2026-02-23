@@ -250,6 +250,12 @@ def upgrade() -> None:
         "'PRONOTE account password', "
         "datetime('now'), datetime('now'))"
     )
+    op.execute(
+        "INSERT INTO secrets (key, value, description, created_at, updated_at) VALUES "
+        "('EDUPAGE_STUDENT_ID', NULL, "
+        "'EduPage student person_id (for parent accounts with multiple children)', "
+        "datetime('now'), datetime('now'))"
+    )
 
     # --- Sync Providers (all inactive) ---
     op.execute(
@@ -270,6 +276,7 @@ def downgrade() -> None:
     op.execute(
         "DELETE FROM secrets WHERE key IN ("
         "'EDUPAGE_USERNAME', 'EDUPAGE_PASSWORD', 'EDUPAGE_SUBDOMAIN', "
+        "'EDUPAGE_STUDENT_ID', "
         "'PRONOTE_URL', 'PRONOTE_USERNAME', 'PRONOTE_PASSWORD')"
     )
     op.execute(
