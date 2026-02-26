@@ -78,6 +78,12 @@ def upgrade() -> None:
         "'Whether base cron jobs have been created (homework reminders, weekly calc, bonus nudge)', "
         "0, datetime('now'), datetime('now'))"
     )
+    op.execute(
+        "INSERT INTO configs (key, value, description, is_required, created_at, updated_at) VALUES "
+        "('SYNC_CRON_CONFIGURED', 'false', "
+        "'Whether a sync cron job has been created after the first successful sync', "
+        "0, datetime('now'), datetime('now'))"
+    )
 
     # --- Configs required (NULL values) ---
     op.execute(
@@ -295,7 +301,7 @@ def downgrade() -> None:
         "'GRADE_MINUTES_MAP', 'TOPIC_REVIEW_THRESHOLDS', "
         "'HOMEWORK_BONUS_MINUTES_ONTIME', 'HOMEWORK_BONUS_MINUTES_OVERDUE', "
         "'BONUS_FUND_WEEKLY_TOPUP', 'DEFAULT_DEADLINE_TIME', 'SETUP_COMPLETED', "
-        "'BASE_CRONS_INSTALLED', "
+        "'BASE_CRONS_INSTALLED', 'SYNC_CRON_CONFIGURED', "
         "'TEMP_BOOK_DIR', 'BOOKS_STORAGE_DIR', 'ISSUES_LOG', 'FAMILY_LANGUAGE')"
     )
     op.execute("DELETE FROM bonus_funds WHERE id = 1")

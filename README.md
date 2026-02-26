@@ -52,6 +52,9 @@ Runtime configuration stored in the `configs` table. Managed via MCP tools (`get
 | `HOMEWORK_BONUS_MINUTES_OVERDUE` | `-10` | Penalty minutes for overdue homework |
 | `BONUS_FUND_WEEKLY_TOPUP` | `15` | Bonus task slots added each week |
 | `DEFAULT_DEADLINE_TIME` | `20:00` | Default time when deadline has only a date |
+| `SETUP_COMPLETED` | `false` | Whether initial setup has been completed |
+| `BASE_CRONS_INSTALLED` | `false` | Whether base cron jobs have been created |
+| `SYNC_CRON_CONFIGURED` | `false` | Whether a sync cron job has been created after first successful sync |
 
 ### Required entries (must be set before use)
 
@@ -86,7 +89,7 @@ Add to your MCP client config:
 }
 ```
 
-## MCP Tools (84 total)
+## MCP Tools (86 total)
 
 ### Subjects
 - `create_subject` - create a new school subject
@@ -181,6 +184,7 @@ Add to your MCP client config:
 - `list_sync_providers` - list all sync providers with status
 - `update_sync_provider` - activate/deactivate, link to school
 - `run_sync` - run sync for all active providers (or a specific one)
+- `find_edupage_subdomain` - detect EduPage school subdomain from stored credentials
 
 ### Readiness
 - `check_system_readiness` - check if the system is properly configured (active schools, required configs)
@@ -203,6 +207,7 @@ Add to your MCP client config:
 - `get_grade_manual_instructions` - manually add a grade (adult only)
 - `get_student_content_policy_instructions` - content safety filtering for external student content
 - `get_topic_review_curation_instructions` - curate and close stale topic reviews
+- `get_base_crons_setup_instructions` - instructions for setting up base cron jobs
 
 ## OpenClaw Bridge Plugin
 

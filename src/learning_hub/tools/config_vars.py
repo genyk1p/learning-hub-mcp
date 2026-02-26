@@ -38,3 +38,6 @@ CFG_SETUP_COMPLETED = "SETUP_COMPLETED"
 
 # Whether base cron jobs have been created (true/false)
 CFG_BASE_CRONS_INSTALLED = "BASE_CRONS_INSTALLED"
+
+# Whether a sync cron job has been created after the first successful sync (true/false)
+CFG_SYNC_CRON_CONFIGURED = "SYNC_CRON_CONFIGURED"

@@ -8,10 +8,12 @@ from sqlalchemy.exc import IntegrityError
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import SyncProviderType
+from learning_hub.repositories.config_entry import ConfigEntryRepository
 from learning_hub.repositories.secret import SecretRepository
 from learning_hub.repositories.sync_provider import SyncProviderRepository
 from learning_hub.sync import SYNC_HANDLERS
 from learning_hub.sync.result import ProviderSyncResult, RunSyncResult
+from learning_hub.tools.config_vars import CFG_SYNC_CRON_CONFIGURED
 from learning_hub.tools.tool_names import (
     TOOL_FIND_EDUPAGE_SUBDOMAIN,
     TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS,
@@ -277,6 +279,34 @@ def register_sync_provider_tools(mcp: FastMCP) -> None:
                     "Sync completed but with errors. Check the errors "
                     "in each provider result for details."
                 )
+
+            # Check if this is the first successful sync — if so, prompt cron setup.
+            # A sync is considered successful if any provider fetched grades or homeworks,
+            # even if there were non-critical warnings (e.g. "Skipped non-numeric").
+            any_success = any(
+                r.grades_fetched > 0 or r.homeworks_fetched > 0 for r in results
+            )
+            if any_success:
+                config_repo = ConfigEntryRepository(session)
+                sync_cron_flag = await config_repo.get_value(CFG_SYNC_CRON_CONFIGURED)
+                if sync_cron_flag == "false":
+                    updated = await config_repo.set_value(CFG_SYNC_CRON_CONFIGURED, "true")
+                    if updated is not None:
+                        cron_note = (
+                            f"\n\n--- FIRST SUCCESSFUL SYNC ---\n"
+                            f"Dear Agent, this was the first successful sync run. "
+                            f"The sync is working, but it won't run again on its own. "
+                            f"You MUST create a cron job now so that data stays up to date automatically.\n\n"
+                            f"Create a cron job with the following behavior:\n"
+                            f"- Schedule: daily at 15:00–18:00 (after school hours, never at night)\n"
+                            f"- Action: call `{TOOL_RUN_SYNC}()` to sync all active providers\n"
+                            f"- The cron should also handle grade escalation and topic review curation "
+                            f"(same steps as in the post-sync recommendation above)\n\n"
+                            f"After creating the cron, notify the admin (via their gateway) "
+                            f"that automatic sync has been configured: what it does, when it runs, "
+                            f"and that they can adjust the schedule if needed."
+                        )
+                        recommendation = (recommendation or "") + cron_note
 
             return RunSyncResult(
                 providers_processed=len(providers),
