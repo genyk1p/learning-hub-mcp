@@ -197,9 +197,13 @@ The calculation is performed with **one call** to the MCP tool \
 `{TOOL_CALCULATE_WEEKLY_MINUTES}(new_week_key=<saturday>)`. \
 Algorithm details — in the tool description.
 
-The fact of "how much the student played" is recorded in Weekly state \
-in the database (field `actual_played_minutes`); \
-this data is entered by the administrator during the week.
+If the previous week was not finalized (admin did not report actual played minutes), \
+the tool auto-finalizes it: \
+if total_minutes ≤ 0 — assumes student did not play (actual_played=0); \
+if total_minutes > 0 — assumes student played everything (carryover=0). \
+In this case the response contains `auto_finalized_prev_week=true` and \
+`auto_finalized_note` with the details. \
+**The agent must notify the admin** about auto-finalization before sending the student report.
 
 ### Student weekly report (after calculation)
 

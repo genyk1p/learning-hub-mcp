@@ -104,6 +104,7 @@ TOOL_LIST_SECRETS = "list_secrets"
 TOOL_LIST_SYNC_PROVIDERS = "list_sync_providers"
 TOOL_UPDATE_SYNC_PROVIDER = "update_sync_provider"
 TOOL_RUN_SYNC = "run_sync"
+TOOL_FIND_EDUPAGE_SUBDOMAIN = "find_edupage_subdomain"
 
 # --- Readiness ---
 TOOL_CHECK_SYSTEM_READINESS = "check_system_readiness"
@@ -126,3 +127,4 @@ TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS = "get_topic_review_curation_instruc
 TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS = "get_grade_escalation_instructions"
 TOOL_GET_STUDENT_CONTENT_POLICY_INSTRUCTIONS = "get_student_content_policy_instructions"
 TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS = "get_learning_system_instructions"
+TOOL_GET_BASE_CRONS_SETUP_INSTRUCTIONS = "get_base_crons_setup_instructions"

@@ -7,6 +7,7 @@ when performing various operations.
 from mcp.server.fastmcp import FastMCP
 
 from learning_hub.tools.tool_names import (
+    TOOL_GET_BASE_CRONS_SETUP_INSTRUCTIONS,
     TOOL_GET_BOOK_LOOKUP_INSTRUCTIONS,
     TOOL_GET_BOOKS_WORKFLOW_INSTRUCTIONS,
     TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS,
@@ -22,6 +23,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS,
     TOOL_RUN_SYNC,
 )
+from learning_hub.tools.instructions.base_crons_setup import BASE_CRONS_SETUP_INSTRUCTIONS
 from learning_hub.tools.instructions.book_lookup import BOOK_LOOKUP_INSTRUCTIONS
 from learning_hub.tools.instructions.books_workflow import BOOKS_WORKFLOW_INSTRUCTIONS
 from learning_hub.tools.instructions.homework_manual import HOMEWORK_MANUAL_INSTRUCTIONS
@@ -195,6 +197,22 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       Returns a detailed content filtering instruction.""")
     async def get_student_content_policy_instructions() -> str:
         return STUDENT_CONTENT_POLICY_INSTRUCTIONS
+
+    @mcp.tool(name=TOOL_GET_BASE_CRONS_SETUP_INSTRUCTIONS, description="""\
+      Get step-by-step instructions for setting up base cron jobs.
+
+      Call this tool once after check_system_readiness returns ready=true,
+      during initial system setup. Guides through creating 4 base crons:
+      homework reminders, unfinalized week reminder, weekly game minutes
+      calculation, and daily bonus task nudge.
+
+      NOTE: If config BASE_CRONS_INSTALLED=true — base crons are already set up.
+      Do NOT call this tool in that case.
+
+      Returns setup algorithm including gateway checks, schedule confirmation,
+      cron creation steps, and completion flag.""")
+    async def get_base_crons_setup_instructions() -> str:
+        return BASE_CRONS_SETUP_INSTRUCTIONS
 
     @mcp.tool(name=TOOL_GET_LEARNING_SYSTEM_INSTRUCTIONS, description="""\
       Get the master instruction for the entire Learning Hub system.

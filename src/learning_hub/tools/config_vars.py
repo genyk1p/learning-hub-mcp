@@ -35,3 +35,6 @@ CFG_DEFAULT_DEADLINE_TIME = "DEFAULT_DEADLINE_TIME"
 
 # Whether initial setup has been completed (true/false)
 CFG_SETUP_COMPLETED = "SETUP_COMPLETED"
+
+# Whether base cron jobs have been created (true/false)
+CFG_BASE_CRONS_INSTALLED = "BASE_CRONS_INSTALLED"

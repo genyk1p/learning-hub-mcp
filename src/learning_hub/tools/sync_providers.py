@@ -1,19 +1,24 @@
 """Sync provider tools for MCP server."""
 
+import asyncio
+
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import SyncProviderType
+from learning_hub.repositories.secret import SecretRepository
 from learning_hub.repositories.sync_provider import SyncProviderRepository
 from learning_hub.sync import SYNC_HANDLERS
 from learning_hub.sync.result import ProviderSyncResult, RunSyncResult
 from learning_hub.tools.tool_names import (
+    TOOL_FIND_EDUPAGE_SUBDOMAIN,
     TOOL_GET_GRADE_ESCALATION_INSTRUCTIONS,
     TOOL_GET_TOPIC_REVIEW_CURATION_INSTRUCTIONS,
     TOOL_LIST_SYNC_PROVIDERS,
     TOOL_RUN_SYNC,
+    TOOL_SET_SECRET,
     TOOL_UPDATE_SYNC_PROVIDER,
 )
 from learning_hub.utils import dt_to_str
@@ -278,3 +283,46 @@ def register_sync_provider_tools(mcp: FastMCP) -> None:
                 results=results,
                 recommendation=recommendation,
             )
+
+    @mcp.tool(name=TOOL_FIND_EDUPAGE_SUBDOMAIN, description="""Find EduPage school subdomain by logging in with stored credentials.
+
+    Uses EDUPAGE_USERNAME and EDUPAGE_PASSWORD from secrets to log in via
+    the EduPage portal and detect the school subdomain automatically.
+    Useful during initial setup when the subdomain is unknown.
+
+    The detected subdomain can then be saved via set_secret(key="EDUPAGE_SUBDOMAIN", ...)
+    to speed up future logins (skips the portal redirect step).
+
+    Returns:
+        Detected subdomain string, or an error message if login fails or
+        credentials are not configured.
+    """)
+    async def find_edupage_subdomain() -> str:
+        async with AsyncSessionLocal() as session:
+            secret_repo = SecretRepository(session)
+            username = await secret_repo.get_value("EDUPAGE_USERNAME")
+            password = await secret_repo.get_value("EDUPAGE_PASSWORD")
+
+        if not username or not password:
+            return (
+                "EDUPAGE_USERNAME or EDUPAGE_PASSWORD is not set. "
+                f"Configure them via {TOOL_SET_SECRET} first."
+            )
+
+        from edupage_api import Edupage  # type: ignore[import-untyped]
+
+        ep = Edupage()
+        try:
+            await asyncio.to_thread(ep.login_auto, username, password)
+        except Exception as e:
+            return f"EduPage login failed: {e}"
+
+        subdomain = ep.subdomain
+        if not subdomain:
+            return "Login succeeded but subdomain could not be determined."
+
+        return (
+            f"Detected EduPage subdomain: {subdomain}\n\n"
+            f"To save it for future use, run: "
+            f"{TOOL_SET_SECRET}(key=\"EDUPAGE_SUBDOMAIN\", value=\"{subdomain}\")"
+        )

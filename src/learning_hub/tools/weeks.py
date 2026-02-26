@@ -86,6 +86,9 @@ class WeeklyCalcResult(BaseModel):
     bonus_fund_topup: int | None = None
     grades_breakdown: list[GradeBreakdown] | None = None
     week: WeekResponse | None = None
+    # Set when previous week was auto-finalized (admin should be notified)
+    auto_finalized_prev_week: bool = False
+    auto_finalized_note: str = ""
     # Human-readable message (always present)
     message: str = ""
 
@@ -220,8 +223,14 @@ def register_week_tools(mcp: FastMCP) -> None:
         new_week_key: Saturday date for the new week (YYYY-MM-DD)
         bonus_fund_topup: Override bonus task slots to add (default from {CFG_BONUS_FUND_WEEKLY_TOPUP} config)
 
+    If the previous week is not finalized, it is auto-finalized:
+    - total_minutes <= 0: assumed student did not play, actual_played=0
+    - total_minutes > 0: assumed student played everything, actual_played=total_minutes, carryover=0
+    In both cases auto_finalized_prev_week=true and auto_finalized_note explains what happened.
+    The agent should notify the admin about auto-finalization.
+
     Returns:
-        Detailed breakdown, or status="prev_week_not_finalized" if previous week is not closed
+        Detailed breakdown with status="ok". auto_finalized_prev_week=true if prev week was auto-closed.
     """)
     async def calculate_weekly_minutes(
         new_week_key: str,
@@ -251,18 +260,58 @@ def register_week_tools(mcp: FastMCP) -> None:
                     await config_repo.get_int_value(CFG_BONUS_FUND_WEEKLY_TOPUP) or 15
                 )
 
-            # Step 1: check prev week is finalized
+            # Step 1: check prev week is finalized; auto-finalize if not
             prev_week = await week_repo.get_by_key(prev_week_key)
-            if prev_week is None or not prev_week.is_finalized:
+            auto_finalized_prev_week = False
+            auto_finalized_note = ""
+
+            if prev_week is None:
+                # No previous week record at all — this is the very first calculation.
+                # Cannot proceed without a finalized previous week to carry over from.
                 return WeeklyCalcResult(
-                    status="prev_week_not_finalized",
+                    status="no_prev_week",
                     new_week_key=new_week_key,
                     prev_week_key=prev_week_key,
                     message=(
-                        f"Previous week {prev_week_key} is not finalized. "
-                        "Provide actual_played_minutes via finalize_week first."
+                        f"No week record found for {prev_week_key}. "
+                        "For the very first weekly calculation, create the previous week "
+                        f"via {TOOL_CREATE_WEEK} and finalize it via {TOOL_FINALIZE_WEEK}, "
+                        "then run calculate_weekly_minutes again."
                     ),
                 )
+
+            if not prev_week.is_finalized:
+                # Determine actual_played_minutes based on total_minutes:
+                # - total <= 0: student had nothing to play, assume 0 played
+                # - total > 0: no report received, assume student played everything
+                original_total = prev_week.total_minutes
+                assumed_played = max(0, original_total)
+                finalized = await week_repo.finalize(prev_week_key, assumed_played)
+                if finalized is None:
+                    return WeeklyCalcResult(
+                        status="error",
+                        new_week_key=new_week_key,
+                        prev_week_key=prev_week_key,
+                        message=(
+                            f"Failed to auto-finalize previous week {prev_week_key}. "
+                            "The week record disappeared during finalization. "
+                            "Check the database for data integrity issues."
+                        ),
+                    )
+                prev_week = finalized
+                auto_finalized_prev_week = True
+                if assumed_played == 0:
+                    auto_finalized_note = (
+                        f"Previous week {prev_week_key} was not finalized. "
+                        f"Total minutes were {original_total} (zero or negative) — "
+                        "assumed student did not play. Auto-finalized with actual_played=0."
+                    )
+                else:
+                    auto_finalized_note = (
+                        f"Previous week {prev_week_key} was not finalized. "
+                        f"No report received — assumed student played all {assumed_played} earned minutes. "
+                        "Auto-finalized with carryover=0. Please notify the admin."
+                    )
 
             carry = prev_week.carryover_out_minutes
 
@@ -311,12 +360,22 @@ def register_week_tools(mcp: FastMCP) -> None:
             total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
 
             # Step 7: update new week record (just created, never finalized)
-            new_week, _ = await week_repo.update(
+            new_week, update_error = await week_repo.update(
                 week_key=new_week_key,
                 grade_minutes=grade_minutes,
                 homework_bonus_minutes=homework_bonus_minutes,
                 total_minutes=total_minutes,
             )
+            if new_week is None:
+                return WeeklyCalcResult(
+                    status="error",
+                    new_week_key=new_week_key,
+                    prev_week_key=prev_week_key,
+                    message=(
+                        f"Failed to save minutes for week {new_week_key}: "
+                        f"{update_error or 'unknown error'}."
+                    ),
+                )
 
             # Step 8: mark grades as rewarded (batch)
             grade_ids = [g.id for g in grades]
@@ -353,6 +412,8 @@ def register_week_tools(mcp: FastMCP) -> None:
                 bonus_fund_topup=bonus_fund_topup,
                 grades_breakdown=grades_breakdown,
                 week=_week_response(new_week),
+                auto_finalized_prev_week=auto_finalized_prev_week,
+                auto_finalized_note=auto_finalized_note,
                 message=(
                     f"Week {new_week_key}: "
                     f"grades={grade_minutes}, homework={homework_bonus_minutes}, "
