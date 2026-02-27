@@ -38,22 +38,33 @@ const DEFAULT_TOOL_PREFIX = "learning_hub";
 // ---- Helper: merge multiple text blocks into one JSON array ----
 // FastMCP serializes list[Model] as separate TextContent blocks (one per item).
 // This caused a bug in mcporter. We merge them back into a single JSON array.
+//
+// Also handles two edge cases from FastMCP 2.14+:
+// 1. Empty content [] (tool returned None/empty list) → return "null" text block
+// 2. Mixed content (text + non-text) → return only text blocks to avoid
+//    OpenClaw rendering non-text blocks as images.
 
 function mergeTextBlocks(blocks: ContentBlock[]): ContentBlock[] {
   const textBlocks = blocks.filter((b) => b.type === "text");
 
-  // Nothing to merge if 0 or 1 text blocks
-  if (textBlocks.length <= 1) {
-    return blocks;
+  // No text blocks — tool returned null/empty. Return a plain "null" so the
+  // agent gets readable text instead of an empty (unrenderable) content array.
+  if (textBlocks.length === 0) {
+    return [{ type: "text", text: "null" }];
   }
 
-  // Try to parse each text block as JSON and combine into an array
+  // Single text block — return it directly (drop any non-text blocks).
+  if (textBlocks.length === 1) {
+    return [textBlocks[0]];
+  }
+
+  // Multiple text blocks — try to parse each as JSON and combine into an array.
   try {
     const parsed = textBlocks.map((b) => JSON.parse(b.text));
     return [{ type: "text", text: JSON.stringify(parsed, null, 2) }];
   } catch {
-    // If any block is not valid JSON, return as-is
-    return blocks;
+    // If any block is not valid JSON, return text blocks as-is.
+    return textBlocks;
   }
 }
 
