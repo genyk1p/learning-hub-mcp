@@ -53,7 +53,6 @@ async def _create_week(
     is_finalized: bool = False,
     carryover_out_minutes: int = 0,
     total_minutes: int = 0,
-    penalty_minutes: int = 0,
 ) -> Week:
     week = Week(
         week_key=week_key,
@@ -62,7 +61,6 @@ async def _create_week(
         is_finalized=is_finalized,
         carryover_out_minutes=carryover_out_minutes,
         total_minutes=total_minutes,
-        penalty_minutes=penalty_minutes,
     )
     session.add(week)
     await session.commit()
@@ -130,8 +128,6 @@ async def _calculate(session, new_week_key: str, bonus_fund_topup: int = 15) -> 
     end_at = start_at + timedelta(days=7)
     new_week = await week_repo.create(week_key=new_week_key, start_at=start_at, end_at=end_at)
 
-    penalty_minutes = new_week.penalty_minutes
-
     # Step 4: get unrewarded grades for PREVIOUS week period
     grades = await grade_repo.list(
         date_from=prev_week.start_at,
@@ -153,7 +149,7 @@ async def _calculate(session, new_week_key: str, bonus_fund_topup: int = 15) -> 
     homework_bonus_minutes = sum(b.minutes for b in bonuses)
 
     # Step 7: total
-    total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
+    total_minutes = carry + grade_minutes + homework_bonus_minutes
 
     # Step 8: update week
     new_week, _ = await week_repo.update(
@@ -179,7 +175,6 @@ async def _calculate(session, new_week_key: str, bonus_fund_topup: int = 15) -> 
         "carry_from_prev": carry,
         "grade_minutes": grade_minutes,
         "homework_bonus_minutes": homework_bonus_minutes,
-        "penalty_minutes": penalty_minutes,
         "total_minutes": total_minutes,
         "grades_marked": grades_marked,
         "bonuses_marked": bonuses_marked,

@@ -46,7 +46,6 @@ async def _create_week(
     end_at: datetime,
     is_finalized: bool = False,
     carryover_out_minutes: int = 0,
-    penalty_minutes: int = 0,
 ) -> Week:
     week = Week(
         week_key=week_key,
@@ -54,7 +53,6 @@ async def _create_week(
         end_at=end_at,
         is_finalized=is_finalized,
         carryover_out_minutes=carryover_out_minutes,
-        penalty_minutes=penalty_minutes,
     )
     session.add(week)
     await session.commit()
@@ -109,8 +107,7 @@ async def _preview(session, now: datetime) -> dict:
     bonuses = await bonus_repo.list_unrewarded()
     homework_bonus_minutes = sum(b.minutes for b in bonuses)
 
-    penalty_minutes = current_week.penalty_minutes
-    total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
+    total_minutes = carry + grade_minutes + homework_bonus_minutes
 
     return {
         "status": "preview",
@@ -118,7 +115,6 @@ async def _preview(session, now: datetime) -> dict:
         "carry_from_prev": carry,
         "grade_minutes": grade_minutes,
         "homework_bonus_minutes": homework_bonus_minutes,
-        "penalty_minutes": penalty_minutes,
         "total_minutes": total_minutes,
         "grades_count": len(grades),
         "bonuses_count": len(bonuses),

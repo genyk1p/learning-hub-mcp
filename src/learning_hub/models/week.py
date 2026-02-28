@@ -36,16 +36,13 @@ class Week(Base, TimestampMixin):
     # AND ad-hoc bonuses (parent rewards/penalties without homework link)
     homework_bonus_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    # Penalty minutes (for late topics, missed deadlines, etc.)
-    penalty_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-
     # Carryover out: remaining minutes after finalization (can be positive or negative)
     carryover_out_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # How many minutes actually played
     actual_played_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    # Total balance (grade - penalty + carryover - played)
+    # Total balance (grade + homework_bonus + carryover)
     total_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Whether this week is finalized (closed for changes)

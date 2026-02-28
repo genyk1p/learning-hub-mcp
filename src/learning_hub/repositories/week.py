@@ -53,7 +53,6 @@ class WeekRepository:
         week_key: str,
         grade_minutes: int | None = None,
         homework_bonus_minutes: int | None = None,
-        penalty_minutes: int | None = None,
         carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
         total_minutes: int | None = None,
@@ -74,8 +73,6 @@ class WeekRepository:
             week.grade_minutes = grade_minutes
         if homework_bonus_minutes is not None:
             week.homework_bonus_minutes = homework_bonus_minutes
-        if penalty_minutes is not None:
-            week.penalty_minutes = penalty_minutes
         if carryover_out_minutes is not None:
             week.carryover_out_minutes = carryover_out_minutes
         if actual_played_minutes is not None:

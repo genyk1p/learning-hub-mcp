@@ -40,7 +40,6 @@ class WeekResponse(BaseModel):
     end_at: str | None
     grade_minutes: int
     homework_bonus_minutes: int
-    penalty_minutes: int
     carryover_out_minutes: int
     actual_played_minutes: int
     total_minutes: int
@@ -55,7 +54,6 @@ def _week_response(week) -> WeekResponse:
         end_at=dt_to_str(week.end_at),
         grade_minutes=week.grade_minutes,
         homework_bonus_minutes=week.homework_bonus_minutes,
-        penalty_minutes=week.penalty_minutes,
         carryover_out_minutes=week.carryover_out_minutes,
         actual_played_minutes=week.actual_played_minutes,
         total_minutes=week.total_minutes,
@@ -79,7 +77,6 @@ class WeeklyCalcResult(BaseModel):
     carry_from_prev: int | None = None
     grade_minutes: int | None = None
     homework_bonus_minutes: int | None = None
-    penalty_minutes: int | None = None
     total_minutes: int | None = None
     grades_processed: int | None = None
     bonuses_processed: int | None = None
@@ -152,7 +149,6 @@ def register_week_tools(mcp: FastMCP) -> None:
     Args:
         week_key: Week key to update
         grade_minutes: Minutes earned from grades (optional)
-        penalty_minutes: Minutes lost as penalty (optional)
         carryover_out_minutes: Minutes carried over from previous week (optional)
         actual_played_minutes: Minutes actually played this week (optional)
         total_minutes: Calculated total available minutes (optional)
@@ -163,7 +159,6 @@ def register_week_tools(mcp: FastMCP) -> None:
     async def update_week(
         week_key: str,
         grade_minutes: int | None = None,
-        penalty_minutes: int | None = None,
         carryover_out_minutes: int | None = None,
         actual_played_minutes: int | None = None,
         total_minutes: int | None = None,
@@ -173,7 +168,6 @@ def register_week_tools(mcp: FastMCP) -> None:
             week, error = await repo.update(
                 week_key=week_key,
                 grade_minutes=grade_minutes,
-                penalty_minutes=penalty_minutes,
                 carryover_out_minutes=carryover_out_minutes,
                 actual_played_minutes=actual_played_minutes,
                 total_minutes=total_minutes,
@@ -334,8 +328,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 end_at=end_at,
             )
 
-            penalty_minutes = new_week.penalty_minutes
-
             # Step 3: get unrewarded grades for the period
             grades = await grade_repo.list(
                 date_from=prev_week.start_at,
@@ -357,7 +349,7 @@ def register_week_tools(mcp: FastMCP) -> None:
             homework_bonus_minutes = sum(b.minutes for b in bonuses)
 
             # Step 6: calculate total
-            total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
+            total_minutes = carry + grade_minutes + homework_bonus_minutes
 
             # Step 7: update new week record (just created, never finalized)
             new_week, update_error = await week_repo.update(
@@ -405,7 +397,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 carry_from_prev=carry,
                 grade_minutes=grade_minutes,
                 homework_bonus_minutes=homework_bonus_minutes,
-                penalty_minutes=penalty_minutes,
                 total_minutes=total_minutes,
                 grades_processed=grades_marked,
                 bonuses_processed=bonuses_marked,
@@ -417,8 +408,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 message=(
                     f"Week {new_week_key}: "
                     f"grades={grade_minutes}, homework={homework_bonus_minutes}, "
-                    f"carry={carry}, penalty={penalty_minutes}, "
-                    f"total={total_minutes} min."
+                    f"carry={carry}, total={total_minutes} min."
                 ),
             )
 
@@ -496,8 +486,7 @@ def register_week_tools(mcp: FastMCP) -> None:
             bonuses = await bonus_repo.list_unrewarded()
             homework_bonus_minutes = sum(b.minutes for b in bonuses)
 
-            penalty_minutes = current_week.penalty_minutes
-            total_minutes = carry + grade_minutes + homework_bonus_minutes - penalty_minutes
+            total_minutes = carry + grade_minutes + homework_bonus_minutes
 
             grades_breakdown = [
                 GradeBreakdown(
@@ -515,7 +504,6 @@ def register_week_tools(mcp: FastMCP) -> None:
                 carry_from_prev=carry,
                 grade_minutes=grade_minutes,
                 homework_bonus_minutes=homework_bonus_minutes,
-                penalty_minutes=penalty_minutes,
                 total_minutes=total_minutes,
                 grades_processed=len(grades),
                 bonuses_processed=len(bonuses),
@@ -524,8 +512,7 @@ def register_week_tools(mcp: FastMCP) -> None:
                 message=(
                     f"Preview for {current_week.week_key}: "
                     f"grades={grade_minutes}, homework={homework_bonus_minutes}, "
-                    f"carry={carry}{carry_note}, penalty={penalty_minutes}, "
-                    f"total={total_minutes} min."
+                    f"carry={carry}{carry_note}, total={total_minutes} min."
                 ),
             )
 
