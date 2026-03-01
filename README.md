@@ -9,7 +9,7 @@ MCP server for student learning workflow with SQLite database.
 - **Topics** - subject topics for improvement tracking
 - **Homework** - assignment tracking with deadlines
 - **Bonus Tasks** - motivational tasks that reward game minutes
-- **Weeks** - weekly game time calculations based on performance
+- **Game Minutes** - immutable transaction ledger for tracking earned/spent game time
 - **Books** - textbook library with markdown summaries and content indexing
 - **Topic Reviews** - reinforcement tracking for weak topics
 - **Escalation** - bad grade notifications for parents
@@ -50,7 +50,8 @@ Runtime configuration stored in the `configs` table. Managed via MCP tools (`get
 | `TOPIC_REVIEW_THRESHOLDS` | `{"2":1,"3":2,"4":3,"5":3}` | Repetitions needed per grade before TopicReview is closed |
 | `HOMEWORK_BONUS_MINUTES_ONTIME` | `10` | Bonus minutes for on-time homework |
 | `HOMEWORK_BONUS_MINUTES_OVERDUE` | `-10` | Penalty minutes for overdue homework |
-| `BONUS_FUND_WEEKLY_TOPUP` | `15` | Bonus task slots added each week |
+| `MAX_PENDING_BONUS_TASKS` | `4` | Max concurrent pending bonus tasks |
+| `MAX_COMPLETED_BONUS_TASKS_PER_WEEK` | `15` | Max completed bonus tasks in rolling 7 days |
 | `DEFAULT_DEADLINE_TIME` | `20:00` | Default time when deadline has only a date |
 | `SETUP_COMPLETED` | `false` | Whether initial setup has been completed |
 | `BASE_CRONS_INSTALLED` | `false` | Whether base cron jobs have been created |
@@ -89,7 +90,7 @@ Add to your MCP client config:
 }
 ```
 
-## MCP Tools (86 total)
+## MCP Tools (78 total)
 
 ### Subjects
 - `create_subject` - create a new school subject
@@ -102,35 +103,30 @@ Add to your MCP client config:
 - `close_topic` - close topic (reason: resolved/skipped/no_longer_relevant)
 
 ### Grades
-- `add_grade` - add a grade (1-5 scale, 1=best)
+- `add_grade` - add a grade (1-5 scale, 1=best), auto-creates minute transaction
 - `list_grades` - list grades (filter: subject, date range, school)
-- `update_grade` - update grade details
 
 ### Bonus Tasks
-- `create_bonus_task` - create a bonus task linked to a topic
+- `create_bonus_task` - create a bonus task linked to a topic (validates limits)
 - `list_bonus_tasks` - list tasks (filter: status, topic)
 - `get_bonus_task` - get a bonus task by ID
 - `get_latest_bonus_task` - get the most recent bonus task
-- `complete_bonus_task` - mark task as completed
-- `apply_bonus_task_result` - complete task and update related topic reviews
+- `apply_bonus_task_result` - complete task, record grade, and update topic reviews
 - `cancel_bonus_task` - cancel a task
 - `check_pending_bonus_task` - check if there's a pending task to reuse
 
-### Bonuses
-- `create_bonus` - create a bonus record (+/- minutes): homework-linked or ad-hoc with reason
-- `delete_bonus` - delete an unrewarded bonus record
-- `list_unrewarded_bonuses` - list bonuses not yet included in weekly calc
-
-### Bonus Funds
-- `get_bonus_fund` - get the bonus fund
-- `add_tasks_to_fund` - add task slots to the fund
+### Minute Transactions
+- `get_balance` - get current game minutes balance
+- `add_played_minutes` - record played game time (deducts from balance)
+- `create_ad_hoc_transaction` - create manual bonus or penalty
+- `list_transactions` - list transactions (filter: date range, type)
 
 ### Homework
 - `create_homework` - create homework assignment
 - `list_homeworks` - list homework (filter: status, subject)
 - `complete_homework` - mark homework as done
 - `update_homework` - update homework details
-- `close_overdue_homeworks` - close overdue homework with penalty
+- `close_overdue_homeworks` - close overdue homework, auto-creates penalty transaction
 - `get_pending_homework_reminders` - get reminders due (D-1, D-2)
 - `mark_homework_reminders_sent` - mark reminders as sent
 
@@ -140,15 +136,6 @@ Add to your MCP client config:
 - `get_book` - get a book by ID
 - `update_book` - update book details
 - `delete_book` - delete a book
-
-### Weeks
-- `create_week` - create a new week period
-- `get_week` - get week by key or current week
-- `update_week` - update week minutes
-- `finalize_week` - finalize week and calculate carryover
-- `calculate_weekly_minutes` - calculate grade/bonus minutes for the week
-- `preview_weekly_minutes` - preview minutes without saving
-- `get_grade_to_minutes_map` - get grade-to-minutes conversion table
 
 ### Topic Reviews
 - `list_topic_reviews` - list topic reviews (filter: subject, status)

@@ -24,26 +24,23 @@ TOOL_CLOSE_TOPIC = "close_topic"
 # --- Grades ---
 TOOL_ADD_GRADE = "add_grade"
 TOOL_LIST_GRADES = "list_grades"
-TOOL_UPDATE_GRADE = "update_grade"
 
 # --- Bonus Tasks ---
 TOOL_CREATE_BONUS_TASK = "create_bonus_task"
 TOOL_LIST_BONUS_TASKS = "list_bonus_tasks"
-TOOL_COMPLETE_BONUS_TASK = "complete_bonus_task"
 TOOL_GET_BONUS_TASK = "get_bonus_task"
 TOOL_GET_LATEST_BONUS_TASK = "get_latest_bonus_task"
 TOOL_CANCEL_BONUS_TASK = "cancel_bonus_task"
 TOOL_APPLY_BONUS_TASK_RESULT = "apply_bonus_task_result"
 TOOL_CHECK_PENDING_BONUS_TASK = "check_pending_bonus_task"
+TOOL_CHECK_BONUS_AVAILABILITY = "check_bonus_availability"
+TOOL_CHECK_BONUS_LIMITS = "check_bonus_limits"
 
-# --- Bonuses ---
-TOOL_CREATE_BONUS = "create_bonus"
-TOOL_DELETE_BONUS = "delete_bonus"
-TOOL_LIST_UNREWARDED_BONUSES = "list_unrewarded_bonuses"
-
-# --- Bonus Funds ---
-TOOL_GET_BONUS_FUND = "get_bonus_fund"
-TOOL_ADD_TASKS_TO_FUND = "add_tasks_to_fund"
+# --- Minute Transactions ---
+TOOL_GET_BALANCE = "get_balance"
+TOOL_ADD_PLAYED_MINUTES = "add_played_minutes"
+TOOL_CREATE_AD_HOC_TRANSACTION = "create_ad_hoc_transaction"
+TOOL_LIST_TRANSACTIONS = "list_transactions"
 
 # --- Homeworks ---
 TOOL_CREATE_HOMEWORK = "create_homework"
@@ -60,15 +57,6 @@ TOOL_LIST_BOOKS = "list_books"
 TOOL_GET_BOOK = "get_book"
 TOOL_UPDATE_BOOK = "update_book"
 TOOL_DELETE_BOOK = "delete_book"
-
-# --- Weeks ---
-TOOL_CREATE_WEEK = "create_week"
-TOOL_GET_WEEK = "get_week"
-TOOL_UPDATE_WEEK = "update_week"
-TOOL_FINALIZE_WEEK = "finalize_week"
-TOOL_CALCULATE_WEEKLY_MINUTES = "calculate_weekly_minutes"
-TOOL_PREVIEW_WEEKLY_MINUTES = "preview_weekly_minutes"
-TOOL_GET_GRADE_TO_MINUTES_MAP = "get_grade_to_minutes_map"
 
 # --- Topic Reviews ---
 TOOL_LIST_TOPIC_REVIEWS = "list_topic_reviews"

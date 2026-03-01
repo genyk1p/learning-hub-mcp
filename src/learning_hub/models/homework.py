@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from learning_hub.models.subject_topic import SubjectTopic
     from learning_hub.models.grade import Grade
     from learning_hub.models.book import Book
-    from learning_hub.models.bonus import Bonus
 
 
 class Homework(Base, TimestampMixin):
@@ -96,7 +95,6 @@ class Homework(Base, TimestampMixin):
     subject_topic: Mapped["SubjectTopic | None"] = relationship("SubjectTopic", back_populates="homeworks")
     book: Mapped["Book | None"] = relationship("Book", back_populates="homeworks")
     grade: Mapped["Grade | None"] = relationship("Grade", back_populates="homework")
-    bonus: Mapped["Bonus | None"] = relationship("Bonus", back_populates="homework")
 
     def __repr__(self) -> str:
         return (

@@ -88,7 +88,6 @@ class GradeRepository:
         school_id: int | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
-        rewarded: bool | None = None,
     ) -> list[Grade]:
         """List grades with optional filters."""
         query = select(Grade).options(joinedload(Grade.subject))
@@ -105,30 +104,10 @@ class GradeRepository:
         if date_to is not None:
             query = query.where(Grade.date <= date_to)
 
-        if rewarded is not None:
-            query = query.where(Grade.rewarded == rewarded)
-
         query = query.order_by(Grade.date.desc())
 
         result = await self.session.execute(query)
         return list(result.scalars().unique().all())
-
-    async def update(
-        self,
-        grade_id: int,
-        rewarded: bool | None = None,
-    ) -> Grade | None:
-        """Update grade fields. Returns None if not found."""
-        grade = await self.get_by_id(grade_id)
-        if grade is None:
-            return None
-
-        if rewarded is not None:
-            grade.rewarded = rewarded
-
-        await self.session.commit()
-        await self.session.refresh(grade)
-        return grade
 
     async def list_pending_escalation(self, threshold: int) -> list[Grade]:
         """List auto-synced grades that need escalation.
@@ -151,19 +130,6 @@ class GradeRepository:
         )
         result = await self.session.execute(query)
         return list(result.scalars().unique().all())
-
-    async def mark_rewarded(self, grade_ids: list[int]) -> int:
-        """Set rewarded=True for given grade IDs. Returns count of updated rows."""
-        if not grade_ids:
-            return 0
-        stmt = (
-            update(Grade)
-            .where(Grade.id.in_(grade_ids))
-            .values(rewarded=True)
-        )
-        result = await self.session.execute(stmt)
-        await self.session.commit()
-        return result.rowcount  # type: ignore[union-attr]
 
     async def mark_escalated(self, grade_ids: list[int]) -> int:
         """Set escalated_at to now for given grade IDs.

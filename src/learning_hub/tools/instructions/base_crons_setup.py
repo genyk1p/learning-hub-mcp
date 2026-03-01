@@ -17,8 +17,8 @@ Do NOT call this tool again. Stop.
 
 Base crons keep the system running automatically:
 - Homework deadline reminders sent to the student
-- Reminder to the admin to close the previous week (if not finalized)
-- Weekly game minutes calculation every Saturday
+- Reminder to the admin if they forgot to record played time for the week
+- Weekly balance report to the student every Saturday
 - Daily nudge encouraging the student to do a bonus task
 
 These 4 crons are required regardless of whether a sync provider (EduPage, etc.)
@@ -54,14 +54,9 @@ Before creating, show the user all 4 crons with their default schedules and ask 
 | Cron | Schedule | Recipient | Reschedule? |
 |------|----------|-----------|-------------|
 | A — Homework reminders | Mon–Fri 17:00 | student | allowed |
-| B — Unfinalized week | Wednesday 12:00 | admin | **not recommended** |
-| C — Weekly game minutes | Saturday 09:00 | admin | **not recommended** |
+| B — Unrecorded play reminder | Wednesday 12:00 | admin | allowed |
+| C — Saturday balance report | Saturday 09:00 | student | allowed |
 | D — Bonus task nudge | daily 16:00 | student | allowed |
-
-> **Important:** Crons B and C are tied to the game minutes calculation and week \
-finalization logic. Changing their schedule may break the bonus accrual algorithm. \
-Strongly advise the user not to reschedule these crons. \
-If the user insists — warn explicitly about the risks and ask them to confirm knowingly.
 
 ---
 
@@ -82,31 +77,41 @@ d1_homework_ids=[...], d2_homework_ids=[...])`.
 
 ---
 
-### Cron B — Unfinalized week reminder (Wednesday 12:00)
+### Cron B — Unrecorded play reminder (Wednesday 12:00)
 
-**Schedule:** `0 12 * * 3` ⚠️ do not reschedule
+**Schedule:** `0 12 * * 3`
 
 **What it does:**
-1. Computes last Saturday's date (today minus 4 days).
-2. Calls `learning_hub_get_week(week_key=<last Saturday YYYY-MM-DD>)`.
-3. If the week is not found or `is_finalized=true` — stop silently.
-4. If `is_finalized=false` — notifies the admin that the previous week is not closed yet. \
-Asks them to report how many minutes the student actually played over the weekend, \
-so the week can be finalized via `learning_hub_finalize_week`.
+1. Take the current date (when the cron fires) and call \
+`learning_hub_list_transactions(date_from=<7 days ago YYYY-MM-DD>, type="played")`.
+2. If there is at least one PLAYED transaction in the last 7 days — stop silently.
+3. If there are no PLAYED transactions in the last 7 days — notify the admin. To compose \
+the message, first check the full history:
+   a. Call `learning_hub_list_transactions(type="played")` (no date filter).
+   b. **If there is at least one PLAYED transaction ever** — find the most recent one \
+and tell the admin: "No game time has been recorded in the last week. \
+The last time you recorded played time was on [date]: [N] minutes. \
+If the student has played since then, please record it via \
+`learning_hub_add_played_minutes(minutes=<N>)`."
+   c. **If there are no PLAYED transactions at all** — tell the admin: \
+"You have never recorded how much the student played. \
+When the student plays games, you should record the minutes spent — \
+this deducts them from the balance and keeps it accurate. \
+Use `learning_hub_add_played_minutes(minutes=<N>)` after each gaming session \
+or as a daily/weekly total."
 
 ---
 
-### Cron C — Weekly game minutes calculation (Saturday 09:00)
+### Cron C — Saturday balance report (Saturday 09:00)
 
-**Schedule:** `0 9 * * 6` ⚠️ do not reschedule
+**Schedule:** `0 9 * * 6`
 
 **What it does:**
-1. Calls `learning_hub_calculate_weekly_minutes(\
-new_week_key=<today's Saturday YYYY-MM-DD>)`.
-2. If the response contains `auto_finalized_prev_week=true` — notifies the admin that \
-the previous week was closed automatically (reason is in `auto_finalized_note`).
-3. Sends the admin a brief summary of the new week: \
-earned minutes, bonuses, carryover, total available.
+1. Gets the current balance: `learning_hub_get_balance()`.
+2. Gets this week's transactions: `learning_hub_list_transactions(\
+date_from=<last Saturday YYYY-MM-DD>)`.
+3. Sends the student a friendly weekly summary via their gateway: \
+what was earned, what was spent, current balance.
 
 ---
 
@@ -128,7 +133,7 @@ Does NOT reveal the topic yet. Does NOT create a BonusTask.
 After creating all 4 crons:
 1. List them with name, schedule, and job ID.
 2. Briefly explain what each one does.
-3. Offer to adjust the schedule for crons A and D if the defaults don't work.
+3. Offer to adjust the schedule if the defaults don't work.
 
 ---
 

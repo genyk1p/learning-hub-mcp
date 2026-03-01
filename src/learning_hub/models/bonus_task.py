@@ -9,7 +9,6 @@ from learning_hub.models.base import Base, TimestampMixin
 from learning_hub.models.enums import BonusTaskStatus
 
 if TYPE_CHECKING:
-    from learning_hub.models.bonus_fund import BonusFund
     from learning_hub.models.subject_topic import SubjectTopic
     from learning_hub.models.grade import Grade
 
@@ -35,12 +34,6 @@ class BonusTask(Base, TimestampMixin):
         nullable=False
     )
 
-    # Foreign key to bonus fund (singleton, always id=1)
-    fund_id: Mapped[int] = mapped_column(
-        ForeignKey("bonus_funds.id"),
-        nullable=False
-    )
-
     # Description of the task
     task_description: Mapped[str] = mapped_column(String(1000), nullable=False)
 
@@ -59,11 +52,10 @@ class BonusTask(Base, TimestampMixin):
     # Notes about quality of completion
     quality_notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
-    # Relationship to BonusFund
-    fund: Mapped["BonusFund"] = relationship("BonusFund")
-
     # Relationship to SubjectTopic
-    subject_topic: Mapped["SubjectTopic"] = relationship("SubjectTopic", back_populates="bonus_tasks")
+    subject_topic: Mapped["SubjectTopic"] = relationship(
+        "SubjectTopic", back_populates="bonus_tasks"
+    )
 
     # Relationship to Grade (one bonus task can have one grade)
     grade: Mapped["Grade | None"] = relationship("Grade", back_populates="bonus_task")

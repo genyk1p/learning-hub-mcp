@@ -6,14 +6,19 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import GradeValue
+from learning_hub.models.enums import GradeValue, TransactionType
+from learning_hub.repositories.config_entry import ConfigEntryRepository
 from learning_hub.repositories.grade import GradeRepository
+from learning_hub.repositories.minute_transaction import MinuteTransactionRepository
+from learning_hub.tools.config_vars import CFG_GRADE_MINUTES_MAP
 from learning_hub.tools.tool_names import (
     TOOL_ADD_GRADE,
     TOOL_LIST_GRADES,
-    TOOL_UPDATE_GRADE,
 )
 from learning_hub.utils import dt_to_str
+
+# Fallback if config DB is empty
+_DEFAULT_GRADE_MINUTES_MAP = {1: 15, 2: 10, 3: 0, 4: -20, 5: -25}
 
 
 class GradeResponse(BaseModel):
@@ -26,7 +31,6 @@ class GradeResponse(BaseModel):
     subject_topic_id: int | None
     bonus_task_id: int | None
     homework_id: int | None
-    rewarded: bool
     source: str
 
 
@@ -46,6 +50,9 @@ def register_grade_tools(mcp: FastMCP) -> None:
 
     If grade comes from a different system (US letters, 10-point, 100-point, etc.),
     YOU MUST convert it to this 1-5 scale before calling this tool.
+
+    A MinuteTransaction is automatically created for the grade (unless it is linked
+    to a bonus_task_id — in that case apply_bonus_task_result handles the transaction).
 
     Args:
         subject_id: ID of the subject
@@ -86,6 +93,27 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 )
             except ValueError as e:
                 return {"error": str(e)}
+
+            # Create GRADE transaction unless this grade belongs to a bonus task
+            # (bonus tasks create their own BONUS_TASK transaction in apply_bonus_task_result)
+            if grade.bonus_task_id is None:
+                config_repo = ConfigEntryRepository(session)
+                grade_map_raw = await config_repo.get_json_value(CFG_GRADE_MINUTES_MAP)
+                grade_minutes_map = (
+                    {int(k): v for k, v in grade_map_raw.items()}
+                    if isinstance(grade_map_raw, dict)
+                    else _DEFAULT_GRADE_MINUTES_MAP
+                )
+                minutes = grade_minutes_map.get(grade_value, 0)
+                if minutes != 0:
+                    tx_repo = MinuteTransactionRepository(session)
+                    await tx_repo.create(
+                        minutes=minutes,
+                        type=TransactionType.GRADE,
+                        description=f"Grade {grade_value}",
+                        grade_id=grade.id,
+                    )
+
             return GradeResponse(
                 id=grade.id,
                 subject_id=grade.subject_id,
@@ -95,7 +123,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 subject_topic_id=grade.subject_topic_id,
                 bonus_task_id=grade.bonus_task_id,
                 homework_id=grade.homework_id,
-                rewarded=grade.rewarded,
                 source=grade.source,
             )
 
@@ -106,7 +133,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
         school_id: Filter by school ID (optional)
         date_from: Filter grades from this date, ISO format (optional)
         date_to: Filter grades until this date, ISO format (optional)
-        rewarded: Filter by rewarded status (optional)
 
     Returns:
         List of grades
@@ -116,7 +142,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
         school_id: int | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
-        rewarded: bool | None = None,
     ) -> list[GradeResponse]:
         date_from_parsed = datetime.fromisoformat(date_from) if date_from else None
         date_to_parsed = datetime.fromisoformat(date_to) if date_to else None
@@ -128,7 +153,6 @@ def register_grade_tools(mcp: FastMCP) -> None:
                 school_id=school_id,
                 date_from=date_from_parsed,
                 date_to=date_to_parsed,
-                rewarded=rewarded,
             )
             return [
                 GradeResponse(
@@ -140,42 +164,7 @@ def register_grade_tools(mcp: FastMCP) -> None:
                     subject_topic_id=g.subject_topic_id,
                     bonus_task_id=g.bonus_task_id,
                     homework_id=g.homework_id,
-                    rewarded=g.rewarded,
                     source=g.source,
                 )
                 for g in grades
             ]
-
-    @mcp.tool(name=TOOL_UPDATE_GRADE, description="""Update a grade.
-
-    Args:
-        grade_id: ID of the grade to update
-        rewarded: Mark if grade was rewarded with game minutes (optional)
-
-    Returns:
-        Updated grade or null if not found
-    """)
-    async def update_grade(
-        grade_id: int,
-        rewarded: bool | None = None,
-    ) -> GradeResponse | None:
-        async with AsyncSessionLocal() as session:
-            repo = GradeRepository(session)
-            grade = await repo.update(
-                grade_id=grade_id,
-                rewarded=rewarded,
-            )
-            if grade is None:
-                return None
-            return GradeResponse(
-                id=grade.id,
-                subject_id=grade.subject_id,
-                grade_value=grade.grade_value.value,
-                original_value=grade.original_value,
-                date=dt_to_str(grade.date),
-                subject_topic_id=grade.subject_topic_id,
-                bonus_task_id=grade.bonus_task_id,
-                homework_id=grade.homework_id,
-                rewarded=grade.rewarded,
-                source=grade.source,
-            )

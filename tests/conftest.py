@@ -30,12 +30,10 @@ async def session():
     from learning_hub.models.subject_topic import SubjectTopic  # noqa: F401
     from learning_hub.models.grade import Grade  # noqa: F401
     from learning_hub.models.bonus_task import BonusTask  # noqa: F401
-    from learning_hub.models.bonus_fund import BonusFund  # noqa: F401
     from learning_hub.models.homework import Homework  # noqa: F401
-    from learning_hub.models.week import Week  # noqa: F401
     from learning_hub.models.book import Book  # noqa: F401
     from learning_hub.models.topic_review import TopicReview  # noqa: F401
-    from learning_hub.models.bonus import Bonus  # noqa: F401
+    from learning_hub.models.minute_transaction import MinuteTransaction  # noqa: F401
     from learning_hub.models.config_entry import ConfigEntry  # noqa: F401
     from learning_hub.models.secret import Secret  # noqa: F401
     from learning_hub.models.sync_provider import SyncProvider  # noqa: F401

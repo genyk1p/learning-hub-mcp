@@ -1,7 +1,7 @@
 from learning_hub.tools.tool_names import (
+    TOOL_CHECK_BONUS_LIMITS,
     TOOL_CHECK_PENDING_BONUS_TASK,
     TOOL_CREATE_BONUS_TASK,
-    TOOL_GET_BONUS_FUND,
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
     TOOL_GET_STUDENT,
 )
@@ -12,26 +12,23 @@ BONUS_TASK_ASSIGNMENT_INSTRUCTIONS = f"""\
 > Call this tool when the student asks for a bonus task \
 ("give me a task", "I want to earn minutes", etc.).
 
-## Step 1 — Check the bonus fund
+## Step 1 — Check availability
 
-Call `{TOOL_GET_BONUS_FUND}()`.
+Call `{TOOL_CHECK_BONUS_LIMITS}()`.
 
-- If `available_tasks` <= 0 — inform the student that the fund is exhausted for this week. **Stop.**
-- If slots are available — continue.
+- If `can_create=false` — inform the student in a friendly way that bonus tasks \
+are not available right now and **stop**. Do not reveal exact limit numbers.
+- If `can_create=true` — continue.
 
----
+Next, call `{TOOL_CHECK_PENDING_BONUS_TASK}()`.
 
-## Step 2 — Check for an existing pending task
-
-Call `{TOOL_CHECK_PENDING_BONUS_TASK}()`.
-
-- If a task is returned — **skip Steps 3–5**, go directly to **Step 6** \
+- If a task is returned — **skip Steps 2–4**, go directly to **Step 5** \
 and send this existing task to the student.
-- If `null` — continue to Step 3.
+- If `null` — continue to Step 2.
 
 ---
 
-## Step 3 — Select a topic for a new task
+## Step 2 — Select a topic for a new task
 
 Call `{TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW}()`.
 
@@ -42,7 +39,7 @@ You can wait for the next grade sync." **Stop.**
 
 ---
 
-## Step 4 — Formulate the task
+## Step 3 — Formulate the task
 
 Based on the selected TopicReview, formulate 1–2 tasks:
 
@@ -59,18 +56,21 @@ more analytical and open-ended for older ones.
 
 ---
 
-## Step 5 — Create a record in Learning Hub
+## Step 4 — Create a record in Learning Hub
 
 Call `{TOOL_CREATE_BONUS_TASK}(subject_topic_id=<id>, task_description=<task text>)`.
 
 - `subject_topic_id` — from the selected TopicReview.
 - `task_description` — full task text as the student will see it.
 
+If the tool returns an error (limit reached) — inform the student \
+in a friendly way and **stop**. Do not reveal the exact limit numbers.
+
 Remember the returned `task_id`.
 
 ---
 
-## Step 6 — Send the task to the student
+## Step 5 — Send the task to the student
 
 The message to the student **must** include:
 - `task_id` in the format: **"Bonus task #<task_id>"**
@@ -96,8 +96,8 @@ denominators, and show the solution step by step.
 
 ## Tools used
 
-- `{TOOL_GET_BONUS_FUND}` — check available slots
+- `{TOOL_CHECK_BONUS_LIMITS}` — check if bonus tasks can be created (pending + weekly limits)
 - `{TOOL_CHECK_PENDING_BONUS_TASK}` — check for reusable pending task (coin flip)
 - `{TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW}` — get a topic for review (random from top 4)
-- `{TOOL_CREATE_BONUS_TASK}` — create a bonus task
+- `{TOOL_CREATE_BONUS_TASK}` — create a bonus task (checks limits automatically)
 """

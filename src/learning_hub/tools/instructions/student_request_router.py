@@ -1,13 +1,12 @@
 from learning_hub.tools.tool_names import (
+    TOOL_CHECK_BONUS_AVAILABILITY,
+    TOOL_GET_BALANCE,
     TOOL_GET_BONUS_TASK_ASSIGNMENT_INSTRUCTIONS,
     TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS,
-    TOOL_GET_BONUS_FUND,
-    TOOL_GET_WEEK,
     TOOL_LIST_BONUS_TASKS,
     TOOL_LIST_GRADES,
     TOOL_LIST_HOMEWORKS,
     TOOL_LIST_TOPIC_REVIEWS,
-    TOOL_PREVIEW_WEEKLY_MINUTES,
 )
 
 STUDENT_REQUEST_ROUTER_INSTRUCTIONS = f"""\
@@ -23,7 +22,7 @@ Read the student's message and determine which scenario applies:
 
 | Scenario | Student's intent | Examples |
 |---|---|---|
-| **A — Facts** | Wants to view data from the system | "show my grades", "what homework do I have", "how many minutes", "what's the bonus balance", "which topics need review" |
+| **A — Facts** | Wants to view data from the system | "show my grades", "what homework do I have", "how many minutes", "how many bonus tasks can I do", "which topics need review" |
 | **B — Bonus task request** | Wants to earn game minutes through extra work | "give me a task", "I want to earn minutes", "any bonus tasks?", "what can I do for minutes" |
 | **C — Work submission** | Submitting an answer, solution, or completed work for review | photo of work, text answer, "here's my homework", "I'm done", "check this", a message that looks like a solution to a previously assigned task |
 
@@ -42,10 +41,9 @@ Return factual data from Learning Hub to the student:
 | Homework list (pending/done, deadlines) | `{TOOL_LIST_HOMEWORKS}` |
 | Grades | `{TOOL_LIST_GRADES}` |
 | Bonus task status | `{TOOL_LIST_BONUS_TASKS}` |
-| Bonus fund (available slots) | `{TOOL_GET_BONUS_FUND}` |
+| How many bonus tasks can I still do | `{TOOL_CHECK_BONUS_AVAILABILITY}` — returns completed this week, remaining this week. Do **not** reveal the exact weekly cap; just say how many more the student can do. |
 | Topics for review | `{TOOL_LIST_TOPIC_REVIEWS}` |
-| Minutes for the current week | `{TOOL_GET_WEEK}` |
-| Estimated minutes at end of this week (preview) | `{TOOL_PREVIEW_WEEKLY_MINUTES}` |
+| Current game minutes balance | `{TOOL_GET_BALANCE}` |
 
 Rules:
 - Provide data as-is, without strategic advice.
@@ -83,10 +81,9 @@ and topics for review are part of the normal process — communicate them in a f
 - `{TOOL_LIST_HOMEWORKS}` — homework list
 - `{TOOL_LIST_GRADES}` — grades
 - `{TOOL_LIST_BONUS_TASKS}` — bonus tasks
-- `{TOOL_GET_BONUS_FUND}` — bonus fund status
+- `{TOOL_CHECK_BONUS_AVAILABILITY}` — how many bonus tasks remaining this week
 - `{TOOL_LIST_TOPIC_REVIEWS}` — topics for review
-- `{TOOL_GET_WEEK}` — minutes for the current week
-- `{TOOL_PREVIEW_WEEKLY_MINUTES}` — estimated minutes preview (read-only)
+- `{TOOL_GET_BALANCE}` — current game minutes balance
 - `{TOOL_GET_BONUS_TASK_ASSIGNMENT_INSTRUCTIONS}` — instruction for scenario B
 - `{TOOL_GET_SUBMISSION_ROUTING_INSTRUCTIONS}` — instruction for scenario C
 """

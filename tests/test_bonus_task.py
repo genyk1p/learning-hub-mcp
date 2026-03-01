@@ -1,8 +1,10 @@
-"""Tests for BonusTask fund slot management and lifecycle."""
+"""Tests for BonusTask limit-based management and lifecycle."""
+
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from learning_hub.models.bonus_fund import BonusFund
+from learning_hub.models.bonus_task import BonusTask
 from learning_hub.models.enums import BonusTaskStatus
 from learning_hub.models.school import School
 from learning_hub.models.subject import Subject
@@ -33,120 +35,145 @@ async def _create_topic(session) -> int:
     return topic.id
 
 
-async def _create_fund(session, available_tasks: int = 5) -> BonusFund:
-    fund = BonusFund(id=1, name="Test Fund", available_tasks=available_tasks)
-    session.add(fund)
-    await session.commit()
-    await session.refresh(fund)
-    return fund
+# Default limits for tests
+MAX_PENDING = 4
+MAX_COMPLETED = 15
 
 
 # ---- create tests ----
 
 
-async def test_create_with_available_slots(session):
-    """Create succeeds when fund has enough slots."""
+async def test_create_within_limits(session):
+    """Create succeeds when within both limits."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=5)
     repo = BonusTaskRepository(session)
 
-    task, fund, error = await repo.create(
+    task, limits = await repo.create(
         subject_topic_id=topic_id,
         task_description="Solve 5 fraction problems",
+        max_pending=MAX_PENDING,
+        max_completed_per_week=MAX_COMPLETED,
     )
 
-    assert error is None
     assert task is not None
     assert task.status == BonusTaskStatus.PENDING
     assert task.task_description == "Solve 5 fraction problems"
-    # Fund NOT deducted on create — only on complete
-    assert fund.available_tasks == 5
+    assert limits["can_create"] is True
 
 
-async def test_create_auto_cancels_oldest_pending(session):
-    """When fund at capacity, creating new task auto-cancels the oldest pending."""
+async def test_create_fails_pending_limit(session):
+    """Create fails when pending count reaches the limit."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=2)
     repo = BonusTaskRepository(session)
 
-    # Create 2 tasks — fills capacity (fund=2, pending=2 -> fund >= pending+0)
-    task1, _, _ = await repo.create(topic_id, "Task 1")
-    task2, _, _ = await repo.create(topic_id, "Task 2")
+    # Fill up to the pending limit
+    for i in range(MAX_PENDING):
+        task, _ = await repo.create(
+            topic_id, f"Task {i + 1}", MAX_PENDING, MAX_COMPLETED,
+        )
+        assert task is not None
 
-    # 3rd task: fund=2, pending=2, need 3 -> auto-cancel oldest
-    task3, fund, error = await repo.create(topic_id, "Task 3")
-
-    assert error is None
-    assert task3 is not None
-
-    # task1 should be auto-cancelled
-    await session.refresh(task1)
-    assert task1.status == BonusTaskStatus.CANCELLED
-
-    # task2 and task3 should be pending
-    await session.refresh(task2)
-    assert task2.status == BonusTaskStatus.PENDING
-    assert task3.status == BonusTaskStatus.PENDING
-
-
-async def test_create_fails_zero_fund(session):
-    """Create fails when fund has 0 slots (even after cancel attempt)."""
-    topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=0)
-    repo = BonusTaskRepository(session)
-
-    task, fund, error = await repo.create(topic_id, "No room")
+    # Next one should fail
+    task, limits = await repo.create(
+        topic_id, "One too many", MAX_PENDING, MAX_COMPLETED,
+    )
 
     assert task is None
-    assert error is not None
-    assert "Not enough" in error
+    assert limits["can_create"] is False
+    assert "pending" in limits["reason"].lower()
 
 
-async def test_create_fails_no_fund(session):
-    """Create fails when bonus fund doesn't exist."""
+async def test_create_fails_weekly_limit(session):
+    """Create fails when completed + pending reaches weekly limit."""
     topic_id = await _create_topic(session)
     repo = BonusTaskRepository(session)
 
-    task, fund, error = await repo.create(topic_id, "Orphan task")
+    small_weekly_limit = 3
+
+    # Complete 2 tasks
+    for i in range(2):
+        task, _ = await repo.create(
+            topic_id, f"Task {i + 1}", MAX_PENDING, small_weekly_limit,
+        )
+        assert task is not None
+        await repo.complete(task.id)
+
+    # Create 1 pending (2 completed + 1 pending = 3 = limit)
+    task, _ = await repo.create(
+        topic_id, "Pending task", MAX_PENDING, small_weekly_limit,
+    )
+    assert task is not None
+
+    # Next one should fail (2 completed + 1 pending >= 3)
+    task, limits = await repo.create(
+        topic_id, "Over limit", MAX_PENDING, small_weekly_limit,
+    )
 
     assert task is None
-    assert fund is None
-    assert "not found" in error.lower()
+    assert limits["can_create"] is False
+    assert "weekly" in limits["reason"].lower()
+
+
+async def test_cancel_stale_pending(session):
+    """Stale pending tasks (>7 days old) are auto-cancelled on create."""
+    topic_id = await _create_topic(session)
+    repo = BonusTaskRepository(session)
+
+    # Create a task and manually backdate it
+    old_task = BonusTask(
+        subject_topic_id=topic_id,
+        task_description="Old stale task",
+        status=BonusTaskStatus.PENDING,
+    )
+    session.add(old_task)
+    await session.commit()
+    await session.refresh(old_task)
+
+    # Backdate created_at to 8 days ago
+    old_task.created_at = datetime.now(timezone.utc) - timedelta(days=8)
+    await session.commit()
+
+    # Creating a new task should auto-cancel the stale one
+    new_task, limits = await repo.create(
+        topic_id, "Fresh task", MAX_PENDING, MAX_COMPLETED,
+    )
+
+    assert new_task is not None
+    await session.refresh(old_task)
+    assert old_task.status == BonusTaskStatus.CANCELLED
 
 
 # ---- complete tests ----
 
 
-async def test_complete_decrements_fund(session):
-    """Completing a task deducts one slot from fund."""
+async def test_complete_task(session):
+    """Completing a task sets status and completed_at."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=5)
     repo = BonusTaskRepository(session)
 
-    task, _, _ = await repo.create(topic_id, "Task to complete")
-
-    completed, updated_fund, error = await repo.complete(
-        task.id, quality_notes="Well done"
+    task, _ = await repo.create(
+        topic_id, "Task to complete", MAX_PENDING, MAX_COMPLETED,
     )
+
+    completed, error = await repo.complete(task.id, quality_notes="Well done")
 
     assert error is None
     assert completed.status == BonusTaskStatus.COMPLETED
     assert completed.completed_at is not None
     assert completed.quality_notes == "Well done"
-    assert updated_fund.available_tasks == 4  # 5 - 1
 
 
 async def test_complete_fails_for_completed_task(session):
     """Cannot complete an already-completed task."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=5)
     repo = BonusTaskRepository(session)
 
-    task, _, _ = await repo.create(topic_id, "Task")
+    task, _ = await repo.create(
+        topic_id, "Task", MAX_PENDING, MAX_COMPLETED,
+    )
     await repo.complete(task.id)
 
-    # Try again
-    _, _, error = await repo.complete(task.id)
+    _, error = await repo.complete(task.id)
     assert error is not None
     assert "already" in error.lower()
 
@@ -154,13 +181,14 @@ async def test_complete_fails_for_completed_task(session):
 async def test_complete_fails_for_cancelled_task(session):
     """Cannot complete a cancelled task."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=5)
     repo = BonusTaskRepository(session)
 
-    task, _, _ = await repo.create(topic_id, "Task")
+    task, _ = await repo.create(
+        topic_id, "Task", MAX_PENDING, MAX_COMPLETED,
+    )
     await repo.cancel(task.id)
 
-    _, _, error = await repo.complete(task.id)
+    _, error = await repo.complete(task.id)
     assert error is not None
     assert "already" in error.lower()
 
@@ -171,10 +199,11 @@ async def test_complete_fails_for_cancelled_task(session):
 async def test_cancel_pending_task(session):
     """Cancelling a pending task sets status to CANCELLED."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=5)
     repo = BonusTaskRepository(session)
 
-    task, _, _ = await repo.create(topic_id, "Task to cancel")
+    task, _ = await repo.create(
+        topic_id, "Task to cancel", MAX_PENDING, MAX_COMPLETED,
+    )
     cancelled, error = await repo.cancel(task.id)
 
     assert error is None
@@ -184,10 +213,11 @@ async def test_cancel_pending_task(session):
 async def test_cancel_fails_for_completed_task(session):
     """Cannot cancel an already-completed task."""
     topic_id = await _create_topic(session)
-    await _create_fund(session, available_tasks=5)
     repo = BonusTaskRepository(session)
 
-    task, _, _ = await repo.create(topic_id, "Task")
+    task, _ = await repo.create(
+        topic_id, "Task", MAX_PENDING, MAX_COMPLETED,
+    )
     await repo.complete(task.id)
 
     _, error = await repo.cancel(task.id)
@@ -201,3 +231,16 @@ async def test_cancel_not_found(session):
     _, error = await repo.cancel(999)
     assert error is not None
     assert "not found" in error.lower()
+
+
+# ---- check_limits tests ----
+
+
+async def test_check_limits_within_limits(session):
+    """check_limits returns can_create=True when within limits."""
+    repo = BonusTaskRepository(session)
+    limits = await repo.check_limits(MAX_PENDING, MAX_COMPLETED)
+
+    assert limits["can_create"] is True
+    assert limits["pending_count"] == 0
+    assert limits["completed_7d"] == 0

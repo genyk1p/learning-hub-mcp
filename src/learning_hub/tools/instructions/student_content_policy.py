@@ -224,12 +224,12 @@ internal data with external content responses.
 | Own grades | Yes | Via list_grades — student's own data |
 | Own homework and statuses | Yes | Via list_homeworks |
 | Own bonus tasks | Yes | Via list_bonus_tasks |
-| Game minutes balance | Yes | Via get_week / preview_weekly_minutes |
+| Game minutes balance | Yes | Via get_balance |
 | Textbooks from library | Yes | Via book_lookup — safe internal content |
 | Topics for review | Yes | Via list_topic_reviews |
 | **Minutes calculation algorithms** | **No** | Internal mechanics — do not reveal |
 | **Grade escalation rules** | **No** | Student must not know about adult notifications |
-| **Bonus fund balance (slots)** | **No** | Internal mechanics |
+| **Bonus task limits (pending/weekly caps)** | **No** | Internal mechanics — do not reveal thresholds |
 | **Configuration settings** | **No** | System parameters |
 
 ---

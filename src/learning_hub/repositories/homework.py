@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from learning_hub.models.homework import Homework
-from learning_hub.models.bonus import Bonus
 from learning_hub.models.enums import HomeworkStatus, GradeValue, SyncProviderType
 
 
@@ -104,14 +103,11 @@ class HomeworkRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def close_overdue(
-        self,
-        ontime_bonus: int = 5,
-        overdue_penalty: int = -5,
-    ) -> list[Homework]:
+    async def close_overdue(self) -> list[Homework]:
         """Find all pending homeworks past deadline and complete them.
 
-        Each overdue homework gets status=OVERDUE and bonus via complete().
+        Each overdue homework gets status=OVERDUE.
+        The caller is responsible for creating MinuteTransaction records.
         Returns the list of closed homeworks.
         """
         now = datetime.now()
@@ -127,11 +123,7 @@ class HomeworkRepository:
 
         closed = []
         for hw in overdue:
-            completed = await self.complete(
-                hw.id,
-                ontime_bonus=ontime_bonus,
-                overdue_penalty=overdue_penalty,
-            )
+            completed = await self.complete(hw.id)
             if completed is not None:
                 closed.append(completed)
 
@@ -140,15 +132,13 @@ class HomeworkRepository:
     async def complete(
         self,
         homework_id: int,
-        ontime_bonus: int = 5,
-        overdue_penalty: int = -5,
         recommended_grade: GradeValue | None = None,
     ) -> Homework | None:
-        """Mark homework as completed with bonus minutes.
+        """Mark homework as completed.
 
         If already DONE or OVERDUE — returns homework as-is (nothing to close).
-        If PENDING — sets completed_at, checks deadline, assigns status and bonus.
-        Creates new bonus or updates existing one for this homework.
+        If PENDING — sets completed_at, checks deadline, assigns status.
+        The caller is responsible for creating a MinuteTransaction record.
         """
         homework = await self.get_by_id(homework_id)
         if homework is None:
@@ -168,27 +158,7 @@ class HomeworkRepository:
             and now > homework.deadline_at
         )
 
-        if is_overdue:
-            homework.status = HomeworkStatus.OVERDUE
-            bonus_minutes = overdue_penalty
-        else:
-            homework.status = HomeworkStatus.DONE
-            bonus_minutes = ontime_bonus
-
-        # Find existing bonus for this homework or create new one
-        query = select(Bonus).where(Bonus.homework_id == homework_id)
-        result = await self.session.execute(query)
-        bonus = result.scalar_one_or_none()
-
-        if bonus is not None:
-            bonus.minutes = bonus_minutes
-            bonus.rewarded = False
-        else:
-            bonus = Bonus(
-                homework_id=homework_id,
-                minutes=bonus_minutes,
-            )
-            self.session.add(bonus)
+        homework.status = HomeworkStatus.OVERDUE if is_overdue else HomeworkStatus.DONE
 
         await self.session.commit()
         await self.session.refresh(homework)

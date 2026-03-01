@@ -23,11 +23,9 @@ from learning_hub.models.grade import Grade
 from learning_hub.models.subject_topic import SubjectTopic
 from learning_hub.models.bonus_task import BonusTask
 from learning_hub.models.homework import Homework
-from learning_hub.models.week import Week
 from learning_hub.models.book import Book
-from learning_hub.models.bonus_fund import BonusFund
 from learning_hub.models.topic_review import TopicReview
-from learning_hub.models.bonus import Bonus
+from learning_hub.models.minute_transaction import MinuteTransaction
 from learning_hub.models.family_member import FamilyMember
 from learning_hub.models.gateway import Gateway
 from learning_hub.models.config_entry import ConfigEntry

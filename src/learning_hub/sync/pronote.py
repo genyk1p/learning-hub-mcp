@@ -14,14 +14,18 @@ from learning_hub.models.enums import (
     GradeValue,
     HomeworkStatus,
     SyncProviderType,
+    TransactionType,
 )
 from learning_hub.models.sync_provider import SyncProvider
+from learning_hub.repositories.config_entry import ConfigEntryRepository
 from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.homework import HomeworkRepository
+from learning_hub.repositories.minute_transaction import MinuteTransactionRepository
 from learning_hub.repositories.secret import SecretRepository
 from learning_hub.repositories.subject import SubjectRepository
 from learning_hub.repositories.subject_topic import SubjectTopicRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.tools.config_vars import CFG_GRADE_MINUTES_MAP
 from learning_hub.sync.result import ProviderSyncResult
 
 
@@ -133,6 +137,16 @@ async def _sync_grades(
     topic_repo = SubjectTopicRepository(session)
     grade_repo = GradeRepository(session)
     review_repo = TopicReviewRepository(session)
+    tx_repo = MinuteTransactionRepository(session)
+    config_repo = ConfigEntryRepository(session)
+
+    # Read grade-to-minutes map once before the loop
+    grade_map_raw = await config_repo.get_json_value(CFG_GRADE_MINUTES_MAP)
+    grade_minutes_map = (
+        {int(k): v for k, v in grade_map_raw.items()}
+        if isinstance(grade_map_raw, dict)
+        else {1: 15, 2: 10, 3: 0, 4: -20, 5: -25}
+    )
 
     for period in client.periods:
         try:
@@ -231,6 +245,19 @@ async def _sync_grades(
                     original_value=f"{pg.grade}/{pg.out_of}",
                 )
                 grades_created += 1
+
+                # Create GRADE transaction for this synced grade
+                tx_minutes = grade_minutes_map.get(grade_int, 0)
+                if tx_minutes != 0:
+                    try:
+                        await tx_repo.create(
+                            minutes=tx_minutes,
+                            type=TransactionType.GRADE,
+                            description=f"Sync grade {grade_int} — {pg.subject.name}",
+                            grade_id=grade.id,
+                        )
+                    except Exception as e:
+                        errors.append(f"Failed to create transaction for grade: {e}")
 
                 # Create TopicReview for grades > 1 if topic exists
                 if grade_int > 1 and subject_topic_id is not None:

@@ -21,12 +21,6 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Seed default data: bonus fund, configs, schools, secrets, sync providers."""
 
-    # --- Bonus Fund (singleton) ---
-    op.execute(
-        "INSERT INTO bonus_funds (id, name, available_tasks, created_at, updated_at) "
-        "VALUES (1, 'Bonus Fund', 0, datetime('now'), datetime('now'))"
-    )
-
     # --- Configs with defaults ---
     op.execute(
         "INSERT INTO configs (key, value, description, is_required, created_at, updated_at) VALUES "
@@ -52,12 +46,6 @@ def upgrade() -> None:
         "INSERT INTO configs (key, value, description, is_required, created_at, updated_at) VALUES "
         "('HOMEWORK_BONUS_MINUTES_OVERDUE', '-10', "
         "'Penalty minutes for overdue homework', "
-        "0, datetime('now'), datetime('now'))"
-    )
-    op.execute(
-        "INSERT INTO configs (key, value, description, is_required, created_at, updated_at) VALUES "
-        "('BONUS_FUND_WEEKLY_TOPUP', '15', "
-        "'Number of bonus task slots to add each week', "
         "0, datetime('now'), datetime('now'))"
     )
     op.execute(
@@ -300,8 +288,7 @@ def downgrade() -> None:
         "DELETE FROM configs WHERE key IN ("
         "'GRADE_MINUTES_MAP', 'TOPIC_REVIEW_THRESHOLDS', "
         "'HOMEWORK_BONUS_MINUTES_ONTIME', 'HOMEWORK_BONUS_MINUTES_OVERDUE', "
-        "'BONUS_FUND_WEEKLY_TOPUP', 'DEFAULT_DEADLINE_TIME', 'SETUP_COMPLETED', "
+        "'DEFAULT_DEADLINE_TIME', 'SETUP_COMPLETED', "
         "'BASE_CRONS_INSTALLED', 'SYNC_CRON_CONFIGURED', "
         "'TEMP_BOOK_DIR', 'BOOKS_STORAGE_DIR', 'ISSUES_LOG', 'FAMILY_LANGUAGE')"
     )
-    op.execute("DELETE FROM bonus_funds WHERE id = 1")

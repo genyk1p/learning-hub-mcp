@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, DateTime, Boolean, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Integer, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from learning_hub.models.base import Base, TimestampMixin
@@ -63,9 +63,6 @@ class Grade(Base, TimestampMixin):
 
     # Date when grade was received (stored in server local time)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-
-    # Whether bonuses/penalties for this grade were counted in weekly calculation
-    rewarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Date when escalation was performed (notifying adult about bad grade)
     escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

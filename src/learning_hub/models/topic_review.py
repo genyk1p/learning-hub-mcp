@@ -17,7 +17,7 @@ class TopicReview(Base, TimestampMixin):
     """
     Topic that needs reinforcement after receiving a grade > 1.
 
-    Created automatically when syncing grades from EduPage.
+    Created automatically when syncing grades from external providers.
     Only created if subject_topic_id exists for the grade.
     """
 

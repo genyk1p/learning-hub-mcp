@@ -70,7 +70,6 @@ Call `{TOOL_APPLY_BONUS_TASK_RESULT}(task_id=<id>, grade_value=<1-3>)`.
 
 This single call does everything:
 - Marks the BonusTask as `completed`
-- Deducts a slot from the bonus fund
 - **Records the grade** (subject and topic are resolved automatically from the task)
 - Automatically increments `repeat_count` on pending TopicReviews for the same topic
 - **Automatically closes** TopicReviews that reached the repetition threshold \

@@ -27,8 +27,11 @@ CFG_HOMEWORK_BONUS_MINUTES_ONTIME = "HOMEWORK_BONUS_MINUTES_ONTIME"
 # Penalty minutes for overdue homework
 CFG_HOMEWORK_BONUS_MINUTES_OVERDUE = "HOMEWORK_BONUS_MINUTES_OVERDUE"
 
-# Bonus task slots added each week
-CFG_BONUS_FUND_WEEKLY_TOPUP = "BONUS_FUND_WEEKLY_TOPUP"
+# Maximum number of pending bonus tasks at the same time
+CFG_MAX_PENDING_BONUS_TASKS = "MAX_PENDING_BONUS_TASKS"
+
+# Maximum bonus tasks completed in a rolling 7-day window
+CFG_MAX_COMPLETED_BONUS_TASKS_PER_WEEK = "MAX_COMPLETED_BONUS_TASKS_PER_WEEK"
 
 # Default time for deadline when only date is specified (HH:MM)
 CFG_DEFAULT_DEADLINE_TIME = "DEFAULT_DEADLINE_TIME"

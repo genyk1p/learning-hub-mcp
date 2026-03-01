@@ -66,6 +66,15 @@ class FamilyRole(str, enum.Enum):
     RELATIVE = "relative"  # Other family members
 
 
+class TransactionType(str, enum.Enum):
+    """Type of minute transaction."""
+    GRADE = "grade"             # grade received
+    HOMEWORK = "homework"       # homework completed: + on time, - overdue
+    BONUS_TASK = "bonus_task"   # bonus task completed
+    AD_HOC = "ad_hoc"           # manual bonus/penalty from parents
+    PLAYED = "played"           # student played (always negative)
+
+
 class SyncProviderType(str, enum.Enum):
     """Type of external sync service for grades/homeworks."""
     EDUPAGE = "edupage"  # EduPage (Czech Republic, Slovakia, etc.)

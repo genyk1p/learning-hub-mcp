@@ -1,27 +1,35 @@
 """BonusTask tools for MCP server."""
 
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import BonusTaskStatus, GradeValue, TopicReviewStatus
+from learning_hub.models.enums import TransactionType
 from learning_hub.models.subject_topic import SubjectTopic
 from learning_hub.repositories.bonus_task import BonusTaskRepository
 from learning_hub.repositories.config_entry import ConfigEntryRepository
 from learning_hub.repositories.grade import GradeRepository
+from learning_hub.repositories.minute_transaction import MinuteTransactionRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
+from learning_hub.tools.config_vars import (
+    CFG_GRADE_MINUTES_MAP,
+    CFG_MAX_COMPLETED_BONUS_TASKS_PER_WEEK,
+    CFG_MAX_PENDING_BONUS_TASKS,
+)
 from learning_hub.tools.tool_names import (
     TOOL_CREATE_BONUS_TASK,
     TOOL_LIST_BONUS_TASKS,
-    TOOL_COMPLETE_BONUS_TASK,
     TOOL_GET_BONUS_TASK,
     TOOL_GET_LATEST_BONUS_TASK,
     TOOL_CANCEL_BONUS_TASK,
     TOOL_APPLY_BONUS_TASK_RESULT,
     TOOL_CHECK_PENDING_BONUS_TASK,
+    TOOL_CHECK_BONUS_AVAILABILITY,
+    TOOL_CHECK_BONUS_LIMITS,
 )
 from learning_hub.utils import dt_to_str
 
@@ -37,6 +45,17 @@ class BonusTaskResponse(BaseModel):
     quality_notes: str | None
 
 
+async def _read_limits(config_repo: ConfigEntryRepository) -> tuple[int, int]:
+    """Read MAX_PENDING and MAX_COMPLETED_PER_WEEK from config."""
+    max_pending_raw = await config_repo.get_value(CFG_MAX_PENDING_BONUS_TASKS)
+    max_completed_raw = await config_repo.get_value(
+        CFG_MAX_COMPLETED_BONUS_TASKS_PER_WEEK
+    )
+    max_pending = int(max_pending_raw) if max_pending_raw else 4
+    max_completed = int(max_completed_raw) if max_completed_raw else 15
+    return max_pending, max_completed
+
+
 def register_bonus_task_tools(mcp: FastMCP) -> None:
     """Register bonus task-related tools."""
 
@@ -45,16 +64,16 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
     @mcp.tool(name=TOOL_CREATE_BONUS_TASK, description="""Create a new bonus task.
 
     Bonus tasks are additional work that student can do to earn a grade.
-    Tasks are linked to a subject topic. A slot is deducted from the bonus fund.
+    Tasks are linked to a subject topic.
 
-    Validates that the bonus fund has available task slots.
+    Validates that limits are not exceeded (max pending, max completed per week).
 
     Args:
         subject_topic_id: ID of the topic this task is related to
         task_description: Description of what student needs to do
 
     Returns:
-        Created bonus task with fund info, or error message
+        Created bonus task with limits info, or error message
     """)
     async def create_bonus_task(
         subject_topic_id: int,
@@ -62,14 +81,18 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
     ) -> dict:
         async with AsyncSessionLocal() as session:
             repo = BonusTaskRepository(session)
-            task, fund, error = await repo.create(
+            config_repo = ConfigEntryRepository(session)
+
+            max_pending, max_completed = await _read_limits(config_repo)
+
+            task, limits = await repo.create(
                 subject_topic_id=subject_topic_id,
                 task_description=task_description,
+                max_pending=max_pending,
+                max_completed_per_week=max_completed,
             )
-            if error is not None:
-                return {"error": error, "available_tasks": fund.available_tasks if fund else None}
-            assert task is not None
-            assert fund is not None
+            if task is None:
+                return {"error": limits["reason"], "limits": limits}
             return {
                 "task": BonusTaskResponse(
                     id=task.id,
@@ -80,8 +103,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                     completed_at=None,
                     quality_notes=None,
                 ).model_dump(),
-                "fund_name": fund.name,
-                "fund_available_tasks": fund.available_tasks,
+                "limits": limits,
             }
 
     @mcp.tool(name=TOOL_LIST_BONUS_TASKS, description=f"""List bonus tasks.
@@ -133,45 +155,6 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 )
                 for t in tasks
             ]
-
-    @mcp.tool(name=TOOL_COMPLETE_BONUS_TASK, description="""Mark a bonus task as completed.
-
-    Deducts one task slot from the bonus fund.
-
-    Args:
-        task_id: ID of the bonus task to complete
-        quality_notes: Optional notes about quality of work done
-
-    Returns:
-        Completed task with fund info, or error message
-    """)
-    async def complete_bonus_task(
-        task_id: int,
-        quality_notes: str | None = None,
-    ) -> dict:
-        async with AsyncSessionLocal() as session:
-            repo = BonusTaskRepository(session)
-            task, fund, error = await repo.complete(
-                task_id=task_id,
-                quality_notes=quality_notes,
-            )
-            if error is not None:
-                return {"error": error}
-            assert task is not None
-            assert fund is not None
-            return {
-                "task": BonusTaskResponse(
-                    id=task.id,
-                    subject_topic_id=task.subject_topic_id,
-                    task_description=task.task_description,
-                    status=task.status.value,
-                    created_at=dt_to_str(task.created_at),
-                    completed_at=dt_to_str(task.completed_at),
-                    quality_notes=task.quality_notes,
-                ).model_dump(),
-                "fund_name": fund.name,
-                "fund_available_tasks": fund.available_tasks,
-            }
 
     @mcp.tool(name=TOOL_GET_BONUS_TASK, description="""Get a bonus task by ID.
 
@@ -285,11 +268,15 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
         A pending bonus task to reuse, or null if none picked
     """)
     async def check_pending_bonus_task() -> BonusTaskResponse | None:
-        if random.randint(0, 1) == 0:
-            return None
-
         async with AsyncSessionLocal() as session:
             repo = BonusTaskRepository(session)
+            config_repo = ConfigEntryRepository(session)
+
+            # Cancel stale pending tasks (older than 7 days) first
+            cancelled = await repo.cancel_stale_pending()
+            if cancelled:
+                await session.commit()
+
             tasks = await repo.list(
                 status=BonusTaskStatus.PENDING,
                 limit=50,
@@ -297,6 +284,14 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             )
             if not tasks:
                 return None
+
+            # If pending limit is reached, always return a task (no coin flip)
+            max_pending, _ = await _read_limits(config_repo)
+            if len(tasks) < max_pending:
+                # Coin flip: 50% chance to create a new task instead
+                if random.randint(0, 1) == 0:
+                    return None
+
             task = random.choice(tasks)
             return BonusTaskResponse(
                 id=task.id,
@@ -308,10 +303,41 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 quality_notes=task.quality_notes,
             )
 
+    @mcp.tool(name=TOOL_CHECK_BONUS_AVAILABILITY, description="""Check how many bonus tasks the student can still complete this week.
+
+    Returns:
+        Availability: completed this week, remaining this week, and whether more can be done
+    """)
+    async def check_bonus_availability() -> dict:
+        async with AsyncSessionLocal() as session:
+            repo = BonusTaskRepository(session)
+            config_repo = ConfigEntryRepository(session)
+            _, max_completed = await _read_limits(config_repo)
+            since = datetime.now() - timedelta(days=7)
+            completed_7d = await repo.count_completed_since(since)
+            remaining = max(0, max_completed - completed_7d)
+            return {
+                "can_do_more": remaining > 0,
+                "completed_this_week": completed_7d,
+                "remaining_this_week": remaining,
+            }
+
+    @mcp.tool(name=TOOL_CHECK_BONUS_LIMITS, description="""Check if a new bonus task can be created (pending + weekly limits).
+
+    Returns:
+        can_create, pending_count, completed_7d, reason (if blocked)
+    """)
+    async def check_bonus_limits() -> dict:
+        async with AsyncSessionLocal() as session:
+            repo = BonusTaskRepository(session)
+            config_repo = ConfigEntryRepository(session)
+            max_pending, max_completed = await _read_limits(config_repo)
+            return await repo.check_limits(max_pending, max_completed)
+
     @mcp.tool(name=TOOL_APPLY_BONUS_TASK_RESULT, description="""Complete a bonus task, record the grade, and update topic reviews.
 
     This is a compound tool that does everything needed to finalize a bonus task:
-    1. Marks the bonus task as completed (deducts one slot from fund)
+    1. Marks the bonus task as completed
     2. Creates a grade linked to this bonus task
        (subject_id is resolved automatically from the task's topic)
     3. If count_repeat is true: finds all pending TopicReviews for the same subject topic,
@@ -337,6 +363,8 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             bonus_repo = BonusTaskRepository(session)
             review_repo = TopicReviewRepository(session)
             grade_repo = GradeRepository(session)
+            tx_repo = MinuteTransactionRepository(session)
+            config_repo = ConfigEntryRepository(session)
 
             # --- Pre-validate everything BEFORE any mutations ---
             try:
@@ -363,14 +391,13 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                 }
 
             # --- All validated, now mutate ---
-            task, fund, error = await bonus_repo.complete(
+            task, error = await bonus_repo.complete(
                 task_id=task_id,
                 quality_notes=quality_notes,
             )
             if error is not None:
                 return {"error": error}
             assert task is not None
-            assert fund is not None
 
             # Create grade linked to this bonus task
             try:
@@ -384,6 +411,23 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             except ValueError as e:
                 return {"error": str(e)}
 
+            # Create BONUS_TASK transaction (grade_id intentionally not set
+            # to avoid double-counting)
+            grade_map_raw = await config_repo.get_json_value(CFG_GRADE_MINUTES_MAP)
+            grade_minutes_map = (
+                {int(k): v for k, v in grade_map_raw.items()}
+                if isinstance(grade_map_raw, dict)
+                else {1: 15, 2: 10, 3: 0, 4: -20, 5: -25}
+            )
+            tx_minutes = grade_minutes_map.get(grade_value, 0)
+            if tx_minutes != 0:
+                await tx_repo.create(
+                    minutes=tx_minutes,
+                    type=TransactionType.BONUS_TASK,
+                    description=f"Bonus task: {task.task_description[:60]}",
+                    bonus_task_id=task.id,
+                )
+
             grade_result = {
                 "grade_id": grade.id,
                 "grade_value": grade.grade_value.value,
@@ -396,7 +440,6 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
 
             if count_repeat:
                 # Read thresholds config for auto-close
-                config_repo = ConfigEntryRepository(session)
                 thresholds = await config_repo.get_json_value(
                     "TOPIC_REVIEW_THRESHOLDS",
                 ) or {}
@@ -441,8 +484,6 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
                     completed_at=dt_to_str(task.completed_at),
                     quality_notes=task.quality_notes,
                 ).model_dump(),
-                "fund_name": fund.name,
-                "fund_available_tasks": fund.available_tasks,
                 "grade": grade_result,
                 "topic_reviews_updated": updated_reviews,
                 "topic_reviews_reinforced": auto_reinforced,

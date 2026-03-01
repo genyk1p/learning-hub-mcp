@@ -1,9 +1,8 @@
-from learning_hub.tools.config_vars import CFG_ISSUES_LOG
+from learning_hub.tools.config_vars import CFG_GRADE_MINUTES_MAP, CFG_ISSUES_LOG
 from learning_hub.tools.tool_names import (
     TOOL_ADD_GRADE,
     TOOL_CREATE_TOPIC,
     TOOL_GET_CONFIG,
-    TOOL_GET_GRADE_TO_MINUTES_MAP,
     TOOL_GET_SCHOOL,
     TOOL_LIST_GRADES,
     TOOL_LIST_SCHOOLS,
@@ -120,10 +119,8 @@ School: <school name>
 Grade: <value> (<verbal>)
 Date: <date>
 Topic: <topic or "not specified">
-Minutes impact: <+N / -N / 0 min>
 ```
 
-Get minutes impact from `{TOOL_GET_GRADE_TO_MINUTES_MAP}`. \
 Wait for confirmation.
 
 ---
@@ -149,9 +146,10 @@ Do not pass `bonus_task_id` or `homework_id` — this is a manual grade.
 
 ## Step 9 — Confirm the recording
 
-After successful recording, inform the user:
-- Grade recorded
-- How it will affect the minutes balance
+After successful recording:
+1. Look up the minute effect: call `{TOOL_GET_CONFIG}(key="{CFG_GRADE_MINUTES_MAP}")` \
+and find the value for the recorded grade.
+2. Inform the user: grade recorded, and how many minutes were added or subtracted.
 
 ---
 
@@ -173,5 +171,4 @@ Log the issue (date, context, error, status: open).
 - `{TOOL_CREATE_TOPIC}` — create a topic
 - `{TOOL_LIST_GRADES}` — check for duplicates
 - `{TOOL_ADD_GRADE}` — record the grade
-- `{TOOL_GET_GRADE_TO_MINUTES_MAP}` — grade to minutes conversion table
 """

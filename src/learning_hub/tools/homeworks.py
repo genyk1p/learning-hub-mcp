@@ -6,9 +6,10 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import HomeworkStatus, GradeValue
+from learning_hub.models.enums import HomeworkStatus, GradeValue, TransactionType
 from learning_hub.repositories.config_entry import ConfigEntryRepository
 from learning_hub.repositories.homework import HomeworkRepository
+from learning_hub.repositories.minute_transaction import MinuteTransactionRepository
 from learning_hub.tools.config_vars import (
     CFG_HOMEWORK_BONUS_MINUTES_ONTIME,
     CFG_HOMEWORK_BONUS_MINUTES_OVERDUE,
@@ -157,14 +158,23 @@ def register_homework_tools(mcp: FastMCP) -> None:
     async def close_overdue_homeworks() -> list[HomeworkResponse]:
         async with AsyncSessionLocal() as session:
             config_repo = ConfigEntryRepository(session)
-            ontime = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_ONTIME) or 5
-            overdue = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_OVERDUE) or -5
+            overdue_pen_raw = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_OVERDUE)
+            overdue_pen = overdue_pen_raw if overdue_pen_raw is not None else -10
 
             repo = HomeworkRepository(session)
-            closed = await repo.close_overdue(
-                ontime_bonus=ontime,
-                overdue_penalty=overdue,
-            )
+            tx_repo = MinuteTransactionRepository(session)
+            closed = await repo.close_overdue()
+
+            for hw in closed:
+                existing_tx = await tx_repo.get_by_homework_id(hw.id)
+                if existing_tx is None:
+                    await tx_repo.create(
+                        minutes=overdue_pen,
+                        type=TransactionType.HOMEWORK,
+                        description=f"Homework overdue: {hw.description[:60]}",
+                        homework_id=hw.id,
+                    )
+
             return [
                 HomeworkResponse(
                     id=hw.id,
@@ -209,18 +219,31 @@ def register_homework_tools(mcp: FastMCP) -> None:
 
         async with AsyncSessionLocal() as session:
             config_repo = ConfigEntryRepository(session)
-            ontime = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_ONTIME) or 5
-            overdue_pen = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_OVERDUE) or -5
+            ontime_raw = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_ONTIME)
+            ontime = ontime_raw if ontime_raw is not None else 10
+            overdue_pen_raw = await config_repo.get_int_value(CFG_HOMEWORK_BONUS_MINUTES_OVERDUE)
+            overdue_pen = overdue_pen_raw if overdue_pen_raw is not None else -10
 
             repo = HomeworkRepository(session)
             hw = await repo.complete(
                 homework_id=homework_id,
-                ontime_bonus=ontime,
-                overdue_penalty=overdue_pen,
                 recommended_grade=grade_enum,
             )
             if hw is None:
                 return None
+
+            # Create HOMEWORK transaction if not already created (idempotency guard)
+            tx_repo = MinuteTransactionRepository(session)
+            existing_tx = await tx_repo.get_by_homework_id(hw.id)
+            if existing_tx is None and hw.status in (HomeworkStatus.DONE, HomeworkStatus.OVERDUE):
+                minutes = ontime if hw.status == HomeworkStatus.DONE else overdue_pen
+                await tx_repo.create(
+                    minutes=minutes,
+                    type=TransactionType.HOMEWORK,
+                    description=f"Homework: {hw.description[:60]}",
+                    homework_id=hw.id,
+                )
+
             return HomeworkResponse(
                 id=hw.id,
                 subject_id=hw.subject_id,
