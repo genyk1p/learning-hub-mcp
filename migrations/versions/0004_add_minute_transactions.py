@@ -45,7 +45,12 @@ def upgrade() -> None:
         sa.UniqueConstraint("bonus_task_id", name="uq_minute_transactions_bonus_task_id"),
     )
 
-    op.drop_column("grades", "rewarded")
+    # Drop rewarded column if it exists (may already be gone after squash)
+    conn = op.get_bind()
+    columns = [r[1] for r in conn.execute(sa.text("PRAGMA table_info(grades)"))]
+    if "rewarded" in columns:
+        with op.batch_alter_table("grades") as batch_op:
+            batch_op.drop_column("rewarded")
 
     op.drop_table("bonuses")
 
