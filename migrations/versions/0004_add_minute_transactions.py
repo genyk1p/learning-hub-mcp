@@ -51,11 +51,9 @@ def upgrade() -> None:
 
     op.drop_table("weeks")
 
-    # Drop fund_id FK and column from bonus_tasks, then drop bonus_funds table
+    # Drop fund_id column from bonus_tasks (FK removed automatically by
+    # batch_alter_table table rebuild), then drop bonus_funds table
     with op.batch_alter_table("bonus_tasks") as batch_op:
-        batch_op.drop_constraint(
-            "fk_bonus_tasks_fund_id_bonus_funds", type_="foreignkey"
-        )
         batch_op.drop_column("fund_id")
 
     op.drop_table("bonus_funds")
