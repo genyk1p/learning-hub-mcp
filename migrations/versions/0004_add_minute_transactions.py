@@ -29,43 +29,59 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade() -> None:
-    op.create_table(
-        "minute_transactions",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("minutes", sa.Integer(), nullable=False),
-        sa.Column("type", sa.String(32), nullable=False),
-        sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("grade_id", sa.Integer(), sa.ForeignKey("grades.id"), nullable=True),
-        sa.Column("homework_id", sa.Integer(), sa.ForeignKey("homeworks.id"), nullable=True),
-        sa.Column("bonus_task_id", sa.Integer(), sa.ForeignKey("bonus_tasks.id"), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint("homework_id", name="uq_minute_transactions_homework_id"),
-        sa.UniqueConstraint("bonus_task_id", name="uq_minute_transactions_bonus_task_id"),
-    )
+def _table_exists(conn, name: str) -> bool:
+    r = conn.execute(sa.text(
+        f"SELECT 1 FROM sqlite_master WHERE type='table' AND name='{name}'"
+    ))
+    return r.fetchone() is not None
 
-    # Drop rewarded column if it exists (may already be gone after squash)
+
+def _column_exists(conn, table: str, column: str) -> bool:
+    rows = conn.execute(sa.text(f"PRAGMA table_info({table})"))
+    return column in [r[1] for r in rows]
+
+
+def upgrade() -> None:
     conn = op.get_bind()
-    columns = [r[1] for r in conn.execute(sa.text("PRAGMA table_info(grades)"))]
-    if "rewarded" in columns:
+
+    if not _table_exists(conn, "minute_transactions"):
+        op.create_table(
+            "minute_transactions",
+            sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+            sa.Column("minutes", sa.Integer(), nullable=False),
+            sa.Column("type", sa.String(32), nullable=False),
+            sa.Column("description", sa.Text(), nullable=True),
+            sa.Column("grade_id", sa.Integer(), sa.ForeignKey("grades.id"), nullable=True),
+            sa.Column("homework_id", sa.Integer(), sa.ForeignKey("homeworks.id"), nullable=True),
+            sa.Column("bonus_task_id", sa.Integer(), sa.ForeignKey("bonus_tasks.id"), nullable=True),
+            sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+            sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+            sa.UniqueConstraint("homework_id", name="uq_minute_transactions_homework_id"),
+            sa.UniqueConstraint("bonus_task_id", name="uq_minute_transactions_bonus_task_id"),
+        )
+
+    # All drops are conditional — prod DB may differ from dev after squash
+    if _column_exists(conn, "grades", "rewarded"):
         with op.batch_alter_table("grades") as batch_op:
             batch_op.drop_column("rewarded")
 
-    op.drop_table("bonuses")
+    if _table_exists(conn, "bonuses"):
+        op.drop_table("bonuses")
 
-    op.drop_table("weeks")
+    if _table_exists(conn, "weeks"):
+        op.drop_table("weeks")
 
-    # Drop fund_id column from bonus_tasks (FK removed automatically by
-    # batch_alter_table table rebuild), then drop bonus_funds table
-    with op.batch_alter_table("bonus_tasks") as batch_op:
-        batch_op.drop_column("fund_id")
+    if _column_exists(conn, "bonus_tasks", "fund_id"):
+        with op.batch_alter_table("bonus_tasks") as batch_op:
+            batch_op.drop_column("fund_id")
 
-    op.drop_table("bonus_funds")
+    if _table_exists(conn, "bonus_funds"):
+        op.drop_table("bonus_funds")
 
     # Seed new config-based limits (replacing the mutable bonus_funds counter)
     op.execute(
-        "INSERT INTO configs (key, value, description, is_required, created_at, updated_at) "
+        "INSERT OR IGNORE INTO configs "
+        "(key, value, description, is_required, created_at, updated_at) "
         "VALUES "
         "('MAX_PENDING_BONUS_TASKS', '4', "
         "'Maximum number of pending bonus tasks at the same time', 0, "
