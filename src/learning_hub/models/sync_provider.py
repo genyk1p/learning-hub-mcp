@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from learning_hub.models.school import School
 
 
-class SyncProvider(TimestampMixin, Base):
+class SyncProvider(Base, TimestampMixin):
     """
     External service that syncs grades/homeworks automatically.
 

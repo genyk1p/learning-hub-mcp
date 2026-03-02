@@ -1,5 +1,5 @@
 from learning_hub.tools.tool_names import (
-    TOOL_CHECK_BONUS_LIMITS,
+    TOOL_CHECK_BONUS_AVAILABILITY,
     TOOL_CHECK_PENDING_BONUS_TASK,
     TOOL_CREATE_BONUS_TASK,
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
@@ -14,16 +14,17 @@ BONUS_TASK_ASSIGNMENT_INSTRUCTIONS = f"""\
 
 ## Step 1 — Check availability
 
-Call `{TOOL_CHECK_BONUS_LIMITS}()`.
+Call `{TOOL_CHECK_BONUS_AVAILABILITY}()`.
 
-- If `can_create=false` — inform the student in a friendly way that bonus tasks \
+- If `can_do_more=false` — inform the student in a friendly way that bonus tasks \
 are not available right now and **stop**. Do not reveal exact limit numbers.
-- If `can_create=true` — continue.
+- If `can_do_more=true` — continue.
 
 Next, call `{TOOL_CHECK_PENDING_BONUS_TASK}()`.
 
 - If a task is returned — **skip Steps 2–4**, go directly to **Step 5** \
-and send this existing task to the student.
+and send this existing task to the student. \
+(When the pending limit is full, this tool always returns a task — no coin flip.)
 - If `null` — continue to Step 2.
 
 ---
@@ -96,7 +97,7 @@ denominators, and show the solution step by step.
 
 ## Tools used
 
-- `{TOOL_CHECK_BONUS_LIMITS}` — check if bonus tasks can be created (pending + weekly limits)
+- `{TOOL_CHECK_BONUS_AVAILABILITY}` — check if student can do more bonus tasks this week
 - `{TOOL_CHECK_PENDING_BONUS_TASK}` — check for reusable pending task (coin flip)
 - `{TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW}` — get a topic for review (random from top 4)
 - `{TOOL_CREATE_BONUS_TASK}` — create a bonus task (checks limits automatically)

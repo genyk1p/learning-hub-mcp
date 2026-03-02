@@ -56,6 +56,52 @@ async def _read_limits(config_repo: ConfigEntryRepository) -> tuple[int, int]:
     return max_pending, max_completed
 
 
+async def _check_limits(
+    repo: BonusTaskRepository,
+    max_pending: int,
+    max_completed_per_week: int,
+) -> dict:
+    """Check if a new bonus task can be created within limits.
+
+    Business logic: decides whether creation is allowed based on
+    pending count and weekly completed count.
+    """
+    pending_count = await repo.count_pending()
+
+    if pending_count >= max_pending:
+        return {
+            "pending_count": pending_count,
+            "completed_7d": None,
+            "can_create": False,
+            "reason": (
+                f"Too many pending tasks ({pending_count}/{max_pending}). "
+                "Finish current tasks first."
+            ),
+        }
+
+    since = datetime.now() - timedelta(days=7)
+    completed_7d = await repo.count_completed_since(since)
+
+    if completed_7d + pending_count >= max_completed_per_week:
+        return {
+            "pending_count": pending_count,
+            "completed_7d": completed_7d,
+            "can_create": False,
+            "reason": (
+                f"Weekly limit reached "
+                f"({completed_7d} completed + {pending_count} pending "
+                f">= {max_completed_per_week})."
+            ),
+        }
+
+    return {
+        "pending_count": pending_count,
+        "completed_7d": completed_7d,
+        "can_create": True,
+        "reason": None,
+    }
+
+
 def register_bonus_task_tools(mcp: FastMCP) -> None:
     """Register bonus task-related tools."""
 
@@ -85,14 +131,18 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
 
             max_pending, max_completed = await _read_limits(config_repo)
 
-            task, limits = await repo.create(
+            # Cancel stale pending tasks first
+            await repo.cancel_stale_pending()
+
+            # Check limits
+            limits = await _check_limits(repo, max_pending, max_completed)
+            if not limits["can_create"]:
+                return {"error": limits["reason"], "limits": limits}
+
+            task = await repo.create(
                 subject_topic_id=subject_topic_id,
                 task_description=task_description,
-                max_pending=max_pending,
-                max_completed_per_week=max_completed,
             )
-            if task is None:
-                return {"error": limits["reason"], "limits": limits}
             return {
                 "task": BonusTaskResponse(
                     id=task.id,
@@ -332,7 +382,7 @@ def register_bonus_task_tools(mcp: FastMCP) -> None:
             repo = BonusTaskRepository(session)
             config_repo = ConfigEntryRepository(session)
             max_pending, max_completed = await _read_limits(config_repo)
-            return await repo.check_limits(max_pending, max_completed)
+            return await _check_limits(repo, max_pending, max_completed)
 
     @mcp.tool(name=TOOL_APPLY_BONUS_TASK_RESULT, description="""Complete a bonus task, record the grade, and update topic reviews.
 

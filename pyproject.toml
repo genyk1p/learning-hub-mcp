@@ -34,3 +34,4 @@ learning-hub-mcp = "learning_hub.server:main"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = [".openclaw-test", "migrations"]

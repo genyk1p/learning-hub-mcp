@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from learning_hub.models.base import Base, TimestampMixin
 
 
-class ConfigEntry(TimestampMixin, Base):
+class ConfigEntry(Base, TimestampMixin):
     """
     A single configuration entry.
 

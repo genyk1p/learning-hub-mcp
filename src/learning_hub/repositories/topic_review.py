@@ -50,12 +50,6 @@ class TopicReviewRepository:
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_grade_id(self, grade_id: int) -> TopicReview | None:
-        """Get topic review by grade ID."""
-        query = select(TopicReview).where(TopicReview.grade_id == grade_id)
-        result = await self.session.execute(query)
-        return result.scalar_one_or_none()
-
     async def list(
         self,
         subject_id: int | None = None,

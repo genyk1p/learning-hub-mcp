@@ -131,7 +131,7 @@ def register_instruction_tools(mcp: FastMCP) -> None:
       Get step-by-step instructions for creating and assigning a bonus task.
 
       Call this tool when the student asks for a bonus task to earn game minutes.
-      Covers: checking the bonus fund, selecting a TopicReview by priority,
+      Covers: checking availability limits, selecting a TopicReview by priority,
       formulating the task, and registering it in Learning Hub.
 
       Returns a detailed algorithm for bonus task assignment.""")
@@ -203,8 +203,8 @@ def register_instruction_tools(mcp: FastMCP) -> None:
 
       Call this tool once after check_system_readiness returns ready=true,
       during initial system setup. Guides through creating 4 base crons:
-      homework reminders, unfinalized week reminder, weekly game minutes
-      calculation, and daily bonus task nudge.
+      homework reminders, unrecorded play reminder, weekly balance report,
+      and daily bonus task nudge.
 
       NOTE: If config BASE_CRONS_INSTALLED=true — base crons are already set up.
       Do NOT call this tool in that case.
@@ -224,6 +224,6 @@ def register_instruction_tools(mcp: FastMCP) -> None:
 
       Returns the complete behavioral framework: user identification,
       access control, communication rules, game time calculation,
-      homework/grade workflows, and bonus fund mechanics.""")
+      homework/grade workflows, and bonus task limits.""")
     async def get_learning_system_instructions() -> str:
         return LEARNING_SYSTEM_INSTRUCTIONS

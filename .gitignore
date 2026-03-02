@@ -12,6 +12,7 @@ CLAUDE.md
 # Local project configs
 .local/
 .openclaw/
+.openclaw-test/
 
 # Docker (local dev environments)
 docker/

@@ -53,76 +53,25 @@ class BonusTaskRepository:
             select(func.count())
             .select_from(BonusTask)
             .where(BonusTask.status == BonusTaskStatus.COMPLETED)
-            .where(BonusTask.updated_at >= since)
+            .where(BonusTask.completed_at >= since)
         )
         result = await self.session.execute(query)
         return result.scalar_one()
 
-    async def check_limits(
-        self,
-        max_pending: int,
-        max_completed_per_week: int,
-    ) -> dict:
-        """Check if a new task can be created within limits.
-
-        Returns dict with: pending_count, completed_7d, can_create, reason
-        """
-        pending_count = await self._count_pending()
-
-        if pending_count >= max_pending:
-            return {
-                "pending_count": pending_count,
-                "completed_7d": 0,
-                "can_create": False,
-                "reason": (
-                    f"Too many pending tasks ({pending_count}/{max_pending}). "
-                    "Finish current tasks first."
-                ),
-            }
-
-        since = datetime.now() - timedelta(days=7)
-        completed_7d = await self.count_completed_since(since)
-
-        if completed_7d + pending_count >= max_completed_per_week:
-            return {
-                "pending_count": pending_count,
-                "completed_7d": completed_7d,
-                "can_create": False,
-                "reason": (
-                    f"Weekly limit reached "
-                    f"({completed_7d} completed + {pending_count} pending "
-                    f">= {max_completed_per_week})."
-                ),
-            }
-
-        return {
-            "pending_count": pending_count,
-            "completed_7d": completed_7d,
-            "can_create": True,
-            "reason": None,
-        }
+    async def count_pending(self) -> int:
+        """Count bonus tasks with PENDING status (public wrapper)."""
+        return await self._count_pending()
 
     async def create(
         self,
         subject_topic_id: int,
         task_description: str,
-        max_pending: int,
-        max_completed_per_week: int,
-    ) -> tuple[BonusTask | None, dict]:
-        """Create a new bonus task.
+    ) -> BonusTask:
+        """Create a new bonus task. No business logic — just CRUD.
 
-        Auto-cancels stale pending tasks (older than 7 days) first,
-        then checks limits before creating.
-
-        Returns:
-            Tuple of (task, limits_info). If task is None, limits_info has reason.
+        Callers are responsible for checking limits and cancelling stale tasks
+        before calling this method.
         """
-        await self.cancel_stale_pending()
-
-        limits = await self.check_limits(max_pending, max_completed_per_week)
-        if not limits["can_create"]:
-            return None, limits
-
         task = BonusTask(
             subject_topic_id=subject_topic_id,
             task_description=task_description,
@@ -131,7 +80,7 @@ class BonusTaskRepository:
         self.session.add(task)
         await self.session.commit()
         await self.session.refresh(task)
-        return task, limits
+        return task
 
     async def get_by_id(self, task_id: int) -> BonusTask | None:
         """Get bonus task by ID."""

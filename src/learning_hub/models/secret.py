@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from learning_hub.models.base import Base, TimestampMixin
 
 
-class Secret(TimestampMixin, Base):
+class Secret(Base, TimestampMixin):
     """
     A single secret entry (e.g. API credential).
 

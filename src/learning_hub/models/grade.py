@@ -32,6 +32,8 @@ class Grade(Base, TimestampMixin):
     __tablename__ = "grades"
     __table_args__ = (
         UniqueConstraint("external_id", "external_source", name="uq_grades_external"),
+        UniqueConstraint("bonus_task_id", name="uq_grades_bonus_task_id"),
+        UniqueConstraint("homework_id", name="uq_grades_homework_id"),
     )
 
     # Primary key
