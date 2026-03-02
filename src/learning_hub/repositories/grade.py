@@ -131,6 +131,27 @@ class GradeRepository:
         result = await self.session.execute(query)
         return list(result.scalars().unique().all())
 
+    async def list_with_topics_since(self, since: datetime) -> list[Grade]:
+        """List grades with linked topics since a given date, excluding grade 1.
+
+        Used for fallback topic selection when no pending TopicReviews exist.
+        Only returns grades where subject_topic_id is set and grade_value > 1.
+        Eager-loads subject and subject_topic for building the response.
+        """
+        query = (
+            select(Grade)
+            .options(
+                joinedload(Grade.subject),
+                joinedload(Grade.subject_topic),
+            )
+            .where(Grade.date >= since)
+            .where(Grade.subject_topic_id.isnot(None))
+            .where(Grade.grade_value != GradeValue.EXCELLENT)
+            .order_by(Grade.date.desc())
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().unique().all())
+
     async def mark_escalated(self, grade_ids: list[int]) -> int:
         """Set escalated_at to now for given grade IDs.
 

@@ -1,12 +1,15 @@
 """TopicReview tools for MCP server."""
 
 import random
+from datetime import datetime, timedelta
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from learning_hub.database.connection import AsyncSessionLocal
-from learning_hub.models.enums import TopicReviewStatus
+from learning_hub.models.enums import ReviewSource, TopicReviewStatus
+from learning_hub.models.topic_review import TopicReview
+from learning_hub.repositories.grade import GradeRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
 from learning_hub.tools.tool_names import (
     TOOL_LIST_TOPIC_REVIEWS,
@@ -16,6 +19,8 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
 )
 from learning_hub.utils import dt_to_str
+
+EXTRA_PRACTICE_LOOKBACK_DAYS = 30
 
 
 class TopicReviewResponse(BaseModel):
@@ -30,8 +35,35 @@ class TopicReviewResponse(BaseModel):
     grade_date: str | None
     subject_name: str
     topic_description: str
+    review_source: str | None = None
     created_at: str | None
     updated_at: str | None
+
+
+def _review_to_response(
+    review: TopicReview,
+    review_source: str | None = None,
+) -> TopicReviewResponse:
+    """Convert a TopicReview ORM object to response schema.
+
+    Caller must ensure grade, subject, and subject_topic
+    are eagerly loaded on the review instance.
+    """
+    return TopicReviewResponse(
+        id=review.id,
+        subject_id=review.subject_id,
+        subject_topic_id=review.subject_topic_id,
+        grade_id=review.grade_id,
+        status=review.status.value,
+        repeat_count=review.repeat_count,
+        grade_value=review.grade.grade_value.value,
+        grade_date=dt_to_str(review.grade.date),
+        subject_name=review.subject.name,
+        topic_description=review.subject_topic.description,
+        review_source=review_source,
+        created_at=dt_to_str(review.created_at),
+        updated_at=dt_to_str(review.updated_at),
+    )
 
 
 def register_topic_review_tools(mcp: FastMCP) -> None:
@@ -66,23 +98,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 subject_topic_id=subject_topic_id,
                 status=status_enum,
             )
-            return [
-                TopicReviewResponse(
-                    id=r.id,
-                    subject_id=r.subject_id,
-                    subject_topic_id=r.subject_topic_id,
-                    grade_id=r.grade_id,
-                    status=r.status.value,
-                    repeat_count=r.repeat_count,
-                    grade_value=r.grade.grade_value.value,
-                    grade_date=dt_to_str(r.grade.date),
-                    subject_name=r.subject.name,
-                    topic_description=r.subject_topic.description,
-                    created_at=dt_to_str(r.created_at),
-                    updated_at=dt_to_str(r.updated_at),
-                )
-                for r in reviews
-            ]
+            return [_review_to_response(r) for r in reviews]
 
     @mcp.tool(name=TOOL_MARK_TOPIC_REINFORCED, description="""Mark topic review as reinforced.
 
@@ -100,20 +116,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
             review = await repo.mark_reinforced(review_id)
             if review is None:
                 return None
-            return TopicReviewResponse(
-                id=review.id,
-                subject_id=review.subject_id,
-                subject_topic_id=review.subject_topic_id,
-                grade_id=review.grade_id,
-                status=review.status.value,
-                repeat_count=review.repeat_count,
-                grade_value=review.grade.grade_value.value,
-                grade_date=dt_to_str(review.grade.date),
-                subject_name=review.subject.name,
-                topic_description=review.subject_topic.description,
-                created_at=dt_to_str(review.created_at),
-                updated_at=dt_to_str(review.updated_at),
-            )
+            return _review_to_response(review)
 
     @mcp.tool(name=TOOL_GET_PENDING_REVIEWS_FOR_TOPIC, description="""Get pending topic reviews for a subject topic.
 
@@ -135,23 +138,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 subject_topic_id=subject_topic_id,
                 status=TopicReviewStatus.PENDING,
             )
-            return [
-                TopicReviewResponse(
-                    id=r.id,
-                    subject_id=r.subject_id,
-                    subject_topic_id=r.subject_topic_id,
-                    grade_id=r.grade_id,
-                    status=r.status.value,
-                    repeat_count=r.repeat_count,
-                    grade_value=r.grade.grade_value.value,
-                    grade_date=dt_to_str(r.grade.date),
-                    subject_name=r.subject.name,
-                    topic_description=r.subject_topic.description,
-                    created_at=dt_to_str(r.created_at),
-                    updated_at=dt_to_str(r.updated_at),
-                )
-                for r in reviews
-            ]
+            return [_review_to_response(r) for r in reviews]
 
     @mcp.tool(name=TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW, description="""Get a high-priority pending topic for review.
 
@@ -161,28 +148,57 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
     Use this for bonus task topic selection.
 
     Returns:
-        A topic review with full context, or null if none pending
+        A topic review with full context, or null if none pending.
+        The `review_source` field indicates how the topic was selected:
+        - "reinforcement" — standard pending TopicReview (topic needs reinforcement)
+        - "extra_practice" — all reviews done, topic picked from recent grades
+          (student wants to keep learning — praise them!)
     """)
     async def get_priority_topic_for_review() -> TopicReviewResponse | None:
         async with AsyncSessionLocal() as session:
+            # Wave 1: pending TopicReviews
             repo = TopicReviewRepository(session)
             candidates = await repo.get_top_priority_candidates(limit=4)
-            if not candidates:
+            if candidates:
+                review = random.choice(candidates)
+                return _review_to_response(
+                    review,
+                    review_source=ReviewSource.REINFORCEMENT.value,
+                )
+
+            # Wave 2: no pending reviews — pick from recent grades
+            grade_repo = GradeRepository(session)
+            since = datetime.now() - timedelta(days=EXTRA_PRACTICE_LOOKBACK_DAYS)
+            grades = await grade_repo.list_with_topics_since(since)
+            if not grades:
                 return None
-            review = random.choice(candidates)
+
+            # Group by subject, find the one with worst average grade
+            subject_grades: dict[int, list] = {}
+            for g in grades:
+                subject_grades.setdefault(g.subject_id, []).append(g)
+
+            worst_subject_id = max(
+                subject_grades,
+                key=lambda sid: sum(g.grade_value.value for g in subject_grades[sid])
+                / len(subject_grades[sid]),
+            )
+
+            grade = random.choice(subject_grades[worst_subject_id])
             return TopicReviewResponse(
-                id=review.id,
-                subject_id=review.subject_id,
-                subject_topic_id=review.subject_topic_id,
-                grade_id=review.grade_id,
-                status=review.status.value,
-                repeat_count=review.repeat_count,
-                grade_value=review.grade.grade_value.value,
-                grade_date=dt_to_str(review.grade.date),
-                subject_name=review.subject.name,
-                topic_description=review.subject_topic.description,
-                created_at=dt_to_str(review.created_at),
-                updated_at=dt_to_str(review.updated_at),
+                id=0,
+                subject_id=grade.subject_id,
+                subject_topic_id=grade.subject_topic_id,
+                grade_id=grade.id,
+                status=ReviewSource.EXTRA_PRACTICE.value,
+                repeat_count=0,
+                grade_value=grade.grade_value.value,
+                grade_date=dt_to_str(grade.date),
+                subject_name=grade.subject.name,
+                topic_description=grade.subject_topic.description,
+                review_source=ReviewSource.EXTRA_PRACTICE.value,
+                created_at=None,
+                updated_at=None,
             )
 
     @mcp.tool(name=TOOL_INCREMENT_TOPIC_REPEAT_COUNT, description="""Increment repeat count for a topic review.
@@ -201,17 +217,4 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
             review = await repo.increment_repeat_count(review_id)
             if review is None:
                 return None
-            return TopicReviewResponse(
-                id=review.id,
-                subject_id=review.subject_id,
-                subject_topic_id=review.subject_topic_id,
-                grade_id=review.grade_id,
-                status=review.status.value,
-                repeat_count=review.repeat_count,
-                grade_value=review.grade.grade_value.value,
-                grade_date=dt_to_str(review.grade.date),
-                subject_name=review.subject.name,
-                topic_description=review.subject_topic.description,
-                created_at=dt_to_str(review.created_at),
-                updated_at=dt_to_str(review.updated_at),
-            )
+            return _review_to_response(review)

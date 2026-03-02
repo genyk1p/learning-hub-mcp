@@ -346,11 +346,20 @@ this is the only source of game minutes from bonus tasks.
 
 ### Priority topic selection
 
-The tool `{TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW}()` selects a random topic \
+The tool `{TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW}()` works in two waves:
+
+**Wave 1** (pending TopicReviews exist): selects a random topic \
 from the **top-4** priority pending topics:
 - **worst grade** → **fewer repetitions** → **more recent** \
 (sorting is server-side).
 - Randomization from top-4 prevents cycling on a single topic.
+- Returns `review_source="reinforcement"`.
+
+**Wave 2** (all TopicReviews are done): picks from grades of the last 30 days — \
+finds the subject with the worst average grade, selects a random topic from it.
+- Returns `review_source="extra_practice"`.
+- The student wants to keep learning — praise their initiative!
+- Tasks should be lighter and more exploratory.
 
 ### Bonus task assignment
 

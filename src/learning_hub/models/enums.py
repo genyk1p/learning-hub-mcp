@@ -75,6 +75,12 @@ class TransactionType(str, enum.Enum):
     PLAYED = "played"           # student played (always negative)
 
 
+class ReviewSource(str, enum.Enum):
+    """How the topic for review was selected."""
+    REINFORCEMENT = "reinforcement"  # Pending TopicReview (standard wave)
+    EXTRA_PRACTICE = "extra_practice"  # No pending reviews, picked from recent grades
+
+
 class SyncProviderType(str, enum.Enum):
     """Type of external sync service for grades/homeworks."""
     EDUPAGE = "edupage"  # EduPage (Czech Republic, Slovakia, etc.)
