@@ -204,30 +204,31 @@ async def test_wave1_returns_reinforcement_source(session):
 # ---- wave 2 tests (fallback from grades) ----
 
 
-async def test_wave2_picks_worst_subject(session):
-    """Wave 2 should select grades from the subject with worst average."""
+async def test_wave2_favorite_subject_filtering(session):
+    """Wave 2 grades can be filtered by favorite subject IDs."""
     school = await _make_school(session)
-    good_subj = await _make_subject(session, school.id, "Easy Subject")
-    bad_subj = await _make_subject(session, school.id, "Hard Subject")
-    good_topic = await _make_topic(session, good_subj.id, "Easy topic")
-    bad_topic = await _make_topic(session, bad_subj.id, "Hard topic")
+    fav_subj = await _make_subject(session, school.id, "Favorite Subject")
+    fav_subj.is_favorite = True
+    other_subj = await _make_subject(session, school.id, "Other Subject")
+    fav_topic = await _make_topic(session, fav_subj.id, "Fav topic")
+    other_topic = await _make_topic(session, other_subj.id, "Other topic")
 
-    # Good subject: grade 2 (avg 2)
-    await _make_grade(session, good_subj.id, GradeValue.GOOD, subject_topic_id=good_topic.id)
-    # Bad subject: grades 4 and 5 (avg 4.5)
-    await _make_grade(session, bad_subj.id, GradeValue.POOR, subject_topic_id=bad_topic.id)
-    await _make_grade(session, bad_subj.id, GradeValue.FAIL, subject_topic_id=bad_topic.id)
+    await _make_grade(session, fav_subj.id, GradeValue.GOOD, subject_topic_id=fav_topic.id)
+    await _make_grade(session, other_subj.id, GradeValue.POOR, subject_topic_id=other_topic.id)
     await session.commit()
 
     repo = GradeRepository(session)
     since = datetime.now() - timedelta(days=30)
     grades = await repo.list_with_topics_since(since)
 
-    # All 3 grades returned (good=1 + bad=2)
-    assert len(grades) == 3
-    # Bad subject has more grades (both with worse values)
-    bad_grades = [g for g in grades if g.subject_id == bad_subj.id]
-    assert len(bad_grades) == 2
+    # Both grades returned
+    assert len(grades) == 2
+
+    # Filtering by favorite IDs gives only the favorite subject's grades
+    favorite_ids = {fav_subj.id}
+    favorite_grades = [g for g in grades if g.subject_id in favorite_ids]
+    assert len(favorite_grades) == 1
+    assert favorite_grades[0].subject_id == fav_subj.id
 
 
 async def test_wave2_returns_none_when_no_grades(session):

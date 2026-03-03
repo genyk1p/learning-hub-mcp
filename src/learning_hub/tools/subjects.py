@@ -20,6 +20,7 @@ class SubjectResponse(BaseModel):
     name_ru: str | None
     grade_level: int | None
     is_active: bool
+    is_favorite: bool
     current_book_id: int | None
     tutor_id: int | None
 
@@ -59,6 +60,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 name_ru=subject.name_ru,
                 grade_level=subject.grade_level,
                 is_active=subject.is_active,
+                is_favorite=subject.is_favorite,
                 current_book_id=subject.current_book_id,
                 tutor_id=subject.tutor_id,
             )
@@ -87,6 +89,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                     name_ru=s.name_ru,
                     grade_level=s.grade_level,
                     is_active=s.is_active,
+                    is_favorite=s.is_favorite,
                     current_book_id=s.current_book_id,
                     tutor_id=s.tutor_id,
                 )
@@ -101,6 +104,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
         name_ru: New Russian name (optional)
         grade_level: New grade level (optional)
         is_active: Set active status (optional)
+        is_favorite: Mark as favorite subject (optional, max 3 favorites allowed)
         current_book_id: ID of the current textbook for this subject (optional)
         clear_current_book: Set to true to remove current textbook link (optional)
         tutor_id: ID of the responsible tutor/adult for this subject (optional)
@@ -115,6 +119,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
         name_ru: str | None = None,
         grade_level: int | None = None,
         is_active: bool | None = None,
+        is_favorite: bool | None = None,
         current_book_id: int | None = None,
         clear_current_book: bool = False,
         tutor_id: int | None = None,
@@ -128,6 +133,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 name_ru=name_ru,
                 grade_level=grade_level,
                 is_active=is_active,
+                is_favorite=is_favorite,
                 current_book_id=current_book_id,
                 clear_current_book=clear_current_book,
                 tutor_id=tutor_id,
@@ -142,6 +148,7 @@ def register_subject_tools(mcp: FastMCP) -> None:
                 name_ru=subject.name_ru,
                 grade_level=subject.grade_level,
                 is_active=subject.is_active,
+                is_favorite=subject.is_favorite,
                 current_book_id=subject.current_book_id,
                 tutor_id=subject.tutor_id,
             )

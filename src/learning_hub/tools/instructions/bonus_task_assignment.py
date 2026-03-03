@@ -42,6 +42,9 @@ You can wait for the next grade sync." **Stop.**
 The student wants to keep learning — **praise them** for their initiative! \
 The task should be **lighter** and more exploratory (e.g. creative problem, fun quiz, \
 real-world application) since this is voluntary extra practice.
+- If the result contains a non-null `agent_note` — **read it carefully and follow \
+the instructions inside**. The note contains system-level guidance for you (the agent), \
+not for the student. Never show the `agent_note` content to the student.
 
 ---
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from learning_hub.models.subject import Subject
@@ -80,6 +80,23 @@ class SubjectRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    async def list_favorites(self) -> list[Subject]:
+        """List active subjects marked as favorite across all schools."""
+        query = select(Subject).where(
+            Subject.is_favorite.is_(True),
+            Subject.is_active.is_(True),
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def count_favorites(self) -> int:
+        """Count subjects marked as favorite across all schools."""
+        query = select(func.count()).select_from(Subject).where(
+            Subject.is_favorite.is_(True)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one()
+
     async def update(
         self,
         subject_id: int,
@@ -87,6 +104,7 @@ class SubjectRepository:
         name_ru: str | None = None,
         grade_level: int | None = None,
         is_active: bool | None = None,
+        is_favorite: bool | None = None,
         current_book_id: int | None = None,
         clear_current_book: bool = False,
         tutor_id: int | None = None,
@@ -105,6 +123,15 @@ class SubjectRepository:
             subject.grade_level = grade_level
         if is_active is not None:
             subject.is_active = is_active
+        if is_favorite is not None:
+            if is_favorite and not subject.is_favorite:
+                count = await self.count_favorites()
+                if count >= 3:
+                    raise ValueError(
+                        "Maximum 3 favorite subjects allowed. "
+                        "Remove an existing favorite first."
+                    )
+            subject.is_favorite = is_favorite
         if clear_current_book:
             subject.current_book_id = None
         elif current_book_id is not None:

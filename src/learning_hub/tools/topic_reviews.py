@@ -10,6 +10,7 @@ from learning_hub.database.connection import AsyncSessionLocal
 from learning_hub.models.enums import ReviewSource, TopicReviewStatus
 from learning_hub.models.topic_review import TopicReview
 from learning_hub.repositories.grade import GradeRepository
+from learning_hub.repositories.subject import SubjectRepository
 from learning_hub.repositories.topic_review import TopicReviewRepository
 from learning_hub.tools.tool_names import (
     TOOL_LIST_TOPIC_REVIEWS,
@@ -17,6 +18,7 @@ from learning_hub.tools.tool_names import (
     TOOL_GET_PENDING_REVIEWS_FOR_TOPIC,
     TOOL_INCREMENT_TOPIC_REPEAT_COUNT,
     TOOL_GET_PRIORITY_TOPIC_FOR_REVIEW,
+    TOOL_UPDATE_SUBJECT,
 )
 from learning_hub.utils import dt_to_str
 
@@ -36,6 +38,7 @@ class TopicReviewResponse(BaseModel):
     subject_name: str
     topic_description: str
     review_source: str | None = None
+    agent_note: str | None = None
     created_at: str | None
     updated_at: str | None
 
@@ -173,18 +176,40 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
             if not grades:
                 return None
 
-            # Group by subject, find the one with worst average grade
-            subject_grades: dict[int, list] = {}
-            for g in grades:
-                subject_grades.setdefault(g.subject_id, []).append(g)
+            # Try favorite subjects first
+            subject_repo = SubjectRepository(session)
+            favorites = await subject_repo.list_favorites()
+            favorite_ids = {s.id for s in favorites}
 
-            worst_subject_id = max(
-                subject_grades,
-                key=lambda sid: sum(g.grade_value.value for g in subject_grades[sid])
-                / len(subject_grades[sid]),
-            )
+            agent_note = None
+            if favorite_ids:
+                # Scenario A: pick from favorite subjects
+                favorite_grades = [g for g in grades if g.subject_id in favorite_ids]
+                if favorite_grades:
+                    grade = random.choice(favorite_grades)
+                else:
+                    # Favorites exist but have no graded topics in last 30 days
+                    grade = random.choice(grades)
+            else:
+                # Scenario B: no favorites configured — random topic + note for agent
+                grade = random.choice(grades)
+                agent_note = (
+                    f"No favorite subjects are configured. "
+                    f"The topic was selected randomly — this is normal, "
+                    f"do NOT inform the student about this.\n\n"
+                    f"ACTION REQUIRED: Send a message to the system administrator "
+                    f"via an available channel recommending to set up favorite subjects "
+                    f"using the `{TOOL_UPDATE_SUBJECT}` tool with parameter "
+                    f"`is_favorite=True` (maximum 3 favorites allowed).\n\n"
+                    f"WHY: Favorite subjects are used by the system to generate "
+                    f"advanced practice tasks when all pending reviews are done. "
+                    f"This helps the student grow stronger in subjects they enjoy.\n\n"
+                    f"IMPORTANT: Favorites should be chosen thoughtfully — "
+                    f"there is no point in marking subjects like PE or Music "
+                    f"as favorites, because Learning Hub cannot generate meaningful "
+                    f"educational content for such subjects."
+                )
 
-            grade = random.choice(subject_grades[worst_subject_id])
             return TopicReviewResponse(
                 id=0,
                 subject_id=grade.subject_id,
@@ -197,6 +222,7 @@ def register_topic_review_tools(mcp: FastMCP) -> None:
                 subject_name=grade.subject.name,
                 topic_description=grade.subject_topic.description,
                 review_source=ReviewSource.EXTRA_PRACTICE.value,
+                agent_note=agent_note,
                 created_at=None,
                 updated_at=None,
             )

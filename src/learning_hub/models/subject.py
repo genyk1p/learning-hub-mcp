@@ -48,6 +48,9 @@ class Subject(Base, TimestampMixin):
     # Whether this subject is active (can deactivate old subjects)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # Whether this is a favorite subject (max 3 across all schools)
+    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Current textbook used for this subject (SET NULL on book delete)
     current_book_id: Mapped[int | None] = mapped_column(
         ForeignKey("books.id", ondelete="SET NULL"),
