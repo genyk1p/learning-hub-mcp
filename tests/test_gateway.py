@@ -13,7 +13,7 @@ from learning_hub.repositories.gateway import GatewayRepository
 pytestmark = pytest.mark.asyncio
 
 
-async def _create_member(session, name="Evhen", role=FamilyRole.ADMIN, **kwargs):
+async def _create_member(session, name="Bob", role=FamilyRole.ADMIN, **kwargs):
     """Helper to create a family member."""
     repo = FamilyMemberRepository(session)
     return await repo.create(name=name, role=role, **kwargs)
@@ -26,12 +26,12 @@ async def test_create_gateway(session):
     gw = await repo.create(
         family_member_id=member.id,
         channel=ChannelType.TELEGRAM,
-        channel_uid="771706548",
+        channel_uid="9990002222",
     )
 
     assert gw.id is not None
     assert gw.channel == ChannelType.TELEGRAM
-    assert gw.channel_uid == "771706548"
+    assert gw.channel_uid == "9990002222"
     assert gw.family_member_id == member.id
 
 
@@ -71,21 +71,21 @@ async def test_second_gateway_not_auto_default(session):
 async def test_lookup(session):
     """Lookup should return gateway with eagerly loaded family member."""
     member = await _create_member(
-        session, name="Stas", role=FamilyRole.STUDENT,
-        is_student=True, full_name="Stanislav Kukoba",
+        session, name="Alex", role=FamilyRole.STUDENT,
+        is_student=True, full_name="Alex Johnson",
         birth_date=date(2014, 5, 15),
     )
     repo = GatewayRepository(session)
     await repo.create(
         family_member_id=member.id,
         channel=ChannelType.TELEGRAM,
-        channel_uid="5712222032",
+        channel_uid="9990001111",
     )
 
-    found = await repo.lookup(channel=ChannelType.TELEGRAM, channel_uid="5712222032")
+    found = await repo.lookup(channel=ChannelType.TELEGRAM, channel_uid="9990001111")
 
     assert found is not None
-    assert found.family_member.name == "Stas"
+    assert found.family_member.name == "Alex"
     assert found.family_member.role == FamilyRole.STUDENT
     assert found.family_member.is_student is True
 
@@ -113,8 +113,8 @@ async def test_get_default(session):
 
 
 async def test_list_filter_by_member(session):
-    m1 = await _create_member(session, name="Evhen")
-    m2 = await _create_member(session, name="Tanya", role=FamilyRole.PARENT)
+    m1 = await _create_member(session, name="Bob")
+    m2 = await _create_member(session, name="Carol", role=FamilyRole.PARENT)
     repo = GatewayRepository(session)
 
     await repo.create(family_member_id=m1.id, channel=ChannelType.TELEGRAM, channel_uid="111")
@@ -126,8 +126,8 @@ async def test_list_filter_by_member(session):
 
 
 async def test_list_filter_by_channel(session):
-    m1 = await _create_member(session, name="Evhen")
-    m2 = await _create_member(session, name="Tanya", role=FamilyRole.PARENT)
+    m1 = await _create_member(session, name="Bob")
+    m2 = await _create_member(session, name="Carol", role=FamilyRole.PARENT)
     repo = GatewayRepository(session)
 
     await repo.create(family_member_id=m1.id, channel=ChannelType.TELEGRAM, channel_uid="111")
@@ -219,8 +219,8 @@ async def test_cascade_delete_member(session):
 
 async def test_constraint_unique_channel_uid(session):
     """Same channel + channel_uid cannot belong to two different members."""
-    m1 = await _create_member(session, name="Evhen")
-    m2 = await _create_member(session, name="Tanya", role=FamilyRole.PARENT)
+    m1 = await _create_member(session, name="Bob")
+    m2 = await _create_member(session, name="Carol", role=FamilyRole.PARENT)
     repo = GatewayRepository(session)
 
     await repo.create(

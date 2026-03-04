@@ -15,10 +15,10 @@ pytestmark = pytest.mark.asyncio
 
 async def test_create_family_member(session):
     repo = FamilyMemberRepository(session)
-    member = await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
+    member = await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
 
     assert member.id is not None
-    assert member.name == "Evhen"
+    assert member.name == "Bob"
     assert member.role == FamilyRole.ADMIN
     assert member.is_admin is True
     assert member.is_student is False
@@ -27,15 +27,15 @@ async def test_create_family_member(session):
 async def test_create_with_all_fields(session):
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Stas",
+        name="Alex",
         role=FamilyRole.STUDENT,
-        full_name="Stanislav Kukoba",
+        full_name="Alex Johnson",
         is_student=True,
         notes="Student, born 2014",
         birth_date=date(2014, 5, 15),
     )
 
-    assert member.full_name == "Stanislav Kukoba"
+    assert member.full_name == "Alex Johnson"
     assert member.is_student is True
     assert member.notes == "Student, born 2014"
     assert member.birth_date == date(2014, 5, 15)
@@ -43,11 +43,11 @@ async def test_create_with_all_fields(session):
 
 async def test_get_by_id(session):
     repo = FamilyMemberRepository(session)
-    created = await repo.create(name="Tanya", role=FamilyRole.PARENT)
+    created = await repo.create(name="Carol", role=FamilyRole.PARENT)
 
     found = await repo.get_by_id(created.id)
     assert found is not None
-    assert found.name == "Tanya"
+    assert found.name == "Carol"
 
 
 async def test_get_by_id_not_found(session):
@@ -58,21 +58,21 @@ async def test_get_by_id_not_found(session):
 
 async def test_get_student(session):
     repo = FamilyMemberRepository(session)
-    await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
+    await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
     await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
 
     student = await repo.get_student()
     assert student is not None
-    assert student.name == "Stas"
+    assert student.name == "Alex"
     assert student.is_student is True
 
 
 async def test_get_student_none(session):
     repo = FamilyMemberRepository(session)
-    await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
+    await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
 
     student = await repo.get_student()
     assert student is None
@@ -80,11 +80,11 @@ async def test_get_student_none(session):
 
 async def test_list_all(session):
     repo = FamilyMemberRepository(session)
-    await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
-    await repo.create(name="Natasha", role=FamilyRole.TUTOR)
+    await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
+    await repo.create(name="Diana", role=FamilyRole.TUTOR)
     await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
 
     members = await repo.list()
@@ -93,9 +93,9 @@ async def test_list_all(session):
 
 async def test_list_filter_by_role(session):
     repo = FamilyMemberRepository(session)
-    await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
-    await repo.create(name="Natasha", role=FamilyRole.TUTOR)
-    await repo.create(name="Valentina", role=FamilyRole.TUTOR)
+    await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
+    await repo.create(name="Diana", role=FamilyRole.TUTOR)
+    await repo.create(name="Eve", role=FamilyRole.TUTOR)
 
     tutors = await repo.list(role=FamilyRole.TUTOR)
     assert len(tutors) == 2
@@ -104,16 +104,16 @@ async def test_list_filter_by_role(session):
 
 async def test_update(session):
     repo = FamilyMemberRepository(session)
-    member = await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
+    member = await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
 
-    updated = await repo.update(member.id, full_name="Evhen Kukoba", notes="sudo")
-    assert updated.full_name == "Evhen Kukoba"
+    updated = await repo.update(member.id, full_name="Bob Johnson", notes="sudo")
+    assert updated.full_name == "Bob Johnson"
     assert updated.notes == "sudo"
 
 
 async def test_update_clear_notes(session):
     repo = FamilyMemberRepository(session)
-    member = await repo.create(name="Evhen", role=FamilyRole.ADMIN, notes="old notes")
+    member = await repo.create(name="Bob", role=FamilyRole.ADMIN, notes="old notes")
 
     updated = await repo.update(member.id, clear_notes=True)
     assert updated.notes is None
@@ -160,8 +160,8 @@ async def test_constraint_single_student(session):
     """Only one member with is_student=True is allowed."""
     repo = FamilyMemberRepository(session)
     await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
 
     with pytest.raises(IntegrityError):
@@ -174,11 +174,11 @@ async def test_constraint_single_student(session):
 async def test_multiple_non_students_allowed(session):
     """Multiple members with is_student=False should be fine."""
     repo = FamilyMemberRepository(session)
-    await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
-    await repo.create(name="Tanya", role=FamilyRole.PARENT)
-    await repo.create(name="Natasha", role=FamilyRole.TUTOR)
-    await repo.create(name="Valentina", role=FamilyRole.TUTOR)
-    await repo.create(name="Anatoliy", role=FamilyRole.RELATIVE)
+    await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
+    await repo.create(name="Carol", role=FamilyRole.PARENT)
+    await repo.create(name="Diana", role=FamilyRole.TUTOR)
+    await repo.create(name="Eve", role=FamilyRole.TUTOR)
+    await repo.create(name="Frank", role=FamilyRole.RELATIVE)
 
     members = await repo.list()
     assert len(members) == 5
@@ -191,8 +191,8 @@ async def test_create_student_with_birth_date(session):
     """Student creation with birth_date and full_name succeeds."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
     assert member.birth_date == date(2014, 5, 15)
 
@@ -202,8 +202,8 @@ async def test_create_student_without_birth_date_fails(session):
     repo = FamilyMemberRepository(session)
     with pytest.raises(ValueError, match="birth_date is required"):
         await repo.create(
-            name="Stas", role=FamilyRole.STUDENT, is_student=True,
-            full_name="Stanislav Kukoba",
+            name="Alex", role=FamilyRole.STUDENT, is_student=True,
+            full_name="Alex Johnson",
         )
 
 
@@ -212,7 +212,7 @@ async def test_create_student_without_full_name_fails(session):
     repo = FamilyMemberRepository(session)
     with pytest.raises(ValueError, match="full_name is required"):
         await repo.create(
-            name="Stas", role=FamilyRole.STUDENT, is_student=True,
+            name="Alex", role=FamilyRole.STUDENT, is_student=True,
             birth_date=date(2014, 5, 15),
         )
 
@@ -221,8 +221,8 @@ async def test_update_student_full_name_to_empty_fails(session):
     """Setting full_name to empty string on student raises ValueError."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
     with pytest.raises(ValueError, match="full_name is required"):
         await repo.update(member.id, full_name="")
@@ -231,7 +231,7 @@ async def test_update_student_full_name_to_empty_fails(session):
 async def test_create_non_student_without_birth_date(session):
     """Non-student can be created without birth_date."""
     repo = FamilyMemberRepository(session)
-    member = await repo.create(name="Evhen", role=FamilyRole.ADMIN, is_admin=True)
+    member = await repo.create(name="Bob", role=FamilyRole.ADMIN, is_admin=True)
     assert member.birth_date is None
 
 
@@ -239,7 +239,7 @@ async def test_create_non_student_with_birth_date(session):
     """Non-student can optionally have birth_date."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Tanya", role=FamilyRole.PARENT,
+        name="Carol", role=FamilyRole.PARENT,
         birth_date=date(1985, 3, 20),
     )
     assert member.birth_date == date(1985, 3, 20)
@@ -249,8 +249,8 @@ async def test_update_birth_date(session):
     """Update birth_date on existing member."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
     updated = await repo.update(member.id, birth_date=date(2014, 6, 20))
     assert updated.birth_date == date(2014, 6, 20)
@@ -260,8 +260,8 @@ async def test_clear_birth_date_on_student_fails(session):
     """Clearing birth_date on student raises ValueError."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Stas", role=FamilyRole.STUDENT, is_student=True,
-        full_name="Stanislav Kukoba", birth_date=date(2014, 5, 15),
+        name="Alex", role=FamilyRole.STUDENT, is_student=True,
+        full_name="Alex Johnson", birth_date=date(2014, 5, 15),
     )
     with pytest.raises(ValueError, match="birth_date is required"):
         await repo.update(member.id, clear_birth_date=True)
@@ -271,7 +271,7 @@ async def test_clear_birth_date_on_non_student(session):
     """Clearing birth_date on non-student works."""
     repo = FamilyMemberRepository(session)
     member = await repo.create(
-        name="Tanya", role=FamilyRole.PARENT,
+        name="Carol", role=FamilyRole.PARENT,
         birth_date=date(1985, 3, 20),
     )
     updated = await repo.update(member.id, clear_birth_date=True)

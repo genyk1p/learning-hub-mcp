@@ -16,14 +16,14 @@ pytestmark = pytest.mark.asyncio
 # ---- helpers ----
 
 
-async def _add_admin(session, name="Dad"):
+async def _add_admin(session, name="Bob"):
     member = FamilyMember(name=name, role="parent", is_admin=True)
     session.add(member)
     await session.commit()
     return member
 
 
-async def _add_student(session, name="Stas", birth_date="2012-05-15"):
+async def _add_student(session, name="Alex", birth_date="2012-05-15"):
     from datetime import date
     member = FamilyMember(
         name=name, role="student", is_student=True,
@@ -159,7 +159,7 @@ async def test_student_without_birth_date(session):
     await _add_required_configs(session)
     # Student without birth_date
     member = FamilyMember(
-        name="Stas", role="student", is_student=True, full_name="Stas Test",
+        name="Alex", role="student", is_student=True, full_name="Alex Test",
     )
     session.add(member)
     await session.commit()
