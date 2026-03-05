@@ -1,7 +1,7 @@
 """Base cron jobs setup instruction — guides agent through creating base crons."""
 
 from learning_hub.tools.config_vars import CFG_BASE_CRONS_INSTALLED
-from learning_hub.tools.tool_names import TOOL_SET_CONFIG
+from learning_hub.tools.tool_names import TOOL_CLOSE_OVERDUE_HOMEWORKS, TOOL_SET_CONFIG
 
 BASE_CRONS_SETUP_INSTRUCTIONS = f"""\
 # Base cron jobs setup
@@ -20,8 +20,9 @@ Base crons keep the system running automatically:
 - Reminder to the admin if they forgot to record played time for the week
 - Weekly balance report to the student every Saturday
 - Daily nudge encouraging the student to do a bonus task
+- Nightly auto-close of overdue homeworks
 
-These 4 crons are required regardless of whether a sync provider (EduPage, etc.)
+These 5 crons are required regardless of whether a sync provider (EduPage, etc.)
 is configured. Sync-specific crons are set up separately.
 
 ---
@@ -49,7 +50,7 @@ to send notifications. Set up a gateway for the admin first. \
 
 ## Step 2 — Show schedule and get confirmation
 
-Before creating, show the user all 4 crons with their default schedules and ask for confirmation.
+Before creating, show the user all 5 crons with their default schedules and ask for confirmation.
 
 | Cron | Schedule | Recipient | Reschedule? |
 |------|----------|-----------|-------------|
@@ -57,10 +58,11 @@ Before creating, show the user all 4 crons with their default schedules and ask 
 | B — Unrecorded play reminder | Wednesday 12:00 | admin | allowed |
 | C — Saturday balance report | Saturday 09:00 | student | allowed |
 | D — Bonus task nudge | daily 16:00 | student | allowed |
+| E — Close overdue homeworks | daily 01:00 | none (silent) | allowed |
 
 ---
 
-## Step 3 — Create 4 crons
+## Step 3 — Create 5 crons
 
 ### Cron A — Homework reminders (Mon–Fri 17:00)
 
@@ -128,9 +130,21 @@ Does NOT reveal the topic yet. Does NOT create a BonusTask.
 
 ---
 
+### Cron E — Close overdue homeworks (daily 01:00)
+
+**Schedule:** `0 1 * * *`
+
+**What it does:**
+1. Calls `{TOOL_CLOSE_OVERDUE_HOMEWORKS}()` — finds all homeworks past their deadline \
+and marks them as overdue, applying penalty minutes from the config.
+2. This cron runs silently — no notifications are sent. The penalty transactions \
+are recorded automatically.
+
+---
+
 ## Step 4 — Report to the user
 
-After creating all 4 crons:
+After creating all 5 crons:
 1. List them with name, schedule, and job ID.
 2. Briefly explain what each one does.
 3. Offer to adjust the schedule if the defaults don't work.
