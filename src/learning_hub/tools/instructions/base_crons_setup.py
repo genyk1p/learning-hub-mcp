@@ -48,12 +48,32 @@ to send notifications. Set up a gateway for the admin first. \
 
 ---
 
-## Step 2 — Show schedule and get confirmation
+## Step 2 — Detect server timezone
 
-Before creating, show the user all 5 crons with their default schedules and ask for confirmation.
+All cron schedules must use the **server's local timezone** so that notifications arrive \
+at the correct local time for the family.
 
-| Cron | Schedule | Recipient | Reschedule? |
-|------|----------|-----------|-------------|
+Run `cat /etc/timezone` (or `timedatectl show -p Timezone --value`) to get the server timezone. \
+Use the resulting IANA timezone identifier (e.g. `Europe/Vienna`, `America/New_York`) as \
+the `tz` parameter when creating every cron job below.
+
+Also use the server's current local time (`date`) to verify the timezone looks correct \
+(e.g. if it's evening in Europe, the time should reflect that).
+
+If the server timezone is `Etc/UTC` or `UTC` — ask the user what timezone the family lives in \
+and use that instead.
+
+Store the resolved timezone — you will use it for **all** cron jobs in step 4.
+
+---
+
+## Step 3 — Show schedule and get confirmation
+
+Before creating, show the user all 5 crons with their default schedules \
+(**in the server's local timezone from step 2**) and ask for confirmation.
+
+| Cron | Schedule (local time) | Recipient | Reschedule? |
+|------|----------------------|-----------|-------------|
 | A — Homework reminders | Mon–Fri 17:00 | student | allowed |
 | B — Unrecorded play reminder | Wednesday 12:00 | admin | allowed |
 | C — Saturday balance report | Saturday 09:00 | student | allowed |
@@ -62,11 +82,20 @@ Before creating, show the user all 5 crons with their default schedules and ask 
 
 ---
 
-## Step 3 — Create 5 crons
+## Step 4 — Create 5 crons
+
+**Important — two mandatory settings for every cron:**
+
+1. **`tz`** — set to the server timezone detected in step 2. \
+Never use UTC unless the server is actually in UTC and the user confirmed it.
+
+2. **`sessionTarget: "main"`** — all crons MUST run in the main agent session. \
+Do NOT use `"isolated"` — isolated sessions do not have access to Learning Hub plugin tools \
+and the cron will fail with "function not found" errors.
 
 ### Cron A — Homework reminders (Mon–Fri 17:00)
 
-**Schedule:** `0 17 * * 1-5`
+**Schedule:** `0 17 * * 1-5` with `tz` from step 2
 
 **What it does:**
 1. Calls `learning_hub_get_pending_homework_reminders()` — returns a list of D-2 and D-1 \
@@ -142,7 +171,7 @@ are recorded automatically.
 
 ---
 
-## Step 4 — Report to the user
+## Step 5 — Report to the user
 
 After creating all 5 crons:
 1. List them with name, schedule, and job ID.
@@ -151,7 +180,7 @@ After creating all 5 crons:
 
 ---
 
-## Step 5 — Mark as installed
+## Step 6 — Mark as installed
 
 Call `{TOOL_SET_CONFIG}(key="{CFG_BASE_CRONS_INSTALLED}", value="true")`.
 
