@@ -122,7 +122,7 @@ def upgrade() -> None:
         "1, datetime('now'), datetime('now'))"
     )
 
-    # --- Schools (16 countries, all inactive) ---
+    # --- Schools (17 countries, all inactive) ---
     schools = [
         ("CZ", "Česká škola",
          "Stupnice 1–5 (1 nejlepší, 5 nejhorší). Používá se také mezistupně: "
@@ -172,6 +172,9 @@ def upgrade() -> None:
         ("AU", "Australian school",
          "Grades A–E (A highest). "
          "Conversion to MCP (1-5): A→1, B→2, C→3, D→4, E→5."),
+        ("CH", "Schweizer Schule",
+         "Notensystem 1–6 (6 beste Note, 1 schlechteste). "
+         "Konvertierung in MCP (1-5): 6→1, 5→2, 4→3, 3→4, 1-2→5."),
     ]
     for code, name, grading in schools:
         grading_escaped = grading.replace("'", "''")
@@ -229,7 +232,7 @@ def downgrade() -> None:
     op.execute(
         "DELETE FROM schools WHERE code IN ("
         "'CZ', 'UA', 'SK', 'AT', 'DE', 'FR', 'GB', 'ES', "
-        "'IT', 'PL', 'NL', 'US', 'CA', 'AR', 'BR', 'AU')"
+        "'IT', 'PL', 'NL', 'US', 'CA', 'AR', 'BR', 'AU', 'CH')"
     )
     op.execute(
         "DELETE FROM configs WHERE key IN ("

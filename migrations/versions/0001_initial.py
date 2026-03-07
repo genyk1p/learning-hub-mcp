@@ -116,6 +116,8 @@ def upgrade() -> None:
         sa.Column("name_ru", sa.String(100), nullable=True),
         sa.Column("grade_level", sa.Integer(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False),
+        sa.Column("is_favorite", sa.Boolean(), nullable=False,
+                  server_default=sa.text("0")),
         sa.Column("current_book_id", sa.Integer(), nullable=True),
         sa.Column("tutor_id", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
@@ -282,6 +284,8 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("external_id", "external_source",
                             name="uq_grades_external"),
+        sa.UniqueConstraint("bonus_task_id", name="uq_grades_bonus_task_id"),
+        sa.UniqueConstraint("homework_id", name="uq_grades_homework_id"),
     )
 
     op.create_table(
