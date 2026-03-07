@@ -1,7 +1,7 @@
 """Base cron jobs setup instruction — guides agent through creating base crons."""
 
 from learning_hub.tools.config_vars import CFG_BASE_CRONS_INSTALLED
-from learning_hub.tools.tool_names import TOOL_CLOSE_OVERDUE_HOMEWORKS, TOOL_SET_CONFIG
+from learning_hub.tools.tool_names import TOOL_SET_CONFIG
 
 BASE_CRONS_SETUP_INSTRUCTIONS = f"""\
 # Base cron jobs setup
@@ -82,92 +82,127 @@ Before creating, show the user all 5 crons with their default schedules \
 
 ---
 
-## Step 4 — Create 5 crons
+## Step 4 — Create 5 crons via `openclaw cron add`
 
-**Important — two mandatory settings for every cron:**
+**How to create crons in OpenClaw:**
 
-1. **`tz`** — set to the server timezone detected in step 2. \
-Never use UTC unless the server is actually in UTC and the user confirmed it.
+Use the CLI command `openclaw cron add`. This is the ONLY correct way to create crons. \
+Do NOT write to `jobs.json` directly. Do NOT use system `crontab`. Do NOT create documentation \
+files instead of actual crons.
 
-2. **`sessionTarget: "main"`** — all crons MUST run in the main agent session. \
-Do NOT use `"isolated"` — isolated sessions do not have access to Learning Hub plugin tools \
-and the cron will fail with "function not found" errors.
+**Mandatory flags for EVERY cron:**
+- `--tz <TIMEZONE>` — timezone from step 2. Never omit this.
+- `--session main` — all crons MUST run in the main session (NOT `isolated`). \
+Isolated sessions do not have access to Learning Hub plugin tools.
+- `--system-event "<text>"` — the instruction the agent will execute when the cron fires.
+
+**Template:**
+```
+openclaw cron add \\
+  --name "<NAME>" \\
+  --cron "<CRON_EXPR>" \\
+  --tz <TIMEZONE> \\
+  --session main \\
+  --system-event "<INSTRUCTION>"
+```
+
+Before running the commands, substitute these placeholders with real values from step 1:
+- `<TIMEZONE>` — IANA timezone from step 2 (e.g. `Europe/Prague`)
+- `<STUDENT_NAME>` — student's name from `list_family_members()`
+- `<STUDENT_TG>` — student's gateway channel_uid (Telegram ID)
+- `<ADMIN_NAME>` — admin's name
+- `<ADMIN_TG>` — admin's gateway channel_uid (Telegram ID)
+
+---
 
 ### Cron A — Homework reminders (Mon–Fri 17:00)
 
-**Schedule:** `0 17 * * 1-5` with `tz` from step 2
-
-**What it does:**
-1. Calls `learning_hub_get_pending_homework_reminders()` — returns a list of D-2 and D-1 \
-reminders. Deduplication is built into the database.
-2. If the list is empty — stop silently.
-3. Sends each reminder to the student in a friendly tone. \
-D-2: gentle heads-up. D-1: more urgent.
-4. Calls `learning_hub_mark_homework_reminders_sent(\
-d1_homework_ids=[...], d2_homework_ids=[...])`.
+```
+openclaw cron add \\
+  --name "LH: Homework Reminders" \\
+  --cron "0 17 * * 1-5" \\
+  --tz <TIMEZONE> \\
+  --session main \\
+  --system-event "Call learning_hub_get_pending_homework_reminders(). \
+If the list is empty — do nothing. \
+If not empty — send each reminder to <STUDENT_NAME> via Telegram (<STUDENT_TG>). \
+D-2: gentle heads-up. D-1: more urgent tone. \
+Then call learning_hub_mark_homework_reminders_sent(d1_homework_ids=[...], d2_homework_ids=[...])."
+```
 
 ---
 
 ### Cron B — Unrecorded play reminder (Wednesday 12:00)
 
-**Schedule:** `0 12 * * 3`
-
-**What it does:**
-1. Take the current date (when the cron fires) and call \
-`learning_hub_list_transactions(date_from=<7 days ago YYYY-MM-DD>, type="played")`.
-2. If there is at least one PLAYED transaction in the last 7 days — stop silently.
-3. If there are no PLAYED transactions in the last 7 days — notify the admin. To compose \
-the message, first check the full history:
-   a. Call `learning_hub_list_transactions(type="played")` (no date filter).
-   b. **If there is at least one PLAYED transaction ever** — find the most recent one \
-and tell the admin: "No game time has been recorded in the last week. \
-The last time you recorded played time was on [date]: [N] minutes. \
-If the student has played since then, please record it via \
-`learning_hub_add_played_minutes(minutes=<N>)`."
-   c. **If there are no PLAYED transactions at all** — tell the admin: \
-"You have never recorded how much the student played. \
-When the student plays games, you should record the minutes spent — \
-this deducts them from the balance and keeps it accurate. \
-Use `learning_hub_add_played_minutes(minutes=<N>)` after each gaming session \
-or as a daily/weekly total."
+```
+openclaw cron add \\
+  --name "LH: Play Reminder" \\
+  --cron "0 12 * * 3" \\
+  --tz <TIMEZONE> \\
+  --session main \\
+  --system-event "Call learning_hub_list_transactions(date_from=<7 days ago YYYY-MM-DD>, type='played'). \
+If there is at least one transaction — do nothing. \
+If none — call learning_hub_list_transactions(type='played') without date filter. \
+If there is at least one ever — find the most recent and tell <ADMIN_NAME> via Telegram (<ADMIN_TG>): \
+'No game time recorded in the last week. Last recorded: [date], [N] minutes.' \
+If none ever — tell admin: 'You have never recorded played time. \
+Use learning_hub_add_played_minutes(minutes=N) after gaming sessions.'"
+```
 
 ---
 
 ### Cron C — Saturday balance report (Saturday 09:00)
 
-**Schedule:** `0 9 * * 6`
-
-**What it does:**
-1. Gets the current balance: `learning_hub_get_balance()`.
-2. Gets this week's transactions: `learning_hub_list_transactions(\
-date_from=<last Saturday YYYY-MM-DD>)`.
-3. Sends the student a friendly weekly summary via their gateway: \
-what was earned, what was spent, current balance.
+```
+openclaw cron add \\
+  --name "LH: Weekly Balance Report" \\
+  --cron "0 9 * * 6" \\
+  --tz <TIMEZONE> \\
+  --session main \\
+  --system-event "Get balance via learning_hub_get_balance(). \
+Get this week's transactions via learning_hub_list_transactions(date_from=<last Saturday YYYY-MM-DD>). \
+Send <STUDENT_NAME> via Telegram (<STUDENT_TG>) a friendly weekly summary: \
+what was earned, what was spent, current balance."
+```
 
 ---
 
 ### Cron D — Bonus task nudge (daily 16:00)
 
-**Schedule:** `0 16 * * *`
-
-**What it does:**
-1. Calls `learning_hub_list_topic_reviews(status="pending")` — checks if there are topics \
-available for bonus tasks.
-2. If the list is empty — stop silently.
-3. If topics exist — sends the student a short friendly invitation to earn extra game minutes. \
-Does NOT reveal the topic yet. Does NOT create a BonusTask.
+```
+openclaw cron add \\
+  --name "LH: Bonus Task Nudge" \\
+  --cron "0 16 * * *" \\
+  --tz <TIMEZONE> \\
+  --session main \\
+  --system-event "Call learning_hub_list_topic_reviews(status='pending'). \
+If list is empty — do nothing. \
+If topics exist — send <STUDENT_NAME> via Telegram (<STUDENT_TG>) a short friendly \
+invitation to earn game minutes via a bonus task. Do NOT reveal the topic. Do NOT create a BonusTask."
+```
 
 ---
 
 ### Cron E — Close overdue homeworks (daily 01:00)
 
-**Schedule:** `0 1 * * *`
+```
+openclaw cron add \\
+  --name "LH: Close Overdue Homeworks" \\
+  --cron "0 1 * * *" \\
+  --tz <TIMEZONE> \\
+  --session main \\
+  --system-event "Call learning_hub_close_overdue_homeworks(). This is a silent background task — do not send any notifications."
+```
 
-**What it does:**
-1. Calls `{TOOL_CLOSE_OVERDUE_HOMEWORKS}()` — finds all homeworks past their deadline \
-and marks them as overdue, applying penalty minutes from the config.
-2. This cron runs silently — no notifications are sent. The penalty transactions \
-are recorded automatically.
+---
+
+### Verify crons were created
+
+After running all 5 commands, verify:
+```
+openclaw cron list
+```
+Must show 5 crons, all enabled. If any are missing — re-run the failed command.
 
 ---
 
