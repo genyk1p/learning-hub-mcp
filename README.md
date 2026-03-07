@@ -1,6 +1,8 @@
 # Learning Hub MCP
 
-MCP server for student learning workflow with SQLite database.
+> **Beta** — fully functional, tested with one family. Feedback and bug reports welcome via [GitHub Issues](https://github.com/genyk1p/learning-hub-mcp/issues).
+
+MCP server for student learning workflow with SQLite database. Each instance serves one student — deploy a separate instance per child for isolated, focused AI tutoring.
 
 ## Features
 
@@ -29,10 +31,9 @@ poetry run alembic upgrade head
 
 ## Configuration
 
-Create `.env` file (optional):
+Database defaults to `./data/learning_hub.db`. Override via environment variable:
 
 ```bash
-# Database (defaults to ./data/learning_hub.db)
 DATABASE_URL=sqlite+aiosqlite:///./data/learning_hub.db
 ```
 
@@ -306,6 +307,14 @@ poetry run ruff check .
 # Fix lint issues
 poetry run ruff check --fix .
 ```
+
+## Known Limitations
+
+- Tested with a single family (one student, two schools: EduPage CZ + UA)
+- PRONOTE sync implemented but minimally tested
+- SQLite only — designed for single-family self-hosted use
+- Requires [OpenClaw](https://github.com/open-claw/openclaw) as the AI agent runtime
+- Edge cases with diverse school configurations are likely not yet covered
 
 ## License
 
