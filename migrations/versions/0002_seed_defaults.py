@@ -122,7 +122,7 @@ def upgrade() -> None:
         "1, datetime('now'), datetime('now'))"
     )
 
-    # --- Schools (17 countries, all inactive) ---
+    # --- Schools (20 countries, all inactive) ---
     schools = [
         ("CZ", "Česká škola",
          "Stupnice 1–5 (1 nejlepší, 5 nejhorší). Používá se také mezistupně: "
@@ -175,6 +175,18 @@ def upgrade() -> None:
         ("CH", "Schweizer Schule",
          "Notensystem 1–6 (6 beste Note, 1 schlechteste). "
          "Konvertierung in MCP (1-5): 6→1, 5→2, 4→3, 3→4, 1-2→5."),
+        ("IN", "Indian school (CBSE)",
+         "CBSE 9-point grading: A1 (91-100), A2 (81-90), B1 (71-80), "
+         "B2 (61-70), C1 (51-60), C2 (41-50), D (33-40), E (<33 fail). "
+         "Conversion to MCP (1-5): A1→1, A2-B1→2, B2-C1→3, C2-D→4, E→5."),
+        ("BD", "বাংলাদেশ স্কুল",
+         "GPA scale 0-5 (5 best). A+ (80-100) GPA 5, A (70-79) GPA 4, "
+         "A- (60-69) GPA 3.5, B (50-59) GPA 3, C (40-49) GPA 2, "
+         "D (33-39) GPA 1, F (0-32) GPA 0. "
+         "Conversion to MCP (1-5): GPA 5→1, GPA 4-3.5→2, GPA 3→3, GPA 2-1→4, GPA 0→5."),
+        ("JP", "日本の学校",
+         "5-point scale (5 best, 1 worst). Used in elementary and junior high. "
+         "Conversion to MCP (1-5): 5→1, 4→2, 3→3, 2→4, 1→5."),
     ]
     for code, name, grading in schools:
         grading_escaped = grading.replace("'", "''")
@@ -232,7 +244,8 @@ def downgrade() -> None:
     op.execute(
         "DELETE FROM schools WHERE code IN ("
         "'CZ', 'UA', 'SK', 'AT', 'DE', 'FR', 'GB', 'ES', "
-        "'IT', 'PL', 'NL', 'US', 'CA', 'AR', 'BR', 'AU', 'CH')"
+        "'IT', 'PL', 'NL', 'US', 'CA', 'AR', 'BR', 'AU', 'CH', "
+        "'IN', 'BD', 'JP')"
     )
     op.execute(
         "DELETE FROM configs WHERE key IN ("

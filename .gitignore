@@ -13,6 +13,7 @@ CLAUDE.md
 .local/
 .openclaw/
 .openclaw-test/
+.playwright-mcp/
 
 # Docker (local dev environments)
 docker/
@@ -79,6 +80,9 @@ data/*.db.bak
 # Logs
 *.log
 logs/
+
+# Frontend
+frontend/
 
 # Node.js (learning-hub-bridge)
 node_modules/
