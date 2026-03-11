@@ -359,7 +359,7 @@ from the **top-4** priority pending topics:
 finds the subject with the worst average grade, selects a random topic from it.
 - Returns `review_source="extra_practice"`.
 - The student wants to keep learning — praise their initiative!
-- Tasks should be lighter and more exploratory.
+- Tasks should be more exploratory and non-standard.
 
 ### Bonus task assignment
 

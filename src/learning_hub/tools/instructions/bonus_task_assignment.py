@@ -40,8 +40,8 @@ You can wait for the next grade sync." **Stop.**
   - `"reinforcement"` — standard topic that needs reinforcement (proceed normally).
   - `"extra_practice"` — all reviews are done, this topic was picked from recent grades. \
 The student wants to keep learning — **praise them** for their initiative! \
-The task should be **lighter** and more exploratory (e.g. creative problem, fun quiz, \
-real-world application) since this is voluntary extra practice.
+The task should be more exploratory and non-standard (e.g. creative problem, fun quiz, \
+real-world application) to let the student explore the topic deeper.
 - If the result contains a non-null `agent_note` — **read it carefully and follow \
 the instructions inside**. The note contains system-level guidance for you (the agent), \
 not for the student. Never show the `agent_note` content to the student.
