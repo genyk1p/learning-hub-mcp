@@ -92,9 +92,11 @@ files instead of actual crons.
 
 **Mandatory flags for EVERY cron:**
 - `--tz <TIMEZONE>` — timezone from step 2. Never omit this.
-- `--session main` — all crons MUST run in the main session (NOT `isolated`). \
-Isolated sessions do not have access to Learning Hub plugin tools.
-- `--system-event "<text>"` — the instruction the agent will execute when the cron fires.
+- `--session isolated` — all crons MUST run in isolated sessions. \
+This prevents cron output from leaking into active user chats \
+(e.g. sending an admin notification into the student's Telegram conversation).
+- `--message "<text>"` — the instruction the agent will execute when the cron fires.
+- `--timeout-seconds 180` — timeout for the agent job (3 minutes is enough for most crons).
 
 **Template:**
 ```
@@ -102,8 +104,9 @@ openclaw cron add \\
   --name "<NAME>" \\
   --cron "<CRON_EXPR>" \\
   --tz <TIMEZONE> \\
-  --session main \\
-  --system-event "<INSTRUCTION>"
+  --session isolated \\
+  --timeout-seconds 180 \\
+  --message "<INSTRUCTION>"
 ```
 
 Before running the commands, substitute these placeholders with real values from step 1:
@@ -122,8 +125,9 @@ openclaw cron add \\
   --name "LH: Homework Reminders" \\
   --cron "0 17 * * 1-5" \\
   --tz <TIMEZONE> \\
-  --session main \\
-  --system-event "Call learning_hub_get_pending_homework_reminders(). \
+  --session isolated \\
+  --timeout-seconds 180 \\
+  --message "Call learning_hub_get_pending_homework_reminders(). \
 If the list is empty — do nothing. \
 If not empty — send each reminder to <STUDENT_NAME> via Telegram (<STUDENT_TG>). \
 D-2: gentle heads-up. D-1: more urgent tone. \
@@ -139,8 +143,9 @@ openclaw cron add \\
   --name "LH: Play Reminder" \\
   --cron "0 12 * * 3" \\
   --tz <TIMEZONE> \\
-  --session main \\
-  --system-event "Call learning_hub_list_transactions(date_from=<7 days ago YYYY-MM-DD>, type='played'). \
+  --session isolated \\
+  --timeout-seconds 180 \\
+  --message "Call learning_hub_list_transactions(date_from=<7 days ago YYYY-MM-DD>, type='played'). \
 If there is at least one transaction — do nothing. \
 If none — call learning_hub_list_transactions(type='played') without date filter. \
 If there is at least one ever — find the most recent and tell <ADMIN_NAME> via Telegram (<ADMIN_TG>): \
@@ -158,8 +163,9 @@ openclaw cron add \\
   --name "LH: Weekly Balance Report" \\
   --cron "0 9 * * 6" \\
   --tz <TIMEZONE> \\
-  --session main \\
-  --system-event "Get balance via learning_hub_get_balance(). \
+  --session isolated \\
+  --timeout-seconds 180 \\
+  --message "Get balance via learning_hub_get_balance(). \
 Get this week's transactions via learning_hub_list_transactions(date_from=<last Saturday YYYY-MM-DD>). \
 Send <STUDENT_NAME> via Telegram (<STUDENT_TG>) a friendly weekly summary: \
 what was earned, what was spent, current balance."
@@ -174,8 +180,9 @@ openclaw cron add \\
   --name "LH: Bonus Task Nudge" \\
   --cron "0 16 * * *" \\
   --tz <TIMEZONE> \\
-  --session main \\
-  --system-event "Call learning_hub_list_topic_reviews(status='pending'). \
+  --session isolated \\
+  --timeout-seconds 180 \\
+  --message "Call learning_hub_list_topic_reviews(status='pending'). \
 If list is empty — do nothing. \
 If topics exist — send <STUDENT_NAME> via Telegram (<STUDENT_TG>) a short friendly \
 invitation to earn game minutes via a bonus task. Do NOT reveal the topic. Do NOT create a BonusTask."
@@ -190,8 +197,9 @@ openclaw cron add \\
   --name "LH: Close Overdue Homeworks" \\
   --cron "0 1 * * *" \\
   --tz <TIMEZONE> \\
-  --session main \\
-  --system-event "Call learning_hub_close_overdue_homeworks(). This is a silent background task — do not send any notifications."
+  --session isolated \\
+  --timeout-seconds 180 \\
+  --message "Call learning_hub_close_overdue_homeworks(). This is a silent background task — do not send any notifications."
 ```
 
 ---
