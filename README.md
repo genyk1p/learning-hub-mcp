@@ -1,5 +1,7 @@
 # Learning Hub MCP
 
+**[learninghub.cc](https://www.learninghub.cc)**
+
 > **Beta** — fully functional, tested with one family. Feedback and bug reports welcome via [GitHub Issues](https://github.com/genyk1p/learning-hub-mcp/issues).
 
 MCP server for student learning workflow with SQLite database. Each instance serves one student — deploy a separate instance per child for isolated, focused AI tutoring.
